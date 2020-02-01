@@ -1,23 +1,20 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
-import { RouterModule } from '@angular/router';
 
-import { HomePage } from './home.page';
+import { IonicModule } from '@ionic/angular';
+
+import { ContactChatPageRoutingModule } from './contact-chat-routing.module';
+
+import { ContactChatPage } from './contact-chat.page';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    RouterModule.forChild([
-      {
-        path: '',
-        component: HomePage
-      }
-    ])
+    ContactChatPageRoutingModule
   ],
-  declarations: [HomePage]
+  declarations: [ContactChatPage]
 })
-export class HomePageModule {}
+export class ContactChatPageModule {}

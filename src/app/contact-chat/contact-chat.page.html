@@ -1,0 +1,40 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-title class="center">
+            {{(contact$ | async)?.name || (contact$ | async)?.torAddress}}
+        </ion-title>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content #content>
+    <ion-list class="chat">
+        <div *ngFor="let message of (contactMessages$ | async)">
+            <div class="wide chat-message" *ngIf="message.direction === 'Outbound'" lines="none">
+                <div class="chat-message left-bubble">
+                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                    <p class="ionic-text-wrap">{{message.text}}</p>
+                </div>
+            </div>
+            <div class="chat-message" *ngIf="message.direction === 'Inbound'" lines="none">
+                <div class="chat-message" class="chat-message right-bubble">
+                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                    <p class="ionic-text-wrap">{{message.text}}</p>
+                </div>
+            </div>
+        </div>
+    </ion-list>
+</ion-content>
+
+<ion-footer>
+    <ion-grid>
+        <ion-row>
+            <ion-col col-10>
+                <ion-input type="text" placeholder="Type a message" [(ngModel)]="messageToSend" name="message">
+                </ion-input>
+            </ion-col>
+            <ion-col col-2 (click)="sendMessage()">
+                <ion-icon name="paper-plane"></ion-icon>
+            </ion-col>
+        </ion-row>
+    </ion-grid>
+</ion-footer>
