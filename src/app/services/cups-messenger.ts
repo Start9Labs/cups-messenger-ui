@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { config } from '../config'
+const uuidv4 = require('uuid/v4')
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -45,6 +46,8 @@ export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)
     messages = mockL(mockMessage, 20)
 
+    counter = 0
+
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         return this.contacts
     }
@@ -52,7 +55,10 @@ export class MockCupsMessenger {
         this.contacts.push(Object.assign(contact, {unreadMessages: 0}))
     }
     async messagesShow(contact: Contact, limit: number = 15): Promise<Message[]> {
-        console.log(this.messages.length)
+        this.counter++
+        if(this.counter % 5 === 0) {
+           this.messages.push(mockMessage(this.counter))
+        }
         return Promise.resolve(this.messages)
     }
     async messagesSend(contact: Contact, message: string): Promise<void> {
@@ -60,7 +66,8 @@ export class MockCupsMessenger {
             timestamp: new Date(),
             direction: 'Outbound',
             otherParty: contact,
-            text: message
+            text: message,
+            id: uuidv4()
         })
         return
     }
@@ -77,6 +84,7 @@ export interface ContactWithMessageCount extends Contact {
 
 export type MessageDirection = 'Inbound' | 'Outbound'
 export interface Message {
+    id: string
     timestamp: Date
     direction: MessageDirection
     otherParty: Contact
@@ -104,15 +112,11 @@ function mockMessage(i: number): Message {
         timestamp: new Date(),
         direction: 'Inbound',
         otherParty: mockContact(i),
-        text: mockL(mockWord, 30).join(' ')
+        text: mockL(mockWord, 30).join(' '),
+        id: uuidv4()
     }
 }
 
 function mockWord(i: number): string {
-    const k = i % 6 + 1
-    let toReturn = ''
-    for (let j = 0; j < k; j ++) {
-        toReturn += 'a'
-    }
-    return toReturn
+    return uuidv4() + i
 }

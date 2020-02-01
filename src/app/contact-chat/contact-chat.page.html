@@ -6,22 +6,23 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content>
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="checkIfAtBottom()">
     <ion-list class="chat">
         <div *ngFor="let message of (contactMessages$ | async)">
-            <div class="wide chat-message" *ngIf="message.direction === 'Outbound'" lines="none">
+            <div class="wide chat-message" *ngIf="message.direction === 'Inbound'" lines="none" [attr.id]="message.id">
                 <div class="chat-message left-bubble">
                     <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                     <p class="ionic-text-wrap">{{message.text}}</p>
                 </div>
             </div>
-            <div class="chat-message" *ngIf="message.direction === 'Inbound'" lines="none">
+            <div class="chat-message" *ngIf="message.direction === 'Outbound'" lines="none" [attr.id]="message.id">
                 <div class="chat-message" class="chat-message right-bubble">
                     <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                     <p class="ionic-text-wrap">{{message.text}}</p>
                 </div>
             </div>
         </div>
+        <div id="end-of-scroll"></div>
     </ion-list>
 </ion-content>
 
@@ -37,4 +38,7 @@
             </ion-col>
         </ion-row>
     </ion-grid>
+    <ion-button *ngIf="unreads" (click)="jumpToUnread()">
+        Jump to bottom
+    </ion-button>
 </ion-footer>

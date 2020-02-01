@@ -13,6 +13,9 @@ import { first, map } from 'rxjs/operators'
 export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
 
+  mostRecentInboundMessage: Message | undefined
+  unreads = false
+
   messageToSend: string
   messagesToShow: Message[]
 
@@ -29,36 +32,76 @@ export class ContactChatPage implements OnInit {
     this.contact$.subscribe(c => this.onContactUpdate(c))
   }
 
-  onContactUpdate(c: Contact | undefined): void {
-    if (c) {
-        if (this.pyro) { this.pyro.stop() }
-        this.pyro = new Pyrodaemon(this.cups, c)
-        this.contactMessages$ = this.pyro.watch().pipe(map( ms => ms.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())))
-        this.contactMessages$.subscribe(ms => {
-            this.scrollToBottomOnInit()
-        })
+    getContact(): Contact | undefined {
+        return this.contact$.getValue()
+    }
 
-        this.pyro.refresh().then(() => { this.pyro.start(); this.content.scrollToBottom(300)})
+    sendMessage() {
+        if (!this.getContact()) { return }
+        this.cups.messagesSend(this.getContact(), this.messageToSend).then(
+            () => { this.pyro.refresh(); this.content.scrollToBottom(300) }
+        )
+        this.messageToSend = ''
+    }
+
+  async onContactUpdate(c: Contact | undefined): Promise<void> {
+    if (c) {
+        await this.initPyro(c)
+        this.content.scrollToBottom(300)
+        this.pyro.start()
     }
   }
 
-  getContact(): Contact | undefined {
-      return this.contact$.getValue()
+  private async initPyro(c: Contact) {
+    if (this.pyro) { this.pyro.stop() }
+    this.pyro = new Pyrodaemon(this.cups, c)
+    this.contactMessages$ = this.pyro.watch().pipe(map(ms => ms.sort(orderTimestampDescending)))
+    await this.pyro.refresh()
+    this.contactMessages$.subscribe(ms => this.adjustViewPort(ms))
   }
 
-  sendMessage() {
-    if (!this.getContact()) { return }
-    this.cups.messagesSend(this.getContact(), this.messageToSend).then(
-        () => { this.pyro.refresh(); this.content.scrollToBottom(300) }
-    )
-    this.messageToSend = ''
+  private adjustViewPort(ms: Message[]) {
+    const mostRecentInbound = ms.filter(m => m.direction === 'Inbound')[0]
+    const isNewMessage = !this.mostRecentInboundMessage || mostRecentInbound.timestamp > this.mostRecentInboundMessage.timestamp
+    if (isNewMessage) {
+        if (this.mostRecentInboundMessage) {
+            const mostRecentInboundElement = document.getElementById(this.mostRecentInboundMessage.id)
+            if (isElementInViewport(mostRecentInboundElement)) {
+                this.content.scrollToBottom(300)
+            } else {
+                this.unreads = true
+            }
+        }
+        this.mostRecentInboundMessage = mostRecentInbound
+    }
   }
 
-  private scrollToBottomOnInit() {
+  checkIfAtBottom() {
+      console.log('CHECLING')
+      if (this.mostRecentInboundMessage) {
+          console.log('MadeIT')
+        const mostRecentInboundElement = document.getElementById(this.mostRecentInboundMessage.id)
+        if (isElementInViewport(mostRecentInboundElement)) {
+            console.log('MadeIT2')
+            this.unreads = false
+         }
+    }
+  }
+
+  jumpToUnread() {
     this.content.scrollToBottom(300)
+    this.unreads = false
   }
 }
 
-function toShowMessage(m: Message): Message & {reference: string} {
-    return Object.assign(m, { reference: m.otherParty.name || m.otherParty.torAddress })
+// returns true if the TOP of the element is in the view port.
+function isElementInViewport(el) {
+    const rect = el.getBoundingClientRect()
+    // elemTop < window.innerHeight && elemBottom >= 0;
+    return (
+        rect.top < window.innerHeight &&
+        rect.bottom >= 0
+    )
 }
+
+const orderTimestampDescending = (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
