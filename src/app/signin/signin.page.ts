@@ -15,13 +15,16 @@ export class SigninPage implements OnInit {
   constructor(private readonly globe: GlobalState, private readonly navCtrl: NavController, private readonly cryoDaemon: Cryodaemon) { }
 
   ngOnInit() {
-      if (this.globe.getPassword()) {
-        this.navCtrl.navigateRoot('contact-chat')
-      }
+      this.globe.init().then(() => this.signin())
   }
 
   enterCupsMessengerPassword() {
-    this.globe.setPassword(this.password)
-    this.navCtrl.navigateRoot('contact-chat')
+    this.globe.setPassword(this.password).then(  () => this.signin() )
+  }
+
+  private signin() {
+    if(this.globe.password){
+        this.navCtrl.navigateRoot('contact-chat')
+    }
   }
 }

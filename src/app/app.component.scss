@@ -1,0 +1,45 @@
+.contactMenu {
+    // color: #dedede;
+    // border-color: #dedede;
+}
+
+.ion-color-white {
+    --ion-color-base: #ffffff;
+    --ion-color-base-rgb: 255, 255, 255;
+    --ion-color-contrast: #000000;
+    --ion-color-contrast-rgb: 0, 0, 0;
+    --ion-color-shade: #ffffff;
+    --ion-color-tint: #ffffff;
+}
+
+.ion-color-charcoal {
+    --ion-color-base: #424242;
+    --ion-color-base-rgb: 66, 66, 66;
+    --ion-color-contrast: #ffffff;
+    --ion-color-contrast-rgb: 255, 255, 255;
+    --ion-color-shade: #424242;
+    --ion-color-tint: #424242;
+}
+
+
+:root {
+    ion-item {
+        --border-color: white; // default underline color
+        --highlight-color-invalid: red; // invalid underline color
+        --highlight-color-valid: white;
+    }
+}
+
+ion-item {
+    --border-color: white; // default underline color
+    --highlight-color-invalid: red; // invalid underline color
+    --highlight-color-valid: white;
+}
+
+:host {
+    ion-item {
+        --border-color: white; // default underline color
+        --highlight-color-invalid: red; // invalid underline color
+        --highlight-color-valid: white;
+    }
+}

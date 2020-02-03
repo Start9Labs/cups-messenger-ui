@@ -3,7 +3,8 @@ import { GlobalState } from '../services/global-state'
 import { CupsMessenger, Message, Contact } from '../services/cups-messenger'
 import { BehaviorSubject, Observable } from 'rxjs'
 import { Pyrodaemon, Cryodaemon } from '../services/cryo-daemon'
-import { first, map } from 'rxjs/operators'
+import { map, tap } from 'rxjs/operators'
+import { NavController } from '@ionic/angular'
 
 @Component({
   selector: 'app-contact-chat',
@@ -13,20 +14,32 @@ import { first, map } from 'rxjs/operators'
 export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
 
-  mostRecentInboundMessage: Message | undefined
+  mostRecentMessage: Message | undefined
   unreads = false
 
   messageToSend: string
   messagesToShow: Message[]
 
+  editingContactForm = false
+  newContactTorAddress: string
+  newContactName: string
+
   contact$: BehaviorSubject<Contact | undefined>
+  displayName: string
   contactMessages$: Observable<Message[]>
   private pyro: Pyrodaemon
 
-  constructor(private readonly globe: GlobalState, private readonly cups: CupsMessenger, private readonly cryo: Cryodaemon) { }
-
+  constructor(
+      private readonly navCtrl: NavController,
+      private readonly globe: GlobalState,
+      private readonly cups: CupsMessenger,
+      private readonly cryo: Cryodaemon
+  ) { }
 
   ngOnInit() {
+    if(!this.globe.password){
+        this.navCtrl.navigateRoot('signin')
+    }
     this.cryo.refresh().then(() => this.cryo.start())
     this.contact$ = this.globe.watchContact()
     this.contact$.subscribe(c => this.onContactUpdate(c))
@@ -39,15 +52,21 @@ export class ContactChatPage implements OnInit {
     sendMessage() {
         if (!this.getContact()) { return }
         this.cups.messagesSend(this.getContact(), this.messageToSend).then(
-            () => { this.pyro.refresh(); this.content.scrollToBottom(300) }
+            () => { this.pyro.refresh(); this.jumpToBottom() }
         )
         this.messageToSend = ''
     }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
     if (c) {
+        this.newContactName = c.name
+        this.newContactTorAddress = c.torAddress
+
+        const n = c.name || c.torAddress
+        this.displayName = n.length > 50 ? n.slice(0, 25) + '...' + n.slice(-25) : n
+        this.cryo.start()
         await this.initPyro(c)
-        this.content.scrollToBottom(300)
+        this.jumpToBottom()
         this.pyro.start()
     }
   }
@@ -57,38 +76,37 @@ export class ContactChatPage implements OnInit {
     this.pyro = new Pyrodaemon(this.cups, c)
     this.contactMessages$ = this.pyro.watch().pipe(map(ms => ms.sort(orderTimestampDescending)))
     await this.pyro.refresh()
-    this.contactMessages$.subscribe(ms => this.adjustViewPort(ms))
+    this.contactMessages$.subscribe(ms => this.jumpOrDisplayJumpButton(ms))
   }
 
-  private adjustViewPort(ms: Message[]) {
-    const mostRecentInbound = ms.filter(m => m.direction === 'Inbound')[0]
-    const isNewMessage = !this.mostRecentInboundMessage || mostRecentInbound.timestamp > this.mostRecentInboundMessage.timestamp
-    if (isNewMessage) {
-        if (this.mostRecentInboundMessage) {
-            const mostRecentInboundElement = document.getElementById(this.mostRecentInboundMessage.id)
-            if (isElementInViewport(mostRecentInboundElement)) {
-                this.content.scrollToBottom(300)
-            } else {
-                this.unreads = true
+  private jumpOrDisplayJumpButton(ms: Message[]) {
+    const mostRecentMessage = ms[0]
+    if (mostRecentMessage) {
+        const isNewMessage = !this.mostRecentMessage || mostRecentMessage.timestamp > this.mostRecentMessage.timestamp
+        if (isNewMessage) {
+            if (this.mostRecentMessage) {
+                const mostRecentElement = document.getElementById(this.mostRecentMessage.id)
+                if (isElementInViewport(mostRecentElement)) {
+                    this.jumpToBottom()
+                } else {
+                    this.unreads = true
+                }
             }
+            this.mostRecentMessage = mostRecentMessage
         }
-        this.mostRecentInboundMessage = mostRecentInbound
     }
   }
 
   checkIfAtBottom() {
-      console.log('CHECLING')
-      if (this.mostRecentInboundMessage) {
-          console.log('MadeIT')
-        const mostRecentInboundElement = document.getElementById(this.mostRecentInboundMessage.id)
-        if (isElementInViewport(mostRecentInboundElement)) {
-            console.log('MadeIT2')
+      if (this.mostRecentMessage) {
+          const mostRecentInboundElement = document.getElementById(this.mostRecentMessage.id)
+          if (isElementInViewport(mostRecentInboundElement)) {
             this.unreads = false
          }
     }
   }
 
-  jumpToUnread() {
+  jumpToBottom() {
     this.content.scrollToBottom(300)
     this.unreads = false
   }

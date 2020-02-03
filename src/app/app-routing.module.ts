@@ -18,7 +18,7 @@ const routes: Routes = [
   {
     path: 'contact-chat',
     loadChildren: () => import('./contact-chat/contact-chat.module').then( m => m.ContactChatPageModule)
-  }
+  },
 ];
 
 @NgModule({

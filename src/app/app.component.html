@@ -1,23 +1,57 @@
 <ion-app>
     <ion-split-pane contentId="main-content">
-        <ion-menu contentId="main-content" type="overlay">
+        <ion-menu contentId="main-content" type="overlay" autoHide='false'>
             <ion-header>
                 <ion-toolbar>
                     <ion-title>Menu</ion-title>
                 </ion-toolbar>
             </ion-header>
             <ion-content>
-                <ion-list>
+                <ion-list *ngIf="globe.password">
                     <ion-menu-toggle auto-hide="false" *ngFor="let p of (contacts$ | async)">
-                        <ion-item (click)="jumpToChat(p)">
-                            <ion-label>
-                                {{p.name || p.torAddress}}
-                            </ion-label>
-                            <ion-item>
-                                {{p.unreadMessages}}
-                            </ion-item>
-                        </ion-item>
+                        <ion-button expand="full" color="white" (click)="jumpToChat(p)">
+                            <div style="position: fixed; left: 2%; color: #424242;">
+                                {{
+                                    (p | truncateEllipses:18:"shortDisplay")?.shortDisplay
+                                }}
+                            </div>
+                            <div style="position: fixed; right: 2%; color: #424242;">
+                                new: {{p.unreadMessages}}
+                            </div>
+                        </ion-button>
+                        <div style="min-height: 1px;"></div>
                     </ion-menu-toggle>
+
+                    <ion-button *ngIf="!makeNewContactForm" expand="full" color="charcoal" fill="clear"
+                        (click)="toggleNewContact()">
+                        Add new contact
+                        <ion-icon color="charcoal" name="add-circle" slot="end"></ion-icon>
+                    </ion-button>
+
+                    <ion-button *ngIf="makeNewContactForm" expand="full" color="charcoal" fill="clear"
+                        (click)="toggleNewContact()">
+                        <ion-icon color="charcoal" name="arrow-dropup"></ion-icon>
+                    </ion-button>
+
+                    <ion-item *ngIf="makeNewContactForm">
+                        <ion-grid color="white">
+                            <ion-row>
+                                <ion-input type="text" placeholder="Contact Tor Address"
+                                    [(ngModel)]="newContactTorAddress" name="message">
+                                </ion-input>
+                            </ion-row>
+                            <ion-row>
+                                <ion-input type="text" placeholder="Contact Name" [(ngModel)]="newContactName"
+                                    name="message">
+                                </ion-input>
+                            </ion-row>
+                            <ion-row>
+                                <ion-button color="charcoal" (click)="submitNewContact()">
+                                    submit
+                                </ion-button>
+                            </ion-row>
+                        </ion-grid>
+                    </ion-item>
                 </ion-list>
             </ion-content>
         </ion-menu>

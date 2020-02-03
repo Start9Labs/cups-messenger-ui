@@ -1,6 +1,6 @@
 <ion-header>
     <ion-toolbar>
-        <ion-title>Signin</ion-title>
+        <ion-title>Authenticate</ion-title>
     </ion-toolbar>
 </ion-header>
 
@@ -8,12 +8,12 @@
     <form (ngSubmit)="enterCupsMessengerPassword()">
         <ion-list>
             <ion-item>
-                <ion-label floating>Enter your Cups Messenger configuration password</ion-label>
-                <ion-input type="text" [(ngModel)]="password" name="password" required=""></ion-input>
+                <ion-input type="text" color="charcoal" placeholder="Cups Messenger Password" [(ngModel)]="password"
+                    name="password" required=""></ion-input>
             </ion-item>
 
             <ion-item *ngIf="password && password != ''">
-                <button ion-button full round color="secondary" type="submit">Enter</button>
+                <button ion-button full round color="secondary">Enter</button>
             </ion-item>
         </ion-list>
     </form>

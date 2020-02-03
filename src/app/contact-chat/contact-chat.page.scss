@@ -8,15 +8,12 @@
 //   }
 // }
 
-
-ion-footer {
-    background: white;
-    ion-icon {
-    padding: 10px;
-    font-size: 20px;
-    color: black;
-    }
+ion-content{
+    --background: #fff url('../../assets/cupsbackground.png') no-repeat center center / cover;
 }
+
+
+
 .chat {
     overflow: auto;
     display: flex;
@@ -48,7 +45,8 @@ ion-footer {
 }
 .chat-message {
     min-height: 40px;
-    width: 100%;
+    background: none;
+    // width: 100%;
 }
 
 .left-bubble {
@@ -89,3 +87,17 @@ ion-footer {
     padding: 10px;
     text-align: center
   }
+
+:host {
+    ion-item {
+        --border-color: white; // default underline color
+        --highlight-color-invalid: red; // invalid underline color
+        --highlight-color-valid: white;
+    }
+}
+
+ion-item {
+    --border-color: white; // default underline color
+    --highlight-color-invalid: red; // invalid underline color
+    --highlight-color-valid: white;
+}

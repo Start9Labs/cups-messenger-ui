@@ -7,6 +7,7 @@ const { Storage } = Plugins
 const passwordKey = { key: 'password' }
 @Injectable({providedIn: 'root'})
 export class GlobalState {
+    public password: string | undefined
     private contact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
 
     constructor() {}
@@ -19,15 +20,15 @@ export class GlobalState {
         this.contact$.next(c)
     }
 
-    async getPassword(): Promise<string | undefined>  {
-        return Storage.get(passwordKey).then(x => x.value)
+    init(): Promise<void> {
+        return Storage.get(passwordKey).then(p => { this.password = p.value })
     }
 
-    async setPassword(p: string): Promise<string> {
+    async setPassword(p: string): Promise<void> {
         return Storage.set({
             key: 'password',
             value: p
-        }).then(() => this.getPassword())
+        }).then(() => this.init())
     }
 
     async clearPassword(): Promise<void> {
