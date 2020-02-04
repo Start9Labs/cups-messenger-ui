@@ -20,7 +20,8 @@ export class ContactChatPage implements OnInit {
   messageToSend: string
   messagesToShow: Message[]
 
-  editingContactForm = false
+  addContactNameForm = false
+  contactName: string
   newContactTorAddress: string
   newContactName: string
 
@@ -56,6 +57,17 @@ export class ContactChatPage implements OnInit {
         )
         this.messageToSend = ''
     }
+
+  contactNameForm(){
+    this.addContactNameForm = true
+  }
+
+  async addContactName(){
+    const contact = this.contact$.getValue()
+    await this.cups.contactsAdd({...contact, name: this.contactName })
+    this.addContactNameForm = false
+    this.contactName = undefined
+  }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
     if (c) {

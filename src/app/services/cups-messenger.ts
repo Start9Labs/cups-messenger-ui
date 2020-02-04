@@ -55,7 +55,10 @@ export class MockCupsMessenger {
         return this.contacts
     }
     async contactsAdd(contact: Contact): Promise<void> {
-        this.contacts.push(Object.assign(contact, {unreadMessages: 0}))
+        const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
+        this.contacts = []
+        this.contacts.push(...nonMatchingTors)
+        this.contacts.push(Object.assign({unreadMessages: 0}, contact))
     }
 
     async messagesShow(contact: Contact, limit: number = 15): Promise<Message[]> {
@@ -120,7 +123,7 @@ function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
 export function mockContact(i: number): ContactWithMessageCount {
     return {
         torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
-        name: 'contact-' + i + 'oizjoiajgoaijregoiajerogiajeorgijaoerigjaoeirjgaoiergjoaierjgoaiergoaierjg',
+        name: 'contact-' + i + 'dfoifd',
         unreadMessages: 0
     }
 }
