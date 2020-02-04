@@ -12,6 +12,23 @@
 //     --background: #fff url('../../assets/cupsbackground.png') no-repeat center center / cover;
 // }
 
+.ion-color-white {
+    --ion-color-base: #ffffff;
+    --ion-color-base-rgb: 255, 255, 255;
+    --ion-color-contrast: #000000;
+    --ion-color-contrast-rgb: 0, 0, 0;
+    --ion-color-shade: #ffffff;
+    --ion-color-tint: #ffffff;
+}
+
+.ion-color-charcoal {
+    --ion-color-base: #424242;
+    --ion-color-base-rgb: 66, 66, 66;
+    --ion-color-contrast: #ffffff;
+    --ion-color-contrast-rgb: 255, 255, 255;
+    --ion-color-shade: #424242;
+    --ion-color-tint: #424242;
+}
 
 .chat {
     overflow: auto;

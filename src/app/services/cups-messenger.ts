@@ -57,6 +57,7 @@ export class MockCupsMessenger {
     async contactsAdd(contact: Contact): Promise<void> {
         const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
         this.contacts = []
+        debugger
         this.contacts.push(...nonMatchingTors)
         this.contacts.push(Object.assign({unreadMessages: 0}, contact))
     }

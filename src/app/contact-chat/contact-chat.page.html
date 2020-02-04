@@ -1,11 +1,11 @@
 <ion-header>
     <ion-toolbar>
         <ion-item lines="none">
-            <ion-title *ngIf="(contact$ | async) && !addContactNameForm" class="center">
+            <ion-title color="charcoal" *ngIf="(contact$ | async) && !addContactNameForm" class="center">
                 {{(contact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
             </ion-title>
             <form *ngIf="(contact$ | async) && addContactNameForm" (ngSubmit)="addContactName()">
-                <ion-input type="text" placeholder="Enter new contact name" [(ngModel)]="contactName" name="contactName">
+                <ion-input type="text" size="150" placeholder="Enter new contact name" [(ngModel)]="contactName" name="contactName">
                 </ion-input>
             </form>
             <ion-button fill="clear" color="charcoal" (click)="contactNameForm()" *ngIf="!(contact$ | async)?.name && (contact$ | async) && !addContactNameForm">
@@ -15,7 +15,7 @@
         </ion-item>
     </ion-toolbar>
 </ion-header>
-<ion-content background="url('../assets/cupsbackground.png')" #content [scrollEvents]="true"
+<ion-content #content [scrollEvents]="true"
     (ionScrollEnd)="checkIfAtBottom()">
     <ion-list background="url('../../assets/cupsbackground.png')" class="chat">
         <div *ngFor="let message of (contactMessages$ | async)">

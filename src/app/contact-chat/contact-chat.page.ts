@@ -64,9 +64,12 @@ export class ContactChatPage implements OnInit {
 
   async addContactName(){
     const contact = this.contact$.getValue()
-    await this.cups.contactsAdd({...contact, name: this.contactName })
+    const updatedContact = {...contact, name: this.contactName }
+    await this.cups.contactsAdd(updatedContact)
+    this.cryo.refresh()
     this.addContactNameForm = false
     this.contactName = undefined
+    this.contact$.next(updatedContact)
   }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {

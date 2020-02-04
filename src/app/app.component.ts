@@ -37,7 +37,7 @@ export class AppComponent {
     this.platform.ready().then(() => {
       this.statusBar.styleDefault()
       this.splashScreen.hide()
-      this.contacts$ = this.cryo.watch()
+      this.contacts$ = this.cryo.watch().pipe(map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)))
     })
   }
 
