@@ -10,7 +10,7 @@ import { AppComponent } from './app.component'
 import { AppRoutingModule } from './app-routing.module'
 import { FormsModule } from '@angular/forms'
 import { ContactChatPageModule } from './contact-chat/contact-chat.module'
-
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [AppComponent ],
@@ -20,7 +20,8 @@ import { ContactChatPageModule } from './contact-chat/contact-chat.module'
     IonicModule.forRoot(),
     AppRoutingModule,
     FormsModule,
-    ContactChatPageModule
+    ContactChatPageModule,
+    HttpClientModule
   ],
   providers: [
     StatusBar,

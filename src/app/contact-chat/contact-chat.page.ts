@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { GlobalState } from '../services/global-state'
-import { CupsMessenger, Message, Contact } from '../services/cups-messenger'
+import { CupsMessenger } from '../services/cups/cups-messenger'
+import { Message, Contact } from "../services/cups/types"
 import { BehaviorSubject, Observable } from 'rxjs'
 import { Pyrodaemon, Cryodaemon } from '../services/cryo-daemon'
 import { map, tap } from 'rxjs/operators'

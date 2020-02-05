@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
-import { CupsMessenger, ContactWithMessageCount, Contact, Message } from './cups-messenger'
+import { CupsMessenger } from './cups/cups-messenger'
+import { ContactWithMessageCount, Contact, Message } from "./cups/types"
 import { BehaviorSubject, interval, Subscription } from 'rxjs'
 
 export abstract class Daemon<T> {

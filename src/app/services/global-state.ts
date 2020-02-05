@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core'
-import { Contact, mockContact } from './cups-messenger'
+import { Contact, mockContact } from "./cups/types"
 import { BehaviorSubject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 const { Storage } = Plugins

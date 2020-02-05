@@ -1,7 +1,13 @@
 export interface Config {
-    cupsMessenger: { mock: boolean }
+    cupsMessenger: { 
+        mock: boolean 
+        url: string
+    }
 }
 
 export const config: Config = {
-    cupsMessenger: { mock: true }
+    cupsMessenger: { 
+        mock: true,
+        url: "http://localhost:59001"
+    }
 }

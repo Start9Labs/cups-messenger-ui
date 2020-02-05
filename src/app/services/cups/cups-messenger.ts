@@ -1,16 +1,18 @@
 import { Injectable } from '@angular/core'
-import { config } from '../config'
+import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
-import { timeout } from 'rxjs/operators'
+import { HttpClient } from '@angular/common/http'
+import { ContactWithMessageCount, Contact, Message, mockL, mockContact, mockMessage, pauseFor } from './types'
+import { CupsResParser } from './cups-res-parser'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private impl: LiveCupsMessenger | MockCupsMessenger
-    constructor() {
+    constructor(http: HttpClient) {
         if (config.cupsMessenger.mock) {
             this.impl = new MockCupsMessenger()
         } else {
-            this.impl = new LiveCupsMessenger()
+            this.impl = new LiveCupsMessenger(http)
         }
     }
 
@@ -29,8 +31,14 @@ export class CupsMessenger {
 }
 
 export class LiveCupsMessenger {
+    private readonly parser : CupsResParser = new CupsResParser()
+    constructor(private readonly http: HttpClient){}
+
     async contactsShow(): Promise<ContactWithMessageCount[]> {
-        return []
+        const arrayBuffer = await this.http.get<ArrayBuffer>(
+            config.cupsMessenger.url, { params: { type: 'users' } }
+        ).toPromise()
+        return this.parser.contactsShow(arrayBuffer)
     }
     async contactsAdd(contact: Contact): Promise<void> {
         return
@@ -42,6 +50,15 @@ export class LiveCupsMessenger {
         return
     }
 }
+
+export function pullContact(arrayBuffer: ArrayBuffer): any {
+    const pkey = arrayBuffer.slice(0, 0 + 32)
+    const unreadsCount = arrayBuffer.slice(32, 32 + 8)
+    const nameLength = arrayBuffer.slice(32 + 8, 32 + 8 + 1)
+    const name = "jon"
+    return { pkey, unreadsCount, nameLength, name }
+}
+
 
 export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)
@@ -91,54 +108,4 @@ export class MockCupsMessenger {
     }
 }
 
-export function pauseFor (ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-export interface Contact {
-    torAddress: string
-    name?: string
-}
-
-export interface ContactWithMessageCount extends Contact {
-    unreadMessages: number
-}
-
-export type MessageDirection = 'Inbound' | 'Outbound'
-export interface Message {
-    id: string
-    timestamp: Date
-    direction: MessageDirection
-    otherParty: Contact
-    text: string
-}
-
-function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
-    const toReturn = []
-    for (let j = 0; j < i ; j++) {
-        toReturn.push(mockF(j))
-    }
-    return toReturn
-}
-
-export function mockContact(i: number): ContactWithMessageCount {
-    return {
-        torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
-        name: 'contact-' + i + 'dfoifd',
-        unreadMessages: 0
-    }
-}
-
-function mockMessage(i: number): Message {
-    return {
-        timestamp: new Date(),
-        direction: 'Inbound',
-        otherParty: mockContact(i),
-        text: mockL(mockWord, 30).join(' '),
-        id: uuidv4()
-    }
-}
-
-function mockWord(i: number): string {
-    return uuidv4() + i
-}
+    

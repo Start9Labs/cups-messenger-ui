@@ -5,7 +5,8 @@ import { SplashScreen } from '@ionic-native/splash-screen/ngx'
 import { StatusBar } from '@ionic-native/status-bar/ngx'
 import { Cryodaemon } from './services/cryo-daemon'
 import { GlobalState } from './services/global-state'
-import { ContactWithMessageCount, Contact, CupsMessenger } from './services/cups-messenger'
+import { CupsMessenger } from './services/cups/cups-messenger'
+import { ContactWithMessageCount, Contact } from "./services/cups/types"
 import { Observable, BehaviorSubject } from 'rxjs'
 import { map } from 'rxjs/operators'
 
