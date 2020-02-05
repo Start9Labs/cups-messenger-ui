@@ -1,18 +1,19 @@
 import { Injectable } from '@angular/core'
 import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
-import { HttpClient } from '@angular/common/http'
+import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, Message, mockL, mockContact, mockMessage, pauseFor } from './types'
-import { CupsResParser } from './cups-res-parser'
+import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
+import { GlobalState } from '../global-state'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private impl: LiveCupsMessenger | MockCupsMessenger
-    constructor(http: HttpClient) {
+    constructor(globe: GlobalState, http: HttpClient) {
         if (config.cupsMessenger.mock) {
             this.impl = new MockCupsMessenger()
         } else {
-            this.impl = new LiveCupsMessenger(http)
+            this.impl = new LiveCupsMessenger(globe, http)
         }
     }
 
@@ -32,33 +33,57 @@ export class CupsMessenger {
 
 export class LiveCupsMessenger {
     private readonly parser : CupsResParser = new CupsResParser()
-    constructor(private readonly http: HttpClient){}
+    constructor(private readonly globe: GlobalState,private readonly http: HttpClient){}
+
+    private get authHeaders(): HttpHeaders {
+        if(!this.globe.password) throw new Error('Unauthenticated request to server attempted.')
+        return new HttpHeaders({"Authorization": "Basic " + btoa(`me:${this.globe.password}`)});
+    }
+
+    private get hostUrl(): string {
+        if(!this.globe.password) throw new Error('Unauthenticated request to server attempted.')
+        return `http://` + config.cupsMessenger.url + "/"
+    }
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
-        const arrayBuffer = await this.http.get<ArrayBuffer>(
-            config.cupsMessenger.url, { params: { type: 'users' } }
-        ).toPromise()
-        return this.parser.contactsShow(arrayBuffer)
+        try {
+            const arrayBuffer = await this.http.get<ArrayBuffer>(
+                this.hostUrl, { params: { type: 'users' }, headers: this.authHeaders }
+            ).toPromise()
+            return this.parser.deserializeContactsShow(arrayBuffer)
+        } catch (e) {
+            console.error(e)
+            throw e
+        }
     }
+
     async contactsAdd(contact: Contact): Promise<void> {
-        return
+        const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
+        return this.http.post<void>(
+            this.hostUrl, toPost, {  headers: this.authHeaders }
+        ).toPromise()
     }
+
     async messagesShow(contact: Contact, limit: number = 15): Promise<Message[]> {
-        return []
+        const arrayBuffer = await this.http.get<ArrayBuffer>(
+            this.hostUrl, { params: { 
+                type: 'messages', 
+                pubkey: onionToPubkeyString(contact.torAddress), 
+                limit: String(limit) 
+                },
+                headers: this.authHeaders
+            }
+        ).toPromise()
+        return this.parser.deserializeMessagesShow(arrayBuffer)
     }
+
     async messagesSend(contact: Contact, message: string): Promise<void> {
-        return
+        const toPost = this.parser.serializeSendMessage(contact.torAddress, message)
+        return this.http.post<void>(
+            this.hostUrl, toPost, {  headers: this.authHeaders }
+        ).toPromise()
     }
 }
-
-export function pullContact(arrayBuffer: ArrayBuffer): any {
-    const pkey = arrayBuffer.slice(0, 0 + 32)
-    const unreadsCount = arrayBuffer.slice(32, 32 + 8)
-    const nameLength = arrayBuffer.slice(32 + 8, 32 + 8 + 1)
-    const name = "jon"
-    return { pkey, unreadsCount, nameLength, name }
-}
-
 
 export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)

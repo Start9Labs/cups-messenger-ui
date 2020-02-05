@@ -7,7 +7,8 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: { 
-        mock: true,
-        url: "http://localhost:59001"
+        mock: false,
+        url: "localhost:8888/api"
     }
 }
+// qqb7xi75y5qa66dxqxet
