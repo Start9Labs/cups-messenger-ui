@@ -1,33 +1,44 @@
-import { Injectable } from '@angular/core'
+import { Injectable, ErrorHandler } from '@angular/core'
 import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, Message, mockL, mockContact, mockMessage, pauseFor } from './types'
+import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, AttendingMessage } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
 import { GlobalState } from '../global-state'
 
+//@TODO get rid of .catch enforcing error handling everywhere
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private impl: LiveCupsMessenger | MockCupsMessenger
     constructor(globe: GlobalState, http: HttpClient) {
         if (config.cupsMessenger.mock) {
-            this.impl = new MockCupsMessenger()
+            this.impl = new MockCupsMessenger(globe)
         } else {
             this.impl = new LiveCupsMessenger(globe, http)
         }
     }
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
-        return this.impl.contactsShow()
+        return HandleError.of(this.impl.contactsShow()).handle(console.error)
     }
-    async contactsAdd(contact: Contact): Promise<void> {
-        return this.impl.contactsAdd(contact)
+    contactsAdd(contact: Contact): HandleError<void> {
+        return HandleError.of(this.impl.contactsAdd(contact))
     }
-    async messagesShow(contact: Contact, limit: number = 15): Promise<Message[]> {
-        return this.impl.messagesShow(contact, limit)
+    async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
+        return HandleError.of(this.impl.messagesShow(contact, limit)).handle(console.error)
     }
     async messagesSend(contact: Contact, message: string): Promise<void> {
-        return this.impl.messagesSend(contact, message)
+        return HandleError.of(this.impl.messagesSend(contact, message)).handle(console.error)
+    }
+}
+
+export class HandleError<A>{
+    static of<A0>(p : Promise<A0>): HandleError<A0> {
+        return new HandleError(p)
+    }
+    constructor (private readonly p : Promise<A>) {}
+    handle(errorHandler: (e: Error) => any): Promise<A> {
+        return this.p.catch(errorHandler)
     }
 }
 
@@ -47,8 +58,8 @@ export class LiveCupsMessenger {
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         try {
-            const arrayBuffer = await this.http.get<ArrayBuffer>(
-                this.hostUrl, { params: { type: 'users' }, headers: this.authHeaders }
+            const arrayBuffer = await this.http.get(
+                this.hostUrl, { params: { type: 'users' }, headers: this.authHeaders, responseType: 'arraybuffer' }
             ).toPromise()
             return this.parser.deserializeContactsShow(arrayBuffer)
         } catch (e) {
@@ -60,35 +71,45 @@ export class LiveCupsMessenger {
     async contactsAdd(contact: Contact): Promise<void> {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
         return this.http.post<void>(
-            this.hostUrl, toPost, {  headers: this.authHeaders }
-        ).toPromise()
+            this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders }
+        ).toPromise().then(p => this.globe.pokeNewContact(contact))
     }
 
-    async messagesShow(contact: Contact, limit: number = 15): Promise<Message[]> {
-        const arrayBuffer = await this.http.get<ArrayBuffer>(
+    async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
+        const arrayBuffer = await this.http.get(
             this.hostUrl, { params: { 
                 type: 'messages', 
-                pubkey: onionToPubkeyString(contact.torAddress), 
-                limit: String(limit) 
+                pubkey: onionToPubkeyString(contact.torAddress)
                 },
-                headers: this.authHeaders
+                headers: this.authHeaders,
+                responseType: 'arraybuffer'
             }
         ).toPromise()
-        return this.parser.deserializeMessagesShow(arrayBuffer)
+
+        return this.parser.deserializeMessagesShow(arrayBuffer).map(m => 
+            ({...m, 
+                attending: false,
+                id: uuidv4(),
+                otherParty: contact
+            })
+        )
     }
 
     async messagesSend(contact: Contact, message: string): Promise<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, message)
         return this.http.post<void>(
-            this.hostUrl, toPost, {  headers: this.authHeaders }
+            this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders }
         ).toPromise()
     }
 }
 
+const mocks = mockL(mockMessage, 2)
+
 export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)
-    messages = mockL(mockMessage, 20)
     counter = 0
+
+    constructor(private globe: GlobalState){}
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         if (this.counter % 5 === 0) {
@@ -96,41 +117,38 @@ export class MockCupsMessenger {
         }
         return this.contacts
     }
+
     async contactsAdd(contact: Contact): Promise<void> {
+        await pauseFor(2000)
         const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
         this.contacts = []
-        debugger
         this.contacts.push(...nonMatchingTors)
         this.contacts.push(Object.assign({unreadMessages: 0}, contact))
     }
 
-    async messagesShow(contact: Contact, limit: number = 15): Promise<Message[]> {
-        this.counter = 1
+    async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
+        this.counter++
         if (this.counter % 5 === 0) {
             if(this.counter % 10 === 0) {
-                console.log('gonna pause')
                 await pauseFor(2000)
             }
 
-           this.messages.push(mockMessage(this.counter))
+           mocks.push(mockMessage(this.counter))
         }
-
-        if(this.counter % 8 === 0) {
-            await pauseFor(2000)
-            console.log('gonna timeout')
-            throw new Error('timeout')
-        }
-        return Promise.resolve(this.messages)
+        return Promise.resolve(JSON.parse(JSON.stringify(mocks)))
     }
+    
     async messagesSend(contact: Contact, message: string): Promise<void> {
-        this.messages.push({
+        this.globe.logState("first", contact)
+        await pauseFor(2000)
+        mocks.push({
             timestamp: new Date(),
             direction: 'Outbound',
             otherParty: contact,
             text: message,
-            id: uuidv4()
+            id: uuidv4(),
+            attending: false
         })
+        this.globe.logState("second", contact)
     }
 }
-
-    

@@ -8,20 +8,35 @@ export interface Contact {
     torAddress: string;
     name?: string;
 }
-
 export interface ContactWithMessageCount extends Contact {
     unreadMessages: number;
 }
 
-export type MessageDirection = 'Inbound' | 'Outbound';
-export interface Message {
-    id: string;
-    timestamp: Date;
-    direction: MessageDirection;
-    otherParty: Contact;
-    text: string;
+export type MessageDirection = 'Inbound' | 'Outbound'
+export type DisplayMessage = ServerMessage | AttendingMessage
+export interface MessageBase {
+    id: string
+    direction: MessageDirection
+    otherParty: Contact
+    text: string
+    attending: boolean
+}
+export interface ServerMessage extends MessageBase {
+    attending: false
+    timestamp: Date
+}
+export interface AttendingMessage extends MessageBase {
+    attending: true
+    direction: 'Outbound'
+    timestamp: Date
 }
 
+export function serverMessageFulfills(s: ServerMessage, a: AttendingMessage) : boolean {
+    if(s.direction !== a.direction) return false
+    if(s.otherParty.torAddress !== a.otherParty.torAddress) return false
+    if(s.text !== a.text) return false
+    return true
+}
 
 // Mocks //
 
@@ -39,13 +54,14 @@ export function mockContact(i: number): ContactWithMessageCount {
         unreadMessages: 0
     };
 }
-export function mockMessage(i: number): Message {
+export function mockMessage(i: number): ServerMessage {
     return {
         timestamp: new Date(),
         direction: 'Inbound',
         otherParty: mockContact(i),
-        text: mockL(mockWord, 30).join(' '),
-        id: uuidv4()
+        text: mockL(mockWord, 10).join(' '),
+        id: uuidv4(),
+        attending: false
     };
 }
 function mockWord(i: number): string {

@@ -1,11 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { GlobalState } from '../services/global-state'
+import { GlobalState, CategorizedMessages } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
-import { Message, Contact } from "../services/cups/types"
-import { BehaviorSubject, Observable } from 'rxjs'
-import { Pyrodaemon, Cryodaemon } from '../services/cryo-daemon'
-import { map, tap } from 'rxjs/operators'
+import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from "../services/cups/types"
+import { CryoDaemon } from '../services/daemons/cryo-daemon'
+import { PyroDaemon } from "../services/daemons/pyro-daemon"
+import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
+import { Observable, Subscription } from 'rxjs'
+import { map } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contact-chat',
@@ -15,111 +17,124 @@ import { NavController } from '@ionic/angular'
 export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
 
-  mostRecentMessage: Message | undefined
+  private pyro: PyroDaemon
+
+  currentContact$: Observable<Contact>
+  contactMessages$: Observable<DisplayMessage[]>
+  contactMessagesSub: Subscription
+
+  // Detecting a new message
   unreads = false
 
+  // Sending messages
   messageToSend: string
-  messagesToShow: Message[]
 
+  // Updating a contact
   addContactNameForm = false
-  contactName: string
-  newContactTorAddress: string
-  newContactName: string
-
-  contact$: BehaviorSubject<Contact | undefined>
-  displayName: string
-  contactMessages$: Observable<Message[]>
-  private pyro: Pyrodaemon
+  contactNameToAdd: string
+  updatingContact = false
 
   constructor(
       private readonly navCtrl: NavController,
       private readonly globe: GlobalState,
       private readonly cups: CupsMessenger,
-      private readonly cryo: Cryodaemon
+      private readonly cryo: CryoDaemon
   ) { }
 
   ngOnInit() {
     if(!this.globe.password){
         this.navCtrl.navigateRoot('signin')
     }
-    this.cryo.refresh().then(() => this.cryo.start())
-    this.contact$ = this.globe.watchContact()
-    this.contact$.subscribe(c => this.onContactUpdate(c))
-  }
-
-    getContact(): Contact | undefined {
-        return this.contact$.getValue()
-    }
-
-    sendMessage() {
-        if (!this.getContact()) { return }
-        this.cups.messagesSend(this.getContact(), this.messageToSend).then(
-            () => { this.pyro.refresh(); this.jumpToBottom() }
-        )
-        this.messageToSend = ''
-    }
-
-  contactNameForm(){
-    this.addContactNameForm = true
-  }
-
-  async addContactName(){
-    const contact = this.contact$.getValue()
-    const updatedContact = {...contact, name: this.contactName }
-    await this.cups.contactsAdd(updatedContact)
     this.cryo.refresh()
-    this.addContactNameForm = false
-    this.contactName = undefined
-    this.contact$.next(updatedContact)
+    this.globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
+    this.currentContact$ = this.globe.watchCurrentContact()
   }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
-    if (c) {
-        this.newContactName = c.name
-        this.newContactTorAddress = c.torAddress
-
-        const n = c.name || c.torAddress
-        this.displayName = n.length > 50 ? n.slice(0, 25) + '...' + n.slice(-25) : n
-        this.cryo.start()
-        await this.initPyro(c)
-        this.jumpToBottom()
-        this.pyro.start()
-    }
+    if(!c) return
+    await this.restartPyro(c)
+    this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
+      ms => { this.onMessageUpdate(ms); return ms }
+    ))
+    this.jumpToBottom()
+    this.pyro.start()
   }
 
-  private async initPyro(c: Contact) {
+  async onMessageUpdate(ms: DisplayMessage[]): Promise<void> {
+    this.jumpIfAtBottom()
+  }
+
+  getContact(): Contact | undefined {
+    return this.globe.getCurrentContact()
+  }
+
+  sendMessage() {
+    if (!this.getContact()) { return }
+    const messageToAttend: AttendingMessage = {
+      id: uuidv4(),
+      timestamp: new Date(),
+      direction: 'Outbound',
+      otherParty: this.getContact(),
+      text: this.messageToSend,
+      attending: true
+    }
+
+    this.globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
+    this.cups.messagesSend(this.getContact(), this.messageToSend).then(
+      () => {
+        this.globe.logState("cups-message-send complete: ", this.getContact())
+        this.pyro.refresh()
+      }
+    )
+    this.jumpToBottom() 
+    this.messageToSend = ''
+  }
+
+  contactNameForm(val: boolean){
+    this.addContactNameForm = val
+  }
+
+  async updateContact(){
+    this.updatingContact = true
+    const contact = this.getContact()
+    const updatedContact = {...contact, name: this.contactNameToAdd }
+
+    await this.cups.contactsAdd(updatedContact).handle(
+      e => { console.error(e) ; this.updatingContact = false }
+    )
+
+    this.addContactNameForm = false
+    this.contactNameToAdd = undefined
+    this.globe.pokeCurrentContact(updatedContact)
+    this.updatingContact = false
+  }
+
+  private async restartPyro(c: Contact) {
     if (this.pyro) { this.pyro.stop() }
-    this.pyro = new Pyrodaemon(this.cups, c)
-    this.contactMessages$ = this.pyro.watch().pipe(map(ms => ms.sort(orderTimestampDescending)))
+    this.pyro = new PyroDaemon(this.globe, this.cups, c)
     await this.pyro.refresh()
-    this.contactMessages$.subscribe(ms => this.jumpOrDisplayJumpButton(ms))
   }
 
-  private jumpOrDisplayJumpButton(ms: Message[]) {
-    const mostRecentMessage = ms[0]
-    if (mostRecentMessage) {
-        const isNewMessage = !this.mostRecentMessage || mostRecentMessage.timestamp > this.mostRecentMessage.timestamp
-        if (isNewMessage) {
-            if (this.mostRecentMessage) {
-                const mostRecentElement = document.getElementById(this.mostRecentMessage.id)
-                if (isElementInViewport(mostRecentElement)) {
-                    this.jumpToBottom()
-                } else {
-                    this.unreads = true
-                }
-            }
-            this.mostRecentMessage = mostRecentMessage
-        }
+  private jumpIfAtBottom() {
+    if(this.isAtBottom()){
+      pauseFor(125).then(() => this.jumpToBottom())
     }
   }
 
-  checkIfAtBottom() {
-      if (this.mostRecentMessage) {
-          const mostRecentInboundElement = document.getElementById(this.mostRecentMessage.id)
-          if (isElementInViewport(mostRecentInboundElement)) {
-            this.unreads = false
-         }
-    }
+  private isAtBottom(){
+    const targetElements = []
+    targetElements[0] = document.getElementById("0")
+    targetElements[1] = document.getElementById("1")
+    targetElements[2] = document.getElementById("2")
+    return targetElements.some( e => e && isElementInViewport(e))
+  }
+
+  toggleUnreads() {
+      if (this.isAtBottom()) { 
+        this.unreads = false 
+      } else {
+        this.unreads = true
+      }
   }
 
   jumpToBottom() {
@@ -131,11 +146,5 @@ export class ContactChatPage implements OnInit {
 // returns true if the TOP of the element is in the view port.
 function isElementInViewport(el) {
     const rect = el.getBoundingClientRect()
-    // elemTop < window.innerHeight && elemBottom >= 0;
-    return (
-        rect.top < window.innerHeight &&
-        rect.bottom >= 0
-    )
+    return rect.top < window.innerHeight && rect.bottom >= 0
 }
-
-const orderTimestampDescending = (a, b) => b.timestamp.getTime() - a.timestamp.getTime()

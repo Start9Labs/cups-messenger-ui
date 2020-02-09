@@ -1,44 +1,56 @@
 <ion-header>
     <ion-toolbar>
         <ion-item lines="none">
-            <ion-title color="charcoal" *ngIf="(contact$ | async) && !addContactNameForm" class="center">
-                {{(contact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
+            <ion-title color="charcoal" *ngIf="(this.currentContact$ | async) && !addContactNameForm" class="center">
+                {{(this.currentContact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
             </ion-title>
-            <form *ngIf="(contact$ | async) && addContactNameForm" (ngSubmit)="addContactName()">
-                <ion-input type="text" size="150" placeholder="Enter new contact name" [(ngModel)]="contactName" name="contactName">
-                </ion-input>
-            </form>
-            <ion-button fill="clear" color="charcoal" (click)="contactNameForm()" *ngIf="!(contact$ | async)?.name && (contact$ | async) && !addContactNameForm">
-                add contact name
+            <ion-item *ngIf="(this.currentContact$ | async) && addContactNameForm">
+                <form (ngSubmit)="updateContact()" >
+                    <ion-input type="text" size="150" [disabled]="updatingContact" placeholder="new contact name" [(ngModel)]="contactNameToAdd" name="contactNameToAdd">
+                    </ion-input>
+                </form>
+                <ion-button fill="clear" color="charcoal" (click)="contactNameForm(false)">
+                    <ion-icon color="charcoal" name="arrow-dropright"></ion-icon>
+                </ion-button>    
+            </ion-item>
+            <ion-button fill="clear" color="charcoal" (click)="contactNameForm(true)" *ngIf="(this.currentContact$ | async) && !addContactNameForm">
+                edit contact name
             </ion-button>
             
         </ion-item>
     </ion-toolbar>
 </ion-header>
-<ion-content #content [scrollEvents]="true"
-    (ionScrollEnd)="checkIfAtBottom()">
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="toggleUnreads()">
+    
     <ion-list background="url('../../assets/cupsbackground.png')" class="chat">
-        <div *ngFor="let message of (contactMessages$ | async)">
-            <div class="chat-message" *ngIf="message.direction === 'Inbound'" lines="none" [attr.id]="message.id">
+        <div *ngFor="let message of (contactMessages$ | async); let i = index">
+            <div class="chat-message" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
                 <div class="chat-message left-bubble">
                     <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                     <p class="ionic-text-wrap">{{message.text}}</p>
                 </div>
             </div>
-            <div class="chat-message" *ngIf="message.direction === 'Outbound'" lines="none" [attr.id]="message.id">
+            <div class="chat-message" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none" [attr.id]="i">
                 <div class="chat-message" class="chat-message right-bubble">
                     <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                     <p class="ionic-text-wrap">{{message.text}}</p>
                 </div>
             </div>
-        </div>
+            <div class="chat-message" *ngIf="message.attending" lines="none" [attr.id]="i">
+                <div class="chat-message right-bubble-attending">
+                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                    <p class="ionic-text-wrap">{{message.text}}</p>
+                </div>
+            </div>
+        </div>    
         <div id="end-of-scroll"></div>
     </ion-list>
+
 </ion-content>
 
 <ion-footer>
     <form (ngSubmit)="sendMessage()">
-        <ion-grid *ngIf="(contact$ | async)">
+        <ion-grid *ngIf="(currentContact$ | async)">
             <ion-row>
                 <ion-col col-10>
                     <ion-input type="text" placeholder="Type a message" [(ngModel)]="messageToSend" name="message">

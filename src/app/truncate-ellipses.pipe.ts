@@ -9,11 +9,14 @@ export class TruncateEllipsesPipe implements PipeTransform {
         if(!contact) { return }
         let displayName = contact.name || contact.torAddress
         if(!displayName) { return }
-        if (displayName.length > allowable) {
-            const splitAt = allowable / 2
-            displayName = displayName.slice(0, splitAt) + '...' + displayName.slice(-splitAt)
-        }
-
+        displayName = truncateEllipses(displayName, allowable)
         return Object.assign(contact, { [key]: displayName })
     }
 }
+
+function truncateEllipses(text: string, allowable: number): string {
+    if(text.length <= allowable) return text
+    
+    const splitAt = allowable / 2
+    return text.slice(0, splitAt) + '...' + text.slice(-splitAt)
+  }

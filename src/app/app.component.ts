@@ -3,13 +3,11 @@ import { Component } from '@angular/core'
 import { Platform, NavController } from '@ionic/angular'
 import { SplashScreen } from '@ionic-native/splash-screen/ngx'
 import { StatusBar } from '@ionic-native/status-bar/ngx'
-import { Cryodaemon } from './services/cryo-daemon'
+import { CryoDaemon } from './services/daemons/cryo-daemon'
 import { GlobalState } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
 import { ContactWithMessageCount, Contact } from "./services/cups/types"
-import { Observable, BehaviorSubject } from 'rxjs'
-import { map } from 'rxjs/operators'
-
+import { Observable } from 'rxjs'
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -19,14 +17,16 @@ export class AppComponent {
   public contacts$: Observable<ContactWithMessageCount[]>
 
   public makeNewContactForm = false
+  public submittingNewContact = false
   public newContactTorAddress: string
   public newContactName: string
+  public hamburger = false
 
   constructor(
     private platform: Platform,
     private splashScreen: SplashScreen,
     private statusBar: StatusBar,
-    private cryo: Cryodaemon,
+    private cryo: CryoDaemon,
     private globe: GlobalState,
     private navCtrl: NavController,
     private cups: CupsMessenger
@@ -38,12 +38,20 @@ export class AppComponent {
     this.platform.ready().then(() => {
       this.statusBar.styleDefault()
       this.splashScreen.hide()
-      this.contacts$ = this.cryo.watch().pipe(map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)))
     })
+    this.cryo.start()
+  }
+
+  onSplitPaneChange(e: {detail: {visible: boolean}}){
+    if(!e.detail.visible) { 
+      this.navCtrl.navigateRoot('mobile-conversations')
+    } else {
+      this.navCtrl.navigateRoot('contact-chat')
+    }
   }
 
   jumpToChat(c: Contact) {
-    this.globe.pokeContact(c)
+    this.globe.pokeCurrentContact(c)
     this.navCtrl.navigateRoot('contact-chat')
   }
 
@@ -52,17 +60,16 @@ export class AppComponent {
   }
 
   async submitNewContact() {
-      try {
-        await this.cups.contactsAdd({
-            torAddress: this.newContactTorAddress,
-            name: this.newContactName
-        })
-        await this.cryo.refresh()
-        this.newContactTorAddress = undefined
-        this.newContactName = undefined
-        this.makeNewContactForm = false
-      } catch (e) {
-
-      }
+    this.submittingNewContact = true
+    await this.cups.contactsAdd({
+        torAddress: this.newContactTorAddress,
+        name: this.newContactName
+    })
+    .handle(e => { console.error(e); this.submittingNewContact = false })
+    .then(() => this.cryo.refresh())
+    this.newContactTorAddress = undefined
+    this.newContactName = undefined
+    this.makeNewContactForm = false
+    this.submittingNewContact = false
   }
 }

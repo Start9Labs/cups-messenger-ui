@@ -1,10 +1,11 @@
-import * as base32 from 'lib/hi-base32'
+import * as base32 from 'base32.js'
+import * as base32decode from 'lib/hi-base32'
 import * as h from 'js-sha3'
-import { ContactWithMessageCount, Message, MessageDirection } from './types';
+import { ContactWithMessageCount, MessageDirection } from './types';
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
-import * as uuidv4 from 'uuid/v4'
 
+type CupsMessageShow = { text: string, timestamp: Date, direction: MessageDirection }
 export class CupsResParser {
     constructor(){}
 
@@ -23,7 +24,7 @@ export class CupsResParser {
         return toReturn
     }
 
-    deserializeMessagesShow(rawRes: ArrayBuffer): Message[] {
+    deserializeMessagesShow(rawRes: ArrayBuffer): CupsMessageShow[] {
         const p = new ArrayBufferParser(rawRes)
         if(p.isEmpty) return []
         const toReturn = []
@@ -47,7 +48,7 @@ export class CupsResParser {
     serializeSendMessage(torAddress: string, message: string): ArrayBuffer {
         const torBytes = onionToPubkey(torAddress)
         const messageBytes = utf8Encoder.encode(message)
-        return bufferArrayConcat([new Uint8Array([0]), torBytes, messageBytes]) 
+        return bufferArrayConcat([new Uint8Array([0]).buffer, torBytes, messageBytes]) 
     }
 }
 
@@ -67,7 +68,7 @@ class ArrayBufferParser {
 
     chopNParse<T>(i: number, callback: (a: ArrayBuffer) => T): T {
         const res = this.buffer.slice(0, i)
-        this.buffer = this.buffer.slice(i, -1)
+        this.buffer = this.buffer.slice(i)
         return callback(res)
     }
 }
@@ -76,24 +77,23 @@ const PKEY_LENGTH = 32
 const UNREADS_LENGTH = 8
 const NAME_LENGTH = 1
 function pullContact(p: ArrayBufferParser): ContactWithMessageCount {
-    const torAddress   = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion) 
+    const torAddress   = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
     const unreadsCount = p.chopNParse(UNREADS_LENGTH, bigEndian)
     const nameSize     = p.chopNParse(NAME_LENGTH   , bigEndian)
-    const name         = p.chopNParse(nameSize      , a => utf8Decoder.decode(a))
-
+    const name         = p.chopNParse(nameSize      , a => { return utf8Decoder.decode(a) } )
     return { torAddress, unreadMessages: unreadsCount, name }
 }
 
-function pullMessage(p: ArrayBufferParser): Partial<Message> {
+function pullMessage(p: ArrayBufferParser): CupsMessageShow {
     const direction: MessageDirection   = p.chopNParse(1, byteToMessageDirection) 
-    const epochTime: number = p.chopNParse(4,signedBigEndian32)
+    const epochTime: number = p.chopNParse(8,bigEndian)
     const messageLength = p.chopNParse(8, bigEndian)
     const text = p.chopNParse(messageLength, a => utf8Decoder.decode(a))
-    return { id: uuidv4(), direction, timestamp: new Date(epochTime), text }
+    return { direction, timestamp: new Date(epochTime), text }
 }
 
 function pubkeyToOnion(pubkey: ArrayBuffer){
-    if(pubkey.byteLength != 32){
+    if(pubkey.byteLength !== 32){
         throw new Error('Invalid pubkey length')
     }
 
@@ -103,13 +103,14 @@ function pubkeyToOnion(pubkey: ArrayBuffer){
     hasher.update([3])
     const checksum = hasher.arrayBuffer().slice(0,2)
 
-    const res = bufferArrayConcat([pubkey, checksum, new Uint8Array(3)])
-    return base32.encode(res).toLowerCase() + ".onion"
+    const res = bufferArrayConcat([pubkey, checksum, new Uint8Array([3])])
+    
+    return new base32.Encoder({ type: "rfc4648", lc: true }).write(res).finalize() + ".onion"
 }
 
 export function onionToPubkey(onion: string): ArrayBuffer {
     const s = onion.split(".")[0].toUpperCase()
-    const decoded = new Uint8Array(base32.decode.asBytes(s))
+    const decoded = new Uint8Array(base32decode.decode.asBytes(s))
 
     if(decoded.byteLength > 35) {
         throw new Error('Invalid base32 length.')
@@ -135,29 +136,24 @@ export function onionToPubkey(onion: string): ArrayBuffer {
 
 export function onionToPubkeyString(onion: string): string {
     const arrayBuffer = onionToPubkey(onion)
-    return base32.encode(arrayBuffer).toLowerCase()
+    return new base32.Encoder({ type: "rfc4648", lc: true }).write(arrayBuffer).finalize()
 }
 
-function bigEndian(arrayBuffer: ArrayBuffer): number {    
-    return new Int8Array(arrayBuffer).reverse().reduce( (acc, next, index) => {
+function bigEndian(arrayBuffer: ArrayBuffer): number {  
+    return new Uint8Array(arrayBuffer).reverse().reduce( (acc, next, index) => {
         return acc + next * 256 ** index
     }, 0)
-}
-
-function signedBigEndian32(a: ArrayBuffer): number {
-    const dv = new DataView(new Uint8Array(a).reverse())
-    return dv.getInt32(0)
 }
 
 function byteToMessageDirection(a: ArrayBuffer): MessageDirection {
     if(a.byteLength !== 1) {
         throw new Error (`invalid message direction`)
     }
-
-    if(a[0] === 0) {
-        return 'Inbound'
-    } else if (a[0] === 1){
+    
+    if(new Uint8Array(a)[0] === 0) {
         return 'Outbound'
+    } else if (new Uint8Array(a)[0] === 1){
+        return 'Inbound'
     } else {
         throw new Error (`invalid message direction`)
     }

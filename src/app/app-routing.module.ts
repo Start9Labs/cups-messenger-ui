@@ -12,12 +12,12 @@ const routes: Routes = [
     loadChildren: () => import('./signin/signin.module').then( m => m.SigninPageModule)
   },
   {
-    path: 'add-room',
-    loadChildren: () => import('./add-room/add-room.module').then( m => m.AddRoomPageModule)
-  },
-  {
     path: 'contact-chat',
     loadChildren: () => import('./contact-chat/contact-chat.module').then( m => m.ContactChatPageModule)
+  },
+  {
+    path: 'mobile-conversations',
+    loadChildren: () => import('./mobile-conversations/mobile-conversations.module').then( m => m.MobileConversationsPageModule)
   },
 ];
 

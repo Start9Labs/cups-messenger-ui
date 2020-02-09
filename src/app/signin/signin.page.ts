@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core'
 
 import { NavController } from '@ionic/angular'
 import { GlobalState } from '../services/global-state'
-import { Cryodaemon } from '../services/cryo-daemon'
+import { CryoDaemon } from '../services/daemons/cryo-daemon'
 
 @Component({
   selector: 'app-signin',
@@ -12,7 +12,7 @@ import { Cryodaemon } from '../services/cryo-daemon'
 export class SigninPage implements OnInit {
   password = ''
 
-  constructor(private readonly globe: GlobalState, private readonly navCtrl: NavController, private readonly cryoDaemon: Cryodaemon) { }
+  constructor(private readonly globe: GlobalState, private readonly navCtrl: NavController, private readonly cryoDaemon: CryoDaemon) { }
 
   ngOnInit() {
       this.globe.init().then(() => this.signin())
