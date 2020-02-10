@@ -15,7 +15,6 @@ import { Observable } from 'rxjs'
 })
 export class AppComponent {
   public contacts$: Observable<ContactWithMessageCount[]>
-
   public makeNewContactForm = false
   public submittingNewContact = false
   public newContactTorAddress: string
@@ -27,7 +26,7 @@ export class AppComponent {
     private splashScreen: SplashScreen,
     private statusBar: StatusBar,
     private cryo: CryoDaemon,
-    private globe: GlobalState,
+    public globe: GlobalState,
     private navCtrl: NavController,
     private cups: CupsMessenger
   ) {

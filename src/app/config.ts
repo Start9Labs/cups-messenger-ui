@@ -13,8 +13,8 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: { 
-        mock: true,
-        url: "localhost:8888/api"
+        mock: false,
+        url: "/api"
     },
     cryoDaemon: {
         frequency: 10000

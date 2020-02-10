@@ -13,8 +13,8 @@ export type CategorizedMessages = { server: ServerMessage[], attending: Attendin
 @Injectable({providedIn: 'root'})
 export class GlobalState {
     public password: string | undefined
-    private contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
-    private currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
+    public contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
+    public currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
     displayMessages: { 
         [contactTorAddress: string]: DeltaSubject<CategorizedMessages>
     } = {}
