@@ -52,7 +52,7 @@ export class ContactChatPage implements OnInit {
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
     if(!c) return
-    await this.restartPyro(c)
+    await this.restartPyro()
     this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
       ms => { this.onMessageUpdate(ms); return ms }
     ))
