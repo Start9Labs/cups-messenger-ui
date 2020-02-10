@@ -1,5 +1,5 @@
 import { CupsMessenger } from '../cups/cups-messenger';
-import { Contact, ServerMessage } from "../cups/types";
+import { ServerMessage } from "../cups/types";
 import { CooldownDaemon } from "./generic-daemon";
 import { GlobalState } from '../global-state';
 import { config } from 'src/app/config';

@@ -53,7 +53,7 @@ export class LiveCupsMessenger {
 
     private get hostUrl(): string {
         if(!this.globe.password) throw new Error('Unauthenticated request to server attempted.')
-        return `http://` + config.cupsMessenger.url + "/"
+        return config.cupsMessenger.url + "/"
     }
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
