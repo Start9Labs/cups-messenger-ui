@@ -42,14 +42,6 @@ export class AppComponent {
     this.cryo.start()
   }
 
-  onSplitPaneChange(e: {detail: {visible: boolean}}){
-    if(!e.detail.visible) { 
-      this.navCtrl.navigateRoot('mobile-conversations')
-    } else {
-      this.navCtrl.navigateRoot('contact-chat')
-    }
-  }
-
   jumpToChat(c: Contact) {
     this.globe.pokeCurrentContact(c)
     this.navCtrl.navigateRoot('contact-chat')

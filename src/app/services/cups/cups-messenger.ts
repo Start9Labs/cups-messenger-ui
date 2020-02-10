@@ -103,7 +103,7 @@ export class LiveCupsMessenger {
     }
 }
 
-const mocks = mockL(mockMessage, 2)
+const mocks = {} //mockL(mockMessage, 2)
 
 export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)
@@ -133,15 +133,15 @@ export class MockCupsMessenger {
                 await pauseFor(2000)
             }
 
-           mocks.push(mockMessage(this.counter))
+           this.getMessageMocks(contact).push(mockMessage(this.counter))
         }
-        return Promise.resolve(JSON.parse(JSON.stringify(mocks)))
+        return Promise.resolve(JSON.parse(JSON.stringify(this.getMessageMocks(contact))))
     }
     
     async messagesSend(contact: Contact, message: string): Promise<void> {
         this.globe.logState("first", contact)
         await pauseFor(2000)
-        mocks.push({
+        this.getMessageMocks(contact).push({
             timestamp: new Date(),
             direction: 'Outbound',
             otherParty: contact,
@@ -150,5 +150,10 @@ export class MockCupsMessenger {
             attending: false
         })
         this.globe.logState("second", contact)
+    }
+
+    private getMessageMocks(c: Contact){
+        mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 2))
+        return mocks[c.torAddress]
     }
 }

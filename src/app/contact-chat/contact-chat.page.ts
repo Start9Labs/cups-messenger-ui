@@ -109,9 +109,9 @@ export class ContactChatPage implements OnInit {
     this.updatingContact = false
   }
 
-  private async restartPyro(c: Contact) {
+  private async restartPyro() {
     if (this.pyro) { this.pyro.stop() }
-    this.pyro = new PyroDaemon(this.globe, this.cups, c)
+    this.pyro = new PyroDaemon(this.globe, this.cups)
     await this.pyro.refresh()
   }
 

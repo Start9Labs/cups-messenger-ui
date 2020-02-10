@@ -1,5 +1,8 @@
 <ion-header>
     <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-menu-button></ion-menu-button>
+          </ion-buttons>
         <ion-item lines="none">
             <ion-title color="charcoal" *ngIf="(this.currentContact$ | async) && !addContactNameForm" class="center">
                 {{(this.currentContact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
@@ -14,7 +17,7 @@
                 </ion-button>    
             </ion-item>
             <ion-button fill="clear" color="charcoal" (click)="contactNameForm(true)" *ngIf="(this.currentContact$ | async) && !addContactNameForm">
-                edit contact name
+                edit
             </ion-button>
             
         </ion-item>
