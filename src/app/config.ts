@@ -14,7 +14,7 @@ export interface Config {
 export const config: Config = {
     cupsMessenger: { 
         mock: false,
-        url: "/api"
+        url: window.origin + "/api"
     },
     cryoDaemon: {
         frequency: 10000
