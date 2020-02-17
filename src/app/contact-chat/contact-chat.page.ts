@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { GlobalState, CategorizedMessages } from '../services/global-state'
+import { GlobalState, CategorizedMessages, globe } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from '../services/cups/types'
-import { CryoDaemon } from '../services/daemons/cryo-daemon'
-import { PyroDaemon } from '../services/daemons/pyro-daemon'
+import { CryoDaemon } from '../services/rx/cryo-daemon'
+import { PyroDaemon } from '../services/rx/pyro-daemon'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription } from 'rxjs'
@@ -36,24 +36,23 @@ export class ContactChatPage implements OnInit {
 
   constructor(
       private readonly navCtrl: NavController,
-      private readonly globe: GlobalState,
       private readonly cups: CupsMessenger,
       private readonly cryo: CryoDaemon
   ) { }
 
   ngOnInit() {
-    if (!this.globe.password) {
+    if (!globe.password) {
         this.navCtrl.navigateRoot('signin')
     }
     this.cryo.refresh()
-    this.globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
-    this.currentContact$ = this.globe.watchCurrentContact()
+    globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
+    this.currentContact$ = globe.watchCurrentContact()
   }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
     if (!c) { return }
     await this.restartPyro()
-    this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
+    this.contactMessages$ = globe.watchAllContactMessages(c).pipe(map(
       ms => { this.onMessageUpdate(ms); return ms }
     ))
     this.jumpToBottom()
@@ -65,7 +64,7 @@ export class ContactChatPage implements OnInit {
   }
 
   getContact(): Contact | undefined {
-    return this.globe.getCurrentContact()
+    return globe.getCurrentContact()
   }
 
   sendMessage() {
@@ -79,10 +78,10 @@ export class ContactChatPage implements OnInit {
       attending: true
     }
 
-    this.globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
+    globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
     this.cups.messagesSend(this.getContact(), this.messageToSend).then(
       () => {
-        this.globe.logState('cups-message-send complete: ', this.getContact())
+        globe.logState('cups-message-send complete: ', this.getContact())
         this.pyro.refresh()
       }
     )
@@ -105,13 +104,13 @@ export class ContactChatPage implements OnInit {
 
     this.addContactNameForm = false
     this.contactNameToAdd = undefined
-    this.globe.pokeCurrentContact(updatedContact)
+    globe.pokeCurrentContact(updatedContact)
     this.updatingContact = false
   }
 
   private async restartPyro() {
     if (this.pyro) { this.pyro.stop() }
-    this.pyro = new PyroDaemon(this.globe, this.cups)
+    this.pyro = new PyroDaemon(this.cups)
     await this.pyro.refresh()
   }
 

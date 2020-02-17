@@ -3,11 +3,12 @@ import { Component } from '@angular/core'
 import { Platform, NavController } from '@ionic/angular'
 import { SplashScreen } from '@ionic-native/splash-screen/ngx'
 import { StatusBar } from '@ionic-native/status-bar/ngx'
-import { CryoDaemon } from './services/daemons/cryo-daemon'
-import { GlobalState } from './services/global-state'
+import { CryoDaemon } from './services/rx/cryo-daemon'
+import { GlobalState, globe } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable } from 'rxjs'
+import { main } from './services/rx/paths'
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -26,7 +27,6 @@ export class AppComponent {
     private splashScreen: SplashScreen,
     private statusBar: StatusBar,
     private cryo: CryoDaemon,
-    public globe: GlobalState,
     private navCtrl: NavController,
     private cups: CupsMessenger
   ) {
@@ -34,15 +34,15 @@ export class AppComponent {
   }
 
   initializeApp() {
+    main(this.cups)
     this.platform.ready().then(() => {
       this.statusBar.styleDefault()
       this.splashScreen.hide()
     })
-    this.cryo.start()
   }
 
   jumpToChat(c: Contact) {
-    this.globe.pokeCurrentContact(c)
+    globe.pokeCurrentContact(c)
     this.navCtrl.navigateRoot('contact-chat')
   }
 

@@ -1,22 +1,23 @@
-import { Injectable, ErrorHandler } from '@angular/core'
+import { Injectable, ErrorHandler, Output, ViewChild, ElementRef, EventEmitter } from '@angular/core'
 import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, AttendingMessage } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
-import { GlobalState } from '../global-state'
+import { GlobalState, globe } from '../global-state'
 
 // @TODO get rid of .catch enforcing error handling everywhere
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private impl: LiveCupsMessenger | MockCupsMessenger
-    constructor(globe: GlobalState, http: HttpClient) {
+    constructor(http: HttpClient) {
         if (config.cupsMessenger.mock) {
-            this.impl = new MockCupsMessenger(globe)
+            this.impl = new MockCupsMessenger()
         } else {
-            this.impl = new LiveCupsMessenger(globe, http)
+            this.impl = new LiveCupsMessenger(http)
         }
     }
+
 
     contactsShow(): HandleError<ContactWithMessageCount[]> {
         return HandleError.of(this.impl.contactsShow())
@@ -44,15 +45,15 @@ export class HandleError<A> {
 
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
-    constructor(private readonly globe: GlobalState, private readonly http: HttpClient) {}
+    constructor(private readonly http: HttpClient) {}
 
     private get authHeaders(): HttpHeaders {
-        if (!this.globe.password) { throw new Error('Unauthenticated request to server attempted.') }
-        return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${this.globe.password}`)})
+        if (!globe.password) { throw new Error('Unauthenticated request to server attempted.') }
+        return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${globe.password}`)})
     }
 
     private get hostUrl(): string {
-        if (!this.globe.password) { throw new Error('Unauthenticated request to server attempted.') }
+        if (!globe.password) { throw new Error('Unauthenticated request to server attempted.') }
         return config.cupsMessenger.url
     }
 
@@ -80,7 +81,7 @@ export class LiveCupsMessenger {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
         return this.http.post<void>(
             this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders }
-        ).toPromise().then(p => this.globe.pokeNewContact(contact))
+        ).toPromise().then(p => globe.pokeNewContact(contact))
     }
 
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
@@ -126,7 +127,7 @@ export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)
     counter = 0
 
-    constructor(private globe: GlobalState) {}
+    constructor() {}
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         throw new Error('fuck you')
@@ -157,7 +158,7 @@ export class MockCupsMessenger {
     }
 
     async messagesSend(contact: Contact, message: string): Promise<void> {
-        this.globe.logState('first', contact)
+        globe.logState('first', contact)
         await pauseFor(2000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
@@ -167,7 +168,7 @@ export class MockCupsMessenger {
             id: uuidv4(),
             attending: false
         })
-        this.globe.logState('second', contact)
+        globe.logState('second', contact)
     }
 
     private getMessageMocks(c: Contact) {
@@ -175,3 +176,9 @@ export class MockCupsMessenger {
         return mocks[c.torAddress]
     }
 }
+
+
+@Output('onSearch') 
+const onSearch = new EventEmitter<string>();
+@ViewChild('searchInput', { static: false }) 
+input: ElementRef;
