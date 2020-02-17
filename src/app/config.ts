@@ -1,6 +1,6 @@
 export interface Config {
-    cupsMessenger: { 
-        mock: boolean 
+    cupsMessenger: {
+        mock: boolean
         url: string
     }
     cryoDaemon: {
@@ -12,9 +12,9 @@ export interface Config {
 }
 
 export const config: Config = {
-    cupsMessenger: { 
-        mock: false,
-        url: window.origin + "/api"
+    cupsMessenger: {
+        mock: true,
+        url: window.origin + '/api'
     },
     cryoDaemon: {
         frequency: 10000

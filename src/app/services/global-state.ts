@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core'
-import { Contact, DisplayMessage, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills } from "./cups/types"
+import { Contact, DisplayMessage, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills } from './cups/types'
 import { BehaviorSubject, Observable } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { DeltaSubject } from './delta-subject'
@@ -8,24 +8,28 @@ const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
 
-export type CategorizedMessages = { server: ServerMessage[], attending: AttendingMessage[] }
+export interface CategorizedMessages { server: ServerMessage[], attending: AttendingMessage[] }
 
 @Injectable({providedIn: 'root'})
 export class GlobalState {
     public password: string | undefined
     public contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
     public currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
-    displayMessages: { 
+    displayMessages: {
         [contactTorAddress: string]: DeltaSubject<CategorizedMessages>
     } = {}
 
     constructor() {}
 
-    //Subscribe to these...
+    // Subscribe to these...
     watchAllContactMessages(c: Contact): Observable<DisplayMessage[]> {
         return this.getCategorizedContactMessages$(c).watch().pipe(
-            map( ({server, attending}) => 
-                (attending.sort(orderTimestampDescending) as DisplayMessage[]).concat(server.sort(orderTimestampDescending) as DisplayMessage[])
+            map( ({server, attending}) => (
+                    attending.sort(orderTimestampDescending) as DisplayMessage[]
+                )
+                .concat(
+                    server.sort(orderTimestampDescending)    as DisplayMessage[]
+                )
             )
         )
     }
@@ -40,18 +44,22 @@ export class GlobalState {
         return this.currentContact$
     }
 
-    //Notify subscribers with these...
+    // Notify subscribers with these...
     pokeServerMessages(c: Contact, newServerMessagesState: ServerMessage[]): void {
         const displayMessages = this.getCategorizedContactMessages$(c)
 
         const { server, attending } = displayMessages.getValue()
 
-        const mostRecentServerMessageSoFar = server.sort(orderTimestampDescending)[0] ? new Date(server.sort(orderTimestampDescending)[0].timestamp).getTime() : new Date(0)
+        const mostRecentServerMessageSoFar =
+            server.sort(orderTimestampDescending)[0] ?
+            new Date(server.sort(orderTimestampDescending)[0].timestamp).getTime() :
+            new Date(0)
+
         const serverDiff = newServerMessagesState.filter(
             newestMessage => new Date(newestMessage.timestamp).getTime() > mostRecentServerMessageSoFar
         )
 
-        let newAttendingState = JSON.parse(JSON.stringify(attending))
+        const newAttendingState = JSON.parse(JSON.stringify(attending))
         serverDiff.forEach( newServerMessage => {
             const i = newAttendingState.findIndex(presentAttending => serverMessageFulfills(newServerMessage, presentAttending))
             newAttendingState.splice(i, 1)
@@ -81,16 +89,16 @@ export class GlobalState {
         this.currentContact$.next(c)
     }
 
-    //Misc
+    // Misc
 
     logState(log: string, c: Contact): void {
-        if(this.displayMessages[c.torAddress]) {
+        if (this.displayMessages[c.torAddress]) {
             const {server, attending} = this.displayMessages[c.torAddress].getValue()
             console.log(log, {t: new Date(), server: server.length, attending: attending.length})
         } else {
             console.log(log, {t: new Date(), server: 0, attending: 0})
         }
-        
+
     }
 
     getCurrentContact(): Contact | undefined {
@@ -110,15 +118,16 @@ export class GlobalState {
 
     async clearPassword(): Promise<void> {
         Storage.remove(passwordKey)
+        this.password = undefined
     }
 
-    private getCategorizedContactMessages$(c : Contact): DeltaSubject<CategorizedMessages>{
+    private getCategorizedContactMessages$(c: Contact): DeltaSubject<CategorizedMessages> {
         this.displayMessages[c.torAddress] = this.displayMessages[c.torAddress] || new DeltaSubject({ server: [], attending: [] })
         return this.displayMessages[c.torAddress]
     }
 }
 
-export const orderTimestampDescending: (a: {timestamp: Date}, b: {timestamp: Date}) => number 
+export const orderTimestampDescending: (a: {timestamp: Date}, b: {timestamp: Date}) => number
     = (a, b) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     }

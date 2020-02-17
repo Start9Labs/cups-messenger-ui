@@ -3,12 +3,11 @@
         <ion-title>Authenticate</ion-title>
     </ion-toolbar>
 </ion-header>
-
 <ion-content class="ion-padding">
     <form (ngSubmit)="enterCupsMessengerPassword()">
         <ion-list>
             <ion-item>
-                <ion-input type="text" color="charcoal" placeholder="Cups Messenger Password" [(ngModel)]="password"
+                <ion-input disabled="{{loading$ | async}}" type="text" color="charcoal" placeholder="Cups Messenger Password" [(ngModel)]="password"
                     name="password" required=""></ion-input>
             </ion-item>
 
@@ -17,4 +16,8 @@
             </ion-item>
         </ion-list>
     </form>
+    <ion-item text-center *ngIf="error$ | async" lines="none">
+        <ion-label class="error-bar" color="danger">{{ error$ | async }}</ion-label>
+    </ion-item>
+    <ion-spinner *ngIf="loading$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>    
 </ion-content>

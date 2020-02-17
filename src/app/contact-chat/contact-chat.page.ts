@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { GlobalState, CategorizedMessages } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
-import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from "../services/cups/types"
+import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from '../services/cups/types'
 import { CryoDaemon } from '../services/daemons/cryo-daemon'
-import { PyroDaemon } from "../services/daemons/pyro-daemon"
+import { PyroDaemon } from '../services/daemons/pyro-daemon'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription } from 'rxjs'
@@ -42,7 +42,7 @@ export class ContactChatPage implements OnInit {
   ) { }
 
   ngOnInit() {
-    if(!this.globe.password){
+    if (!this.globe.password) {
         this.navCtrl.navigateRoot('signin')
     }
     this.cryo.refresh()
@@ -51,7 +51,7 @@ export class ContactChatPage implements OnInit {
   }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
-    if(!c) return
+    if (!c) { return }
     await this.restartPyro()
     this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
       ms => { this.onMessageUpdate(ms); return ms }
@@ -82,19 +82,19 @@ export class ContactChatPage implements OnInit {
     this.globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
     this.cups.messagesSend(this.getContact(), this.messageToSend).then(
       () => {
-        this.globe.logState("cups-message-send complete: ", this.getContact())
+        this.globe.logState('cups-message-send complete: ', this.getContact())
         this.pyro.refresh()
       }
     )
-    this.jumpToBottom() 
+    this.jumpToBottom()
     this.messageToSend = ''
   }
 
-  contactNameForm(val: boolean){
+  contactNameForm(val: boolean) {
     this.addContactNameForm = val
   }
 
-  async updateContact(){
+  async updateContact() {
     this.updatingContact = true
     const contact = this.getContact()
     const updatedContact = {...contact, name: this.contactNameToAdd }
@@ -116,22 +116,22 @@ export class ContactChatPage implements OnInit {
   }
 
   private jumpIfAtBottom() {
-    if(this.isAtBottom()){
+    if (this.isAtBottom()) {
       pauseFor(125).then(() => this.jumpToBottom())
     }
   }
 
-  private isAtBottom(){
+  private isAtBottom() {
     const targetElements = []
-    targetElements[0] = document.getElementById("0")
-    targetElements[1] = document.getElementById("1")
-    targetElements[2] = document.getElementById("2")
+    targetElements[0] = document.getElementById('0')
+    targetElements[1] = document.getElementById('1')
+    targetElements[2] = document.getElementById('2')
     return targetElements.some( e => e && isElementInViewport(e))
   }
 
   toggleUnreads() {
-      if (this.isAtBottom()) { 
-        this.unreads = false 
+      if (this.isAtBottom()) {
+        this.unreads = false
       } else {
         this.unreads = true
       }

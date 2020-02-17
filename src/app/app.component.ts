@@ -6,7 +6,7 @@ import { StatusBar } from '@ionic-native/status-bar/ngx'
 import { CryoDaemon } from './services/daemons/cryo-daemon'
 import { GlobalState } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
-import { ContactWithMessageCount, Contact } from "./services/cups/types"
+import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable } from 'rxjs'
 @Component({
   selector: 'app-root',

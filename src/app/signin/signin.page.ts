@@ -4,6 +4,8 @@ import { NavController } from '@ionic/angular'
 import { GlobalState } from '../services/global-state'
 import { CryoDaemon } from '../services/daemons/cryo-daemon'
 import { CupsMessenger } from '../services/cups/cups-messenger'
+import { pauseFor } from '../services/cups/types'
+import { BehaviorSubject } from 'rxjs'
 
 @Component({
   selector: 'app-signin',
@@ -12,6 +14,8 @@ import { CupsMessenger } from '../services/cups/cups-messenger'
 })
 export class SigninPage implements OnInit {
   password = ''
+  loading$ = new BehaviorSubject(false)
+  error$ = new BehaviorSubject(undefined)
 
   constructor(
     private readonly cups: CupsMessenger,
@@ -23,16 +27,16 @@ export class SigninPage implements OnInit {
       this.globe.init().then(() => this.signin())
   }
 
-  enterCupsMessengerPassword() {
-    this.globe.setPassword(this.password).then(async () => {
-      try {
-        await this.cups.contactsShow()
-        await this.signin()
-      } catch (e) {
-        console.error(e)
-        await this.globe.clearPassword()
-      }
+  async enterCupsMessengerPassword() {
+    this.error$.next(undefined)
+    this.loading$.next(true)
+    await pauseFor(500000)
+    await this.globe.setPassword(this.password)
+    await this.cups.contactsShow().handle(async e => {
+      this.error$.next(`Invalid password`)
+      await this.globe.clearPassword()
     })
+    this.loading$.next(false)
   }
 
   private signin() {

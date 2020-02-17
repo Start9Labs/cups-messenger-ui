@@ -6,7 +6,7 @@ import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, paus
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
 import { GlobalState } from '../global-state'
 
-//@TODO get rid of .catch enforcing error handling everywhere
+// @TODO get rid of .catch enforcing error handling everywhere
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private impl: LiveCupsMessenger | MockCupsMessenger
@@ -18,8 +18,8 @@ export class CupsMessenger {
         }
     }
 
-    async contactsShow(): Promise<ContactWithMessageCount[]> {
-        return HandleError.of(this.impl.contactsShow()).handle(console.error)
+    contactsShow(): HandleError<ContactWithMessageCount[]> {
+        return HandleError.of(this.impl.contactsShow())
     }
     contactsAdd(contact: Contact): HandleError<void> {
         return HandleError.of(this.impl.contactsAdd(contact))
@@ -32,38 +32,46 @@ export class CupsMessenger {
     }
 }
 
-export class HandleError<A>{
-    static of<A0>(p : Promise<A0>): HandleError<A0> {
+export class HandleError<A> {
+    static of<A0>(p: Promise<A0>): HandleError<A0> {
         return new HandleError(p)
     }
-    constructor (private readonly p : Promise<A>) {}
+    constructor(private readonly p: Promise<A>) {}
     handle(errorHandler: (e: Error) => any): Promise<A> {
         return this.p.catch(errorHandler)
     }
 }
 
 export class LiveCupsMessenger {
-    private readonly parser : CupsResParser = new CupsResParser()
-    constructor(private readonly globe: GlobalState,private readonly http: HttpClient){}
+    private readonly parser: CupsResParser = new CupsResParser()
+    constructor(private readonly globe: GlobalState, private readonly http: HttpClient) {}
 
     private get authHeaders(): HttpHeaders {
-        if(!this.globe.password) throw new Error('Unauthenticated request to server attempted.')
-        return new HttpHeaders({"Authorization": "Basic " + btoa(`me:${this.globe.password}`)});
+        if (!this.globe.password) { throw new Error('Unauthenticated request to server attempted.') }
+        return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${this.globe.password}`)})
     }
 
     private get hostUrl(): string {
-        if(!this.globe.password) throw new Error('Unauthenticated request to server attempted.')
-        return config.cupsMessenger.url + "/"
+        if (!this.globe.password) { throw new Error('Unauthenticated request to server attempted.') }
+        return config.cupsMessenger.url
     }
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         try {
             const arrayBuffer = await this.http.get(
-                this.hostUrl, { params: { type: 'users' }, headers: this.authHeaders, responseType: 'arraybuffer' }
+                this.hostUrl,
+                {
+                    params: {
+                        type: 'users'
+                    },
+                    headers: this.authHeaders,
+                    responseType: 'arraybuffer'
+                }
             ).toPromise()
             return this.parser.deserializeContactsShow(arrayBuffer)
         } catch (e) {
-            console.error(e)
+            console.error('Contacts show', e)
+            console.error('Contacts show', JSON.stringify(e))
             throw e
         }
     }
@@ -76,23 +84,32 @@ export class LiveCupsMessenger {
     }
 
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
-        const arrayBuffer = await this.http.get(
-            this.hostUrl, { params: { 
-                type: 'messages', 
-                pubkey: onionToPubkeyString(contact.torAddress)
-                },
-                headers: this.authHeaders,
-                responseType: 'arraybuffer'
-            }
-        ).toPromise()
+        try {
+            const arrayBuffer = await this.http.get(
+                    this.hostUrl,
+                    {
+                        params: {
+                            type: 'messages',
+                            pubkey: onionToPubkeyString(contact.torAddress),
+                            limit: String(limit)
+                        },
+                        headers: this.authHeaders,
+                        responseType: 'arraybuffer'
+                    }
+            ).toPromise()
 
-        return this.parser.deserializeMessagesShow(arrayBuffer).map(m => 
-            ({...m, 
-                attending: false,
-                id: uuidv4(),
-                otherParty: contact
-            })
-        )
+            return this.parser.deserializeMessagesShow(arrayBuffer).map(m =>
+                ({...m,
+                    attending: false,
+                    id: uuidv4(),
+                    otherParty: contact
+                })
+            )
+        } catch (e) {
+            console.error('Messages show', e)
+            console.error('Messages show', JSON.stringify(e))
+            throw e
+        }
     }
 
     async messagesSend(contact: Contact, message: string): Promise<void> {
@@ -103,15 +120,16 @@ export class LiveCupsMessenger {
     }
 }
 
-const mocks = {} //mockL(mockMessage, 2)
+const mocks = {} // mockL(mockMessage, 2)
 
 export class MockCupsMessenger {
     contacts = mockL(mockContact, 5)
     counter = 0
 
-    constructor(private globe: GlobalState){}
+    constructor(private globe: GlobalState) {}
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
+        throw new Error('fuck you')
         if (this.counter % 5 === 0) {
             this.contacts[1].unreadMessages ++
         }
@@ -129,17 +147,17 @@ export class MockCupsMessenger {
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
         this.counter++
         if (this.counter % 5 === 0) {
-            if(this.counter % 10 === 0) {
+            if (this.counter % 10 === 0) {
                 await pauseFor(2000)
             }
 
-           this.getMessageMocks(contact).push(mockMessage(this.counter))
+            this.getMessageMocks(contact).push(mockMessage(this.counter))
         }
         return Promise.resolve(JSON.parse(JSON.stringify(this.getMessageMocks(contact))))
     }
-    
+
     async messagesSend(contact: Contact, message: string): Promise<void> {
-        this.globe.logState("first", contact)
+        this.globe.logState('first', contact)
         await pauseFor(2000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
@@ -149,10 +167,10 @@ export class MockCupsMessenger {
             id: uuidv4(),
             attending: false
         })
-        this.globe.logState("second", contact)
+        this.globe.logState('second', contact)
     }
 
-    private getMessageMocks(c: Contact){
+    private getMessageMocks(c: Contact) {
         mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 2))
         return mocks[c.torAddress]
     }
