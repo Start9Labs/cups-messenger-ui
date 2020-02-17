@@ -129,7 +129,6 @@ export class MockCupsMessenger {
     constructor(private globe: GlobalState) {}
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
-        throw new Error('fuck you')
         if (this.counter % 5 === 0) {
             this.contacts[1].unreadMessages ++
         }

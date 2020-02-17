@@ -30,10 +30,10 @@ export class SigninPage implements OnInit {
   async enterCupsMessengerPassword() {
     this.error$.next(undefined)
     this.loading$.next(true)
-    await pauseFor(500000)
+    await pauseFor(2000)
     await this.globe.setPassword(this.password)
     await this.cups.contactsShow().handle(async e => {
-      this.error$.next(`Invalid password`)
+      this.error$.next(`Invalid Password`)
       await this.globe.clearPassword()
     })
     this.loading$.next(false)

@@ -43,22 +43,26 @@
                     <ion-item *ngIf="makeNewContactForm">
                         <ion-grid color="white">
                             <ion-row>
-                                <ion-input type="text" [disabled]="submittingNewContact" placeholder="Contact Tor Address"
+                                <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Tor Address"
                                     [(ngModel)]="newContactTorAddress" name="message">
                                 </ion-input>
                             </ion-row>
                             <ion-row>
-                                <ion-input type="text" [disabled]="submittingNewContact" placeholder="Contact Name" [(ngModel)]="newContactName"
+                                <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Name" [(ngModel)]="newContactName"
                                     name="message">
                                 </ion-input>
                             </ion-row>
                             <ion-row>
-                                <ion-button color="charcoal" [disabled]="submittingNewContact" (click)="submitNewContact()">
+                                <ion-button color="charcoal" [disabled]="submittingNewContact$ | async" (click)="submitNewContact()">
                                     submit
                                 </ion-button>
                             </ion-row>
                         </ion-grid>
                     </ion-item>
+                    <ion-item text-center *ngIf="error$ | async" lines="none">
+                        <ion-label class="error-bar" color="danger">{{ error$ | async }}</ion-label>
+                    </ion-item>
+                    <ion-spinner *ngIf="submittingNewContact$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>    
                 </ion-list>
             </ion-content>
         </ion-menu>

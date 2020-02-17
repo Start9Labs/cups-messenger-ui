@@ -6,8 +6,9 @@ import { StatusBar } from '@ionic-native/status-bar/ngx'
 import { CryoDaemon } from './services/daemons/cryo-daemon'
 import { GlobalState } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
-import { ContactWithMessageCount, Contact } from './services/cups/types'
-import { Observable } from 'rxjs'
+import { ContactWithMessageCount, Contact, pauseFor } from './services/cups/types'
+import { Observable, BehaviorSubject } from 'rxjs'
+import { onionToPubkeyString } from './services/cups/cups-res-parser'
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -16,10 +17,13 @@ import { Observable } from 'rxjs'
 export class AppComponent {
   public contacts$: Observable<ContactWithMessageCount[]>
   public makeNewContactForm = false
-  public submittingNewContact = false
+  public submittingNewContact$ = new BehaviorSubject(false)
   public newContactTorAddress: string
   public newContactName: string
-  public hamburger = false
+
+  public loading$ = new BehaviorSubject(false)
+  public error$ = new BehaviorSubject(undefined)
+
 
   constructor(
     private platform: Platform,
@@ -48,19 +52,39 @@ export class AppComponent {
 
   toggleNewContact() {
     this.makeNewContactForm = !this.makeNewContactForm
+    this.error$.next(undefined)
   }
 
   async submitNewContact() {
-    this.submittingNewContact = true
+    this.error$.next(undefined)
+    const sanitizedTorOnion = this.newContactTorAddress.trim().split('.onion')[0].concat('.onion')
+
+    try {
+      onionToPubkeyString(sanitizedTorOnion)
+    } catch (e) {
+      this.error$.next(`Invalid V3 Tor Address: ${e.message}`)
+      return
+    }
+
+    const sanitizedName = this.newContactName.trim()
+    if (sanitizedName.length > 255) {
+      this.error$.next(`Name must be less than 255 characters.`)
+      return
+    }
+
+    this.submittingNewContact$.next(true)
     await this.cups.contactsAdd({
-        torAddress: this.newContactTorAddress,
-        name: this.newContactName
+        torAddress: sanitizedTorOnion,
+        name: sanitizedName
     })
-    .handle(e => { console.error(e); this.submittingNewContact = false })
+    .handle(e => {
+      this.error$.next(e)
+      this.submittingNewContact$.next(false)
+    })
     .then(() => this.cryo.refresh())
     this.newContactTorAddress = undefined
     this.newContactName = undefined
     this.makeNewContactForm = false
-    this.submittingNewContact = false
+    this.submittingNewContact$.next(false)
   }
 }

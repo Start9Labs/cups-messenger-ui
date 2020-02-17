@@ -1,15 +1,15 @@
 import * as uuidv4 from 'uuid/v4'
 
 export function pauseFor(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 export interface Contact {
-    torAddress: string;
-    name?: string;
+    torAddress: string
+    name?: string
 }
 export interface ContactWithMessageCount extends Contact {
-    unreadMessages: number;
+    unreadMessages: number
 }
 
 export type MessageDirection = 'Inbound' | 'Outbound'
@@ -31,28 +31,28 @@ export interface AttendingMessage extends MessageBase {
     timestamp: Date
 }
 
-export function serverMessageFulfills(s: ServerMessage, a: AttendingMessage) : boolean {
-    if(s.direction !== a.direction) return false
-    if(s.otherParty.torAddress !== a.otherParty.torAddress) return false
-    if(s.text !== a.text) return false
+export function serverMessageFulfills(s: ServerMessage | AttendingMessage, a: AttendingMessage): boolean {
+    if (s.direction !== a.direction) { return false }
+    if (s.otherParty.torAddress !== a.otherParty.torAddress) { return false }
+    if (s.text !== a.text) { return false }
     return true
 }
 
 // Mocks //
 
 export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
-    const toReturn = [];
+    const toReturn = []
     for (let j = 0; j < i; j++) {
-        toReturn.push(mockF(j));
+        toReturn.push(mockF(j))
     }
-    return toReturn;
+    return toReturn
 }
 export function mockContact(i: number): ContactWithMessageCount {
     return {
         torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
         name: 'contact-' + i + 'dfoifd',
         unreadMessages: 0
-    };
+    }
 }
 export function mockMessage(i: number): ServerMessage {
     return {
@@ -62,8 +62,8 @@ export function mockMessage(i: number): ServerMessage {
         text: mockL(mockWord, 10).join(' '),
         id: uuidv4(),
         attending: false
-    };
+    }
 }
 function mockWord(i: number): string {
-    return uuidv4() + i;
+    return uuidv4() + i
 }

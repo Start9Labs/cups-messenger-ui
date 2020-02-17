@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators'
 
 export class DeltaSubject<V> {
   protected readonly subject$: BehaviorSubject<V>
-  constructor(v: V){
+  constructor(v: V) {
       this.subject$ = new BehaviorSubject(v)
   }
 
@@ -21,7 +21,7 @@ export class DeltaSubject<V> {
     return this.subject$
   }
 
-  watchPresentKey<k extends keyof V>(k : k): Observable<V[k]>{
+  watchPresentKey<k extends keyof V>(k: k): Observable<V[k]> {
     return this.watch().pipe(map(v => v[k]))
   }
 }

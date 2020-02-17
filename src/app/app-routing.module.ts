@@ -1,5 +1,5 @@
-import { NgModule } from '@angular/core';
-import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { NgModule } from '@angular/core'
+import { PreloadAllModules, RouterModule, Routes } from '@angular/router'
 
 const routes: Routes = [
   {
@@ -15,7 +15,7 @@ const routes: Routes = [
     path: 'contact-chat',
     loadChildren: () => import('./contact-chat/contact-chat.module').then( m => m.ContactChatPageModule)
   },
-];
+]
 
 @NgModule({
   imports: [

@@ -6,7 +6,7 @@ import { CryoDaemon } from '../services/daemons/cryo-daemon'
 import { PyroDaemon } from '../services/daemons/pyro-daemon'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription } from 'rxjs'
+import { Observable, Subscription, BehaviorSubject } from 'rxjs'
 import { map } from 'rxjs/operators'
 
 @Component({
@@ -32,7 +32,8 @@ export class ContactChatPage implements OnInit {
   // Updating a contact
   addContactNameForm = false
   contactNameToAdd: string
-  updatingContact = false
+  updatingContact$ = new BehaviorSubject(false)
+  error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
 
   constructor(
       private readonly navCtrl: NavController,
@@ -91,22 +92,27 @@ export class ContactChatPage implements OnInit {
   }
 
   contactNameForm(val: boolean) {
+    this.error$.next(undefined)
     this.addContactNameForm = val
   }
 
   async updateContact() {
-    this.updatingContact = true
+    this.error$.next(undefined)
+    this.updatingContact$.next(true)
     const contact = this.getContact()
     const updatedContact = {...contact, name: this.contactNameToAdd }
 
-    await this.cups.contactsAdd(updatedContact).handle(
-      e => { console.error(e) ; this.updatingContact = false }
-    )
-
-    this.addContactNameForm = false
-    this.contactNameToAdd = undefined
-    this.globe.pokeCurrentContact(updatedContact)
-    this.updatingContact = false
+    try {
+      await this.cups.contactsAdd(updatedContact).handle(e => {throw e})
+      this.addContactNameForm = false
+      this.contactNameToAdd = undefined
+      this.globe.pokeCurrentContact(updatedContact)
+      this.updatingContact$.next(false)
+    } catch (e) {
+      this.error$.next(`Contact update failed: ${e.message}`)
+    } finally {
+      this.updatingContact$.next(false)
+    }
   }
 
   private async restartPyro() {

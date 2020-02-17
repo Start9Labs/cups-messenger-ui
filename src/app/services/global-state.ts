@@ -75,6 +75,16 @@ export class GlobalState {
         this.displayMessages[c.torAddress].deltaPoke({ attending: newAttending.concat(a) })
     }
 
+    dropAttendingMessage(c: Contact, a: AttendingMessage): void {
+        const displayMessages = this.getCategorizedContactMessages$(c)
+        const { attending } = displayMessages.getValue()
+        const newAttending = JSON.parse(JSON.stringify(attending))
+
+        const i = newAttending.findIndex(presentAttending => serverMessageFulfills(a, presentAttending))
+        newAttending.splice(i, 1)
+        this.displayMessages[c.torAddress].deltaPoke({ attending: newAttending })
+    }
+
     pokeContacts(cs: ContactWithMessageCount[]): void {
         this.contacts$.next(cs)
     }
