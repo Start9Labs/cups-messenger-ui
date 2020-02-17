@@ -1,8 +1,6 @@
 import { Component } from '@angular/core'
 
 import { Platform, NavController } from '@ionic/angular'
-import { SplashScreen } from '@ionic-native/splash-screen/ngx'
-import { StatusBar } from '@ionic-native/status-bar/ngx'
 import { CryoDaemon } from './services/daemons/cryo-daemon'
 import { GlobalState } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
@@ -27,8 +25,6 @@ export class AppComponent {
 
   constructor(
     private platform: Platform,
-    private splashScreen: SplashScreen,
-    private statusBar: StatusBar,
     private cryo: CryoDaemon,
     public globe: GlobalState,
     private navCtrl: NavController,
@@ -39,8 +35,6 @@ export class AppComponent {
 
   initializeApp() {
     this.platform.ready().then(() => {
-      this.statusBar.styleDefault()
-      this.splashScreen.hide()
     })
     this.cryo.start()
   }
