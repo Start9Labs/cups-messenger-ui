@@ -1,10 +1,10 @@
-import { Injectable, ErrorHandler, Output, ViewChild, ElementRef, EventEmitter } from '@angular/core'
+import { Injectable } from '@angular/core'
 import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, AttendingMessage } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
-import { GlobalState, globe } from '../global-state'
+import { globe } from '../global-state'
 
 // @TODO get rid of .catch enforcing error handling everywhere
 @Injectable({providedIn: 'root'})
@@ -16,6 +16,10 @@ export class CupsMessenger {
         } else {
             this.impl = new LiveCupsMessenger(http)
         }
+    }
+
+    setTempPassword(s: string): void {
+        return this.impl.setTempPassword(s)
     }
 
     contactsShow(): HandleError<ContactWithMessageCount[]> {
@@ -43,12 +47,24 @@ export class HandleError<A> {
 }
 
 export class LiveCupsMessenger {
+    private tempPassword: string | undefined = undefined
     private readonly parser: CupsResParser = new CupsResParser()
     constructor(private readonly http: HttpClient) {}
 
+    setTempPassword(password: string){
+        this.tempPassword = password
+    }
+
+    private getTempPassword(): string | undefined {
+        const toReturn = this.tempPassword
+        this.tempPassword = undefined
+        return toReturn
+    }
+
+
     private get authHeaders(): HttpHeaders {
         if (!globe.password) { throw new Error('Unauthenticated request to server attempted.') }
-        return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${globe.password}`)})
+        return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${this.getTempPassword() || globe.password}`)})
     }
 
     private get hostUrl(): string {
@@ -127,6 +143,10 @@ export class MockCupsMessenger {
     counter = 0
 
     constructor() {}
+
+    setTempPassword(password: string){
+        console.log('setting temp password', password)
+    }
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         if (this.counter % 5 === 0) {

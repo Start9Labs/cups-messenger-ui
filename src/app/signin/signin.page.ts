@@ -28,6 +28,7 @@ export class SigninPage implements OnInit {
     this.error$.next(undefined)
     this.loading$.next(true)
     await globe.setPassword(this.password)
+
     await this.cups.contactsShow().handle(async () => {
       this.error$.next(`Invalid Password`)
       await globe.clearPassword()
