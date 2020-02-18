@@ -30,17 +30,18 @@ export class SigninPage implements OnInit {
   async enterCupsMessengerPassword() {
     this.error$.next(undefined)
     this.loading$.next(true)
-    await pauseFor(2000)
     await this.globe.setPassword(this.password)
     await this.cups.contactsShow().handle(async e => {
       this.error$.next(`Invalid Password`)
       await this.globe.clearPassword()
     })
     this.loading$.next(false)
+    this.signin()
   }
 
   private signin() {
     if (this.globe.password) {
+        console.log('signed in successfully!', this.globe.password)
         this.navCtrl.navigateRoot('contact-chat')
     }
   }
