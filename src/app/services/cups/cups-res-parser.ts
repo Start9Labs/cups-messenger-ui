@@ -107,11 +107,10 @@ function pubkeyToOnion(pubkey: ArrayBuffer) {
     return new base32.Encoder({ type: 'rfc4648', lc: true }).write(res).finalize() + '.onion'
 }
 
-const decoder = new base32.Decoder({ type: 'rfc4648', lc: true })
 export function onionToPubkey(onion: string): ArrayBuffer {
     const s = onion.split('.')[0].toUpperCase()
 
-    const decoded = new Uint8Array(decoder.write(s).finalize())
+    const decoded = new Uint8Array(new base32.Decoder({ type: 'rfc4648', lc: true }).write(s).finalize())
 
     if (decoded.byteLength > 35) {
         throw new Error('Invalid base32 length.')

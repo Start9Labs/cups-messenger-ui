@@ -67,18 +67,19 @@ export class AppComponent {
     }
 
     this.submittingNewContact$.next(true)
-    await this.cups.contactsAdd({
+    
+    try {
+      await this.cups.contactsAdd({
         torAddress: sanitizedTorOnion,
         name: sanitizedName
-    })
-    .handle(e => {
-      this.error$.next(e)
+      }).handle(e => {throw e})
+      this.newContactTorAddress = undefined
+      this.newContactName = undefined
+      this.makeNewContactForm = false
+    } catch (e) {
+      this.error$.next(e.message)
+    } finally {
       this.submittingNewContact$.next(false)
-    })
-    .then(() => this.cryo.refresh())
-    this.newContactTorAddress = undefined
-    this.newContactName = undefined
-    this.makeNewContactForm = false
-    this.submittingNewContact$.next(false)
+    }
   }
 }
