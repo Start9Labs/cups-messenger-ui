@@ -6,8 +6,8 @@ import { CryoDaemon } from '../services/daemons/cryo-daemon'
 import { PyroDaemon } from '../services/daemons/pyro-daemon'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject } from 'rxjs'
-import { map } from 'rxjs/operators'
+import { Observable, Subscription, BehaviorSubject, Subject } from 'rxjs'
+import { map, mergeMap } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contact-chat',
@@ -34,6 +34,7 @@ export class ContactChatPage implements OnInit {
   contactNameToAdd: string
   updatingContact$ = new BehaviorSubject(false)
   error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
+  sendMessage$: Subject<[Contact, string]> = new Subject()
 
   constructor(
       private readonly navCtrl: NavController,
@@ -49,6 +50,14 @@ export class ContactChatPage implements OnInit {
     this.cryo.refresh()
     this.globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
     this.currentContact$ = this.globe.watchCurrentContact()
+    this.sendMessage$
+      .pipe(
+        mergeMap( ([contact, message]) => this.cups.messagesSend(contact, message))
+      )
+      .subscribe( () => { 
+        this.pyro.refresh()
+        console.log(`Message sent.`)
+      })
   }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
@@ -70,25 +79,23 @@ export class ContactChatPage implements OnInit {
   }
 
   sendMessage() {
-    if (!this.getContact()) { return }
+    const contact = this.getContact()
+    if (!contact) { return }
+
+    const messageText = this.messageToSend
     const messageToAttend: AttendingMessage = {
       id: uuidv4(),
       timestamp: new Date(),
       direction: 'Outbound',
-      otherParty: this.getContact(),
-      text: this.messageToSend,
+      otherParty: contact,
+      text: messageText,
       attending: true
     }
 
-    this.globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
-    this.cups.messagesSend(this.getContact(), this.messageToSend).then(
-      () => {
-        this.globe.logState('cups-message-send complete: ', this.getContact())
-        this.pyro.refresh()
-      }
-    )
-    this.jumpToBottom()
+    this.globe.pokeAppendAttendingMessage(contact, messageToAttend)
     this.messageToSend = ''
+
+    this.sendMessage$.next([contact, messageText])
   }
 
   contactNameForm(val: boolean) {
