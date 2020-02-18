@@ -3,23 +3,23 @@ export interface Config {
         mock: boolean
         url: string
     }
-    cryoDaemon: {
+    contactsDaemon: {
         frequency: number
     }
-    pyroDaemon: {
+    contactMessagesDaemon: {
         frequency: number
     }
 }
 
 export const config: Config = {
     cupsMessenger: {
-        mock: false,
+        mock: true,
         url: window.origin + '/api'
     },
-    cryoDaemon: {
+    contactsDaemon: {
         frequency: 10000
     },
-    pyroDaemon: {
+    contactMessagesDaemon: {
         frequency: 2500
     }
 }

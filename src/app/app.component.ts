@@ -1,11 +1,11 @@
 import { Component } from '@angular/core'
 
 import { Platform, NavController } from '@ionic/angular'
-import { CryoDaemon } from './services/daemons/cryo-daemon'
-import { GlobalState } from './services/global-state'
+import { globe } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
-import { ContactWithMessageCount, Contact, pauseFor } from './services/cups/types'
+import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable, BehaviorSubject } from 'rxjs'
+import { main } from './services/rx/paths'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 @Component({
   selector: 'app-root',
@@ -21,12 +21,10 @@ export class AppComponent {
 
   public loading$ = new BehaviorSubject(false)
   public error$ = new BehaviorSubject(undefined)
-
+  public globe = globe
 
   constructor(
     private platform: Platform,
-    private cryo: CryoDaemon,
-    public globe: GlobalState,
     private navCtrl: NavController,
     private cups: CupsMessenger
   ) {
@@ -34,13 +32,13 @@ export class AppComponent {
   }
 
   initializeApp() {
+    main(this.cups)
     this.platform.ready().then(() => {
     })
-    this.cryo.start()
   }
 
   jumpToChat(c: Contact) {
-    this.globe.pokeCurrentContact(c)
+    globe.pokeCurrentContact(c)
     this.navCtrl.navigateRoot('contact-chat')
   }
 
@@ -67,7 +65,7 @@ export class AppComponent {
     }
 
     this.submittingNewContact$.next(true)
-    
+
     try {
       await this.cups.contactsAdd({
         torAddress: sanitizedTorOnion,

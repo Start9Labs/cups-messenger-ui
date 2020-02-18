@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core'
 import { Contact, DisplayMessage, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills } from './cups/types'
-import { BehaviorSubject, Observable } from 'rxjs'
+import { BehaviorSubject, Observable, NextObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { DeltaSubject } from './delta-subject'
 import { map } from 'rxjs/operators'
@@ -10,7 +9,6 @@ const passwordKey = { key: 'password' }
 
 export interface CategorizedMessages { server: ServerMessage[], attending: AttendingMessage[] }
 
-@Injectable({providedIn: 'root'})
 export class GlobalState {
     public password: string | undefined
     public contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
@@ -45,27 +43,31 @@ export class GlobalState {
     }
 
     // Notify subscribers with these...
-    pokeServerMessages(c: Contact, newServerMessagesState: ServerMessage[]): void {
-        const displayMessages = this.getCategorizedContactMessages$(c)
+    subscribeContactMessages(c: Contact): NextObserver<ServerMessage[]> {
+        return {
+            next : newServerMessagesState => {
+                const displayMessages = this.getCategorizedContactMessages$(c)
 
-        const { server, attending } = displayMessages.getValue()
+                const { server, attending } = displayMessages.getValue()
 
-        const mostRecentServerMessageSoFar =
-            server.sort(orderTimestampDescending)[0] ?
-            new Date(server.sort(orderTimestampDescending)[0].timestamp).getTime() :
-            new Date(0)
+                const mostRecentServerMessageSoFar =
+                    server.sort(orderTimestampDescending)[0] ?
+                    new Date(server.sort(orderTimestampDescending)[0].timestamp).getTime() :
+                    new Date(0)
 
-        const serverDiff = newServerMessagesState.filter(
-            newestMessage => new Date(newestMessage.timestamp).getTime() > mostRecentServerMessageSoFar
-        )
+                const serverDiff = newServerMessagesState.filter(
+                    newestMessage => new Date(newestMessage.timestamp).getTime() > mostRecentServerMessageSoFar
+                )
 
-        const newAttendingState = JSON.parse(JSON.stringify(attending))
-        serverDiff.forEach( newServerMessage => {
-            const i = newAttendingState.findIndex(presentAttending => serverMessageFulfills(newServerMessage, presentAttending))
-            newAttendingState.splice(i, 1)
-        })
+                const newAttendingState = JSON.parse(JSON.stringify(attending))
+                serverDiff.forEach( newServerMessage => {
+                    const i = newAttendingState.findIndex(presentAttending => serverMessageFulfills(newServerMessage, presentAttending))
+                    newAttendingState.splice(i, 1)
+                })
 
-        this.displayMessages[c.torAddress].deltaPoke({ server: newServerMessagesState, attending: newAttendingState })
+                this.displayMessages[c.torAddress].deltaPoke({ server: newServerMessagesState, attending: newAttendingState })
+            }
+        }
     }
 
     pokeAppendAttendingMessage(c: Contact, a: AttendingMessage): void {
@@ -136,6 +138,8 @@ export class GlobalState {
         return this.displayMessages[c.torAddress]
     }
 }
+
+export const globe = new GlobalState()
 
 export const orderTimestampDescending: (a: {timestamp: Date}, b: {timestamp: Date}) => number
     = (a, b) => {

@@ -1,13 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { GlobalState, CategorizedMessages } from '../services/global-state'
+import { globe } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from '../services/cups/types'
-import { CryoDaemon } from '../services/daemons/cryo-daemon'
-import { PyroDaemon } from '../services/daemons/pyro-daemon'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject } from 'rxjs'
 import { map } from 'rxjs/operators'
+import { prodContacts$, prodMessageContacts$ } from '../services/rx/paths'
 
 @Component({
   selector: 'app-contact-chat',
@@ -16,8 +15,6 @@ import { map } from 'rxjs/operators'
 })
 export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
-
-  private pyro: PyroDaemon
 
   currentContact$: Observable<Contact>
   contactMessages$: Observable<DisplayMessage[]>
@@ -37,28 +34,26 @@ export class ContactChatPage implements OnInit {
 
   constructor(
       private readonly navCtrl: NavController,
-      private readonly globe: GlobalState,
       private readonly cups: CupsMessenger,
-      private readonly cryo: CryoDaemon
   ) { }
 
   ngOnInit() {
-    if (!this.globe.password) {
+    if (!globe.password) {
         this.navCtrl.navigateRoot('signin')
     }
-    this.cryo.refresh()
-    this.globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
-    this.currentContact$ = this.globe.watchCurrentContact()
+
+    prodContacts$.next()
+
+    globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
+    this.currentContact$ = globe.watchCurrentContact()
   }
 
   async onContactUpdate(c: Contact | undefined): Promise<void> {
     if (!c) { return }
-    await this.restartPyro()
-    this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
+    this.contactMessages$ = globe.watchAllContactMessages(c).pipe(map(
       ms => { this.onMessageUpdate(ms); return ms }
     ))
     this.jumpToBottom()
-    this.pyro.start()
   }
 
   async onMessageUpdate(ms: DisplayMessage[]): Promise<void> {
@@ -66,7 +61,7 @@ export class ContactChatPage implements OnInit {
   }
 
   getContact(): Contact | undefined {
-    return this.globe.getCurrentContact()
+    return globe.getCurrentContact()
   }
 
   sendMessage() {
@@ -80,11 +75,11 @@ export class ContactChatPage implements OnInit {
       attending: true
     }
 
-    this.globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
+    globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
     this.cups.messagesSend(this.getContact(), this.messageToSend).then(
       () => {
-        this.globe.logState('cups-message-send complete: ', this.getContact())
-        this.pyro.refresh()
+        globe.logState('cups-message-send complete: ', this.getContact())
+        prodMessageContacts$.next()
       }
     )
     this.jumpToBottom()
@@ -106,19 +101,13 @@ export class ContactChatPage implements OnInit {
       await this.cups.contactsAdd(updatedContact).handle(e => {throw e})
       this.addContactNameForm = false
       this.contactNameToAdd = undefined
-      this.globe.pokeCurrentContact(updatedContact)
+      globe.pokeCurrentContact(updatedContact)
       this.updatingContact$.next(false)
     } catch (e) {
       this.error$.next(`Contact update failed: ${e.message}`)
     } finally {
       this.updatingContact$.next(false)
     }
-  }
-
-  private async restartPyro() {
-    if (this.pyro) { this.pyro.stop() }
-    this.pyro = new PyroDaemon(this.globe, this.cups)
-    await this.pyro.refresh()
   }
 
   private jumpIfAtBottom() {
