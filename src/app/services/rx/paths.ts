@@ -46,3 +46,5 @@ export const contactsProvider: (p: ContactsDaemonConfig) => Observable<ContactWi
             .pipe(
                 mergeMap(() => cups.contactsShow().handle(console.error)),
             )
+
+export const $sendMessageManual = new Subject()

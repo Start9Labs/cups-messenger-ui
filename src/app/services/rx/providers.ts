@@ -1,4 +1,4 @@
-import { interval, Observable, BehaviorSubject, merge } from 'rxjs'
+import { interval, Observable, BehaviorSubject, merge, Subject } from 'rxjs'
 import { mergeMap } from 'rxjs/operators'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
@@ -20,3 +20,5 @@ export const cryoProvider: (p: CryoDaemonConfig) => Observable<ContactWithMessag
             ).pipe(
                 mergeMap(() => cups.contactsShow().handle(console.error)),
             )
+
+

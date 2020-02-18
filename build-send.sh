@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 rm -rf www
 ionic build #--prod
 tar -zcvf cups${1}.tar.gz www
