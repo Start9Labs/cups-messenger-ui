@@ -9,6 +9,25 @@ const passwordKey = { key: 'password' }
 
 export interface CategorizedMessages { server: ServerMessage[], attending: AttendingMessage[] }
 
+export interface Globe {
+    contacts$: BehaviorSubject<ContactWithMessageCount[]>,
+    currentContact$: BehaviorSubject<Contact | undefined>,
+    password: string | undefined,
+    contactMessages: { 
+        [contactTorAddress: string]: { attending: BehaviorSubject<AttendingMessage[]>, server: BehaviorSubject<ServerMessage[]> } 
+    }
+}
+export const globe2 : Globe = {
+    contacts$: new BehaviorSubject([]) ,
+    currentContact$: new BehaviorSubject(undefined) ,
+    password: undefined ,
+    contactMessages: {} ,
+}
+
+export function getContactMessages(g : Globe) {
+    
+}
+
 export class GlobalState {
     public password: string | undefined
     public contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
