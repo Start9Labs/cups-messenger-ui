@@ -1,14 +1,12 @@
 import { Component } from '@angular/core'
 
-import { Platform, NavController } from '@ionic/angular'
+import { NavController } from '@ionic/angular'
 import { globe } from './services/global-state'
-import { CupsMessenger } from './services/cups/cups-messenger'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
-import { Observable, BehaviorSubject, interval, merge } from 'rxjs'
-import { main, $prodAddContact, addContactFire } from './services/rx/paths'
+import { Observable, BehaviorSubject } from 'rxjs'
+import { AppPaths } from './services/rx/paths'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import * as uuidv4 from 'uuid/v4'
-import { filter, take } from 'rxjs/operators'
 
 @Component({
   selector: 'app-root',
@@ -27,16 +25,9 @@ export class AppComponent {
   public globe = globe
 
   constructor(
-    private platform: Platform,
-    private navCtrl: NavController,
-    private cups: CupsMessenger
+    private readonly paths: AppPaths,
+    private readonly navCtrl: NavController,
   ) {
-    this.initializeApp()
-  }
-
-  initializeApp() {
-    main(this.cups)
-    this.platform.ready().then(() => {})
   }
 
   jumpToChat(c: Contact) {
@@ -74,16 +65,14 @@ export class AppComponent {
         name: sanitizedName
       }
 
-      globe.contacts$.pipe(
-        filter(contacts => contacts.map(c => c.torAddress).indexOf( contact.torAddress ) > 1),
-        take(1)
-      ).subscribe(() => {
+      const pid = uuidv4()
+      this.paths.$showContacts$.subscribeToId(pid, () => {
         this.submittingNewContact$.next(false)
         this.newContactTorAddress = undefined
         this.newContactName = undefined
         this.makeNewContactForm = false
-      })
-      $prodAddContact.next({contact})
+      }, 10000)
+      this.paths.$addContact$.next([pid, { contact }])
 
     } catch (e) {
       this.error$.next(e.message)

@@ -149,7 +149,6 @@ export class MockCupsMessenger {
             this.getMessageMocks(contact).push(mockMessage(this.counter))
         }
         const toReturn = JSON.parse(JSON.stringify(this.getMessageMocks(contact))).map(x => { x.timestamp = new Date(x.timestamp); return x })
-        console.log('showing', toReturn)
         return Promise.resolve(
             toReturn
         )

@@ -8,7 +8,7 @@
             </ion-header>
             <ion-content>
                 <ion-list *ngIf="globe.password">
-                    <ion-menu-toggle auto-hide="false" *ngFor="let p of (globe.contacts$ | async)">
+                    <ion-menu-toggle auto-hide="false" *ngFor="let p of (globe.$contacts$ | async)">
                         <ion-button *ngIf="(globe.currentContact$ | async)?.torAddress !== p.torAddress" expand="full" color="white" (click)="jumpToChat(p)">
                             <div style="position: fixed; left: 2%; color: #424242;">
                                 {{

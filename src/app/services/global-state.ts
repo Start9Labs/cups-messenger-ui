@@ -10,7 +10,8 @@ export interface CategorizedMessages { server: ServerMessage[], attending: Atten
 export type CategorizedMessagesSubject = [ BehaviorSubject<AttendingMessage[]>, BehaviorSubject<ServerMessage[]> ]
 
 export class Globe {
-    contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
+    constructor() {}
+    $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
     contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
     password: string | undefined = undefined
@@ -19,7 +20,41 @@ export class Globe {
     } = {}
 
     private latestOutboundServerMessageTime: Date = new Date(0)
-    constructor() {}
+
+    $observeServerMessages: NextObserver<{ contact: Contact, messages: ServerMessage[] }> = {
+        next : ({contact, messages}) => {
+            combineLatest(this.contactMessagesSubjects(contact.torAddress)).pipe(take(1)).subscribe( ([attendingMs, serverMs]) => {
+                if(!messages || !messages.length) { return }
+
+                const newMessages = messages
+                    .filter(m => m.timestamp.getTime() > this.latestOutboundServerMessageTime.getTime())
+                    .sort(sortByTimestamp)
+
+                const newOutboundMessages = newMessages.filter(m => m.direction === 'Outbound')
+
+                if(newOutboundMessages && newOutboundMessages.length){
+                    this.latestOutboundServerMessageTime = newOutboundMessages[0].timestamp
+                    newOutboundMessages.forEach(newOutbound => {
+                        const i = attendingMs.findIndex(attending => serverMessageFulfills(newOutbound, attending))
+                        attendingMs.splice(i, 1)
+                    })
+                }
+                const newMessageState = newMessages.concat(serverMs)
+
+                this.pokeServerMessages(contact, newMessageState)
+                this.pokeAttendingMessages(contact, attendingMs)
+            })
+        }
+    }
+
+    observeAttendingMessage: NextObserver<{contact: Contact, attendingMessage: AttendingMessage}> = 
+        {
+            next : ({contact, attendingMessage}) => {
+                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(messages => {
+                    this.pokeAttendingMessages(contact, [...messages, attendingMessage])
+                })
+            }
+        }
 
     watchMessages(c: Contact): Observable<MessageBase[]> {
         return combineLatest(this.contactMessagesSubjects(c.torAddress)).pipe(map(
@@ -42,44 +77,6 @@ export class Globe {
         Storage.remove(passwordKey)
         this.password = undefined
         return
-    }
-
-    observeAttendingMessage: (c: Contact) => NextObserver<AttendingMessage> = contact => {
-        return {
-            next : attendingMessage => {
-                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(messages => {
-                    this.pokeAttendingMessages(contact, [...messages, attendingMessage])
-                })
-            }
-        }
-    }
-
-    observeServerMessages: (c: Contact) => NextObserver<ServerMessage[]> = contact => {
-        return {
-            next : serverMessages => {
-                combineLatest(this.contactMessagesSubjects(contact.torAddress)).pipe(take(1)).subscribe( ([attendingMs, serverMs]) => {
-                    if(!serverMessages || !serverMessages.length) { return }
-
-                    const newMessages = serverMessages
-                        .filter(m => m.timestamp.getTime() > this.latestOutboundServerMessageTime.getTime())
-                        .sort(sortByTimestamp)
-
-                    const newOutboundMessages = newMessages.filter(m => m.direction === 'Outbound')
-
-                    if(newOutboundMessages && newOutboundMessages.length){
-                        this.latestOutboundServerMessageTime = newOutboundMessages[0].timestamp
-                        newOutboundMessages.forEach(newOutbound => {
-                            const i = attendingMs.findIndex(attending => serverMessageFulfills(newOutbound, attending))
-                            attendingMs.splice(i, 1)
-                        })
-                    }
-                    const newMessageState = newMessages.concat(serverMs)
-
-                    this.pokeServerMessages(contact, newMessageState)
-                    this.pokeAttendingMessages(contact, attendingMs)
-                })
-            }
-        }
     }
 
     private contactMessagesSubjects(tor: string): CategorizedMessagesSubject {

@@ -1,12 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { CupsMessenger } from '../services/cups/cups-messenger'
-import { Contact, AttendingMessage, pauseFor, MessageBase } from '../services/cups/types'
+import { Contact, AttendingMessage, MessageBase, pauseFor } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of } from 'rxjs'
-import { prodContacts$, $prodSendMessage, $prodAddContact, prodContactMessages$ } from '../services/rx/paths'
 import { globe } from '../services/global-state'
-import { filter, take, map, delay } from 'rxjs/operators'
+import { delay } from 'rxjs/operators'
+import { AppPaths } from '../services/rx/paths'
 
 @Component({
   selector: 'app-contact-chat',
@@ -16,7 +15,8 @@ import { filter, take, map, delay } from 'rxjs/operators'
 export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
 
-  currentContact$: Observable<Contact>
+  currentContactTorAddress: string
+  currentContact$: BehaviorSubject<Contact>
   contactMessages$: Observable<MessageBase[]> = new Observable()
   contactMessagesSub: Subscription
 
@@ -34,18 +34,21 @@ export class ContactChatPage implements OnInit {
 
   constructor(
       private readonly navCtrl: NavController,
-      private readonly cups: CupsMessenger,
+      private readonly paths: AppPaths,
   ) {
     globe.currentContact$.subscribe(c => {
       if(!c) return
       this.contactMessages$ = globe.watchMessages(c)
-      this.currentContact$ = globe.currentContact$
+      this.currentContact$ = new BehaviorSubject(c)
+      this.currentContactTorAddress = c.torAddress
       if(this.contactMessagesSub) { this.contactMessagesSub.unsubscribe() }
 
-      this.contactMessagesSub = this.contactMessages$.pipe(delay(250)).subscribe( ms => {
+      this.contactMessagesSub = this.contactMessages$.pipe(delay(250)).subscribe( () => {
         this.onMessageUpdate()
       })
-      prodContactMessages$.next({})
+
+      this.paths.$showContactMessages$.next([uuidv4(), { contact: c }])
+      pauseFor(125).then(() => this.jumpToBottom())
     })
   }
 
@@ -53,7 +56,7 @@ export class ContactChatPage implements OnInit {
     if (!globe.password) {
         this.navCtrl.navigateRoot('signin')
     }
-    prodContacts$.next()
+    this.paths.$showContacts$.next([uuidv4(), {}])
   }
 
   async onMessageUpdate(): Promise<void> {
@@ -64,18 +67,17 @@ export class ContactChatPage implements OnInit {
     const messageText = this.messageToSend
     if (!contact) { return }
 
-    const messageToAttend: AttendingMessage = {
+    of({contact, attendingMessage: {
       id: uuidv4(),
       timestamp: new Date(),
       direction: 'Outbound',
       otherParty: contact,
       text: this.messageToSend,
       attending: true
-    }
+    }}).subscribe(globe.observeAttendingMessage)
 
-    of(messageToAttend).subscribe(globe.observeAttendingMessage(contact))
-    $prodSendMessage.next({contact, text: messageText})
     this.messageToSend = ''
+    this.paths.$sendMessage$.next([uuidv4(), {contact, text: messageText}])
   }
 
   contactNameForm(val: boolean) {
@@ -89,15 +91,15 @@ export class ContactChatPage implements OnInit {
     const updatedContact = {...contact, name: this.contactNameToAdd }
 
     try {
-      globe.contacts$.pipe(
-        filter(contacts => contacts.map(c => [c.name, c.torAddress]).indexOf( [contact.name, contact.torAddress] ) > 1),
-        take(1)
-      ).subscribe(() => {
+      const pid = uuidv4()
+      this.paths.$showContacts$.subscribeToId(pid, cs => {
+        const updated = cs.find(c => c.torAddress === this.currentContactTorAddress)
         this.updatingContact$.next(false)
         this.addContactNameForm = false
         this.contactNameToAdd = undefined
-      })
-      $prodAddContact.next({contact: updatedContact })
+        this.currentContact$.next(updated)
+      }, 10000)
+      this.paths.$addContact$.next([pid, { contact: updatedContact }])
     } catch (e) {
       this.error$.next(`Contact update failed: ${e.message}`)
       this.updatingContact$.next(false)
