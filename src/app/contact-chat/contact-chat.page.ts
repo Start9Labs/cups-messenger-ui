@@ -54,7 +54,7 @@ export class ContactChatPage implements OnInit {
       .pipe(
         mergeMap( ([contact, message]) => this.cups.messagesSend(contact, message))
       )
-      .subscribe( () => { 
+      .subscribe( () => {
         this.pyro.refresh()
         console.log(`Message sent.`)
       })
@@ -95,25 +95,6 @@ export class ContactChatPage implements OnInit {
   contactNameForm(val: boolean) {
     this.error$.next(undefined)
     this.addContactNameForm = val
-  }
-
-  async updateContact() {
-    this.error$.next(undefined)
-    this.updatingContact$.next(true)
-    const contact = this.getContact()
-    const updatedContact = {...contact, name: this.contactNameToAdd }
-
-    try {
-      await this.cups.contactsAdd(updatedContact).handle(e => {throw e})
-      this.addContactNameForm = false
-      this.contactNameToAdd = undefined
-      this.globe.pokeCurrentContact(updatedContact)
-      this.updatingContact$.next(false)
-    } catch (e) {
-      this.error$.next(`Contact update failed: ${e.message}`)
-    } finally {
-      this.updatingContact$.next(false)
-    }
   }
 
   private async restartPyro() {

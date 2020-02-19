@@ -1,6 +1,6 @@
 import { Component } from '@angular/core'
 
-import { Platform, NavController } from '@ionic/angular'
+import { Platform, NavController, MenuController } from '@ionic/angular'
 import { CryoDaemon } from './services/daemons/cryo-daemon'
 import { GlobalState } from './services/global-state'
 import { CupsMessenger } from './services/cups/cups-messenger'
@@ -28,7 +28,8 @@ export class AppComponent {
     private cryo: CryoDaemon,
     public globe: GlobalState,
     private navCtrl: NavController,
-    private cups: CupsMessenger
+    private cups: CupsMessenger,
+    private menu: MenuController,
   ) {
     this.initializeApp()
   }
@@ -42,6 +43,7 @@ export class AppComponent {
   jumpToChat(c: Contact) {
     this.globe.pokeCurrentContact(c)
     this.navCtrl.navigateRoot('contact-chat')
+    this.menu.close('main-menu')
   }
 
   toggleNewContact() {
@@ -67,7 +69,7 @@ export class AppComponent {
     }
 
     this.submittingNewContact$.next(true)
-    
+
     try {
       await this.cups.contactsAdd({
         torAddress: sanitizedTorOnion,

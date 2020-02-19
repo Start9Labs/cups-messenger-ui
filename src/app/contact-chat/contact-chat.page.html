@@ -2,32 +2,13 @@
     <ion-toolbar>
         <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
-          </ion-buttons>
-        <ion-item lines="none">
-            <ion-title color="charcoal" *ngIf="(this.currentContact$ | async) && !addContactNameForm" class="center">
-                {{(this.currentContact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
-            </ion-title>
-            <ion-item *ngIf="(this.currentContact$ | async) && addContactNameForm">
-                <form (ngSubmit)="updateContact()" >
-                    <ion-input type="text" size="150" [disabled]="updatingContact$ | async" placeholder="new contact name" [(ngModel)]="contactNameToAdd" name="contactNameToAdd">
-                    </ion-input>
-                </form>
-                <ion-spinner *ngIf="updatingContact$ | async" name="lines" class="right-spinner" color="warning"></ion-spinner>    
-                <ion-button fill="clear" color="charcoal" (click)="contactNameForm(false)">
-                    <ion-icon color="charcoal" name="arrow-dropright"></ion-icon>
-                </ion-button> 
-            </ion-item>
-            <ion-button fill="clear" color="charcoal" (click)="contactNameForm(true)" *ngIf="(this.currentContact$ | async) && !addContactNameForm">
-                edit
-            </ion-button>
-        </ion-item>
+        </ion-buttons>
+		<ion-title color="charcoal" *ngIf="(currentContact$ | async)" [routerLink]="['/profile']">
+			{{ (currentContact$ | async | truncateEllipses:50:"shortDisplay")?.shortDisplay }}
+		</ion-title>
     </ion-toolbar>
-    
-    <div *ngIf="error$ | async" style="min-height: 2em; text-align: center;">
-        <ion-label class="error-bar" color="danger">{{ error$ | async }}</ion-label>
-    </div>
-
 </ion-header>
+
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="toggleUnreads()">
     
     <ion-list background="url('../../assets/cupsbackground.png')" class="chat">
