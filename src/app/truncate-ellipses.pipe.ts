@@ -5,7 +5,7 @@ import { Contact } from "./services/cups/types"
   name: 'truncateEllipses'
 })
 export class TruncateEllipsesPipe implements PipeTransform {
-    transform(contact: Contact, allowable: number, key): Contact {
+    transform(contact: Contact, allowable: number, key): any {
         if(!contact) { return }
         let displayName = contact.name || contact.torAddress
         if(!displayName) { return }

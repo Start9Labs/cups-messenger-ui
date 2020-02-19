@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { CupsMessenger } from '../services/cups/cups-messenger'
-import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from '../services/cups/types'
+import { Contact, AttendingMessage, pauseFor, MessageBase } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject } from 'rxjs'
-import { map } from 'rxjs/operators'
-import { prodContacts$, $prodSendMessage } from '../services/rx/paths'
+import { Observable, Subscription, BehaviorSubject, of } from 'rxjs'
+import { prodContacts$, $prodSendMessage, $prodAddContact, prodContactMessages$ } from '../services/rx/paths'
 import { globe } from '../services/global-state'
+import { filter, take, map, delay } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contact-chat',
@@ -17,7 +17,7 @@ export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
 
   currentContact$: Observable<Contact>
-  contactMessages$: Observable<DisplayMessage[]>
+  contactMessages$: Observable<MessageBase[]> = new Observable()
   contactMessagesSub: Subscription
 
   // Detecting a new message
@@ -35,39 +35,35 @@ export class ContactChatPage implements OnInit {
   constructor(
       private readonly navCtrl: NavController,
       private readonly cups: CupsMessenger,
-  ) { }
+  ) {
+    globe.currentContact$.subscribe(c => {
+      if(!c) return
+      this.contactMessages$ = globe.watchMessages(c)
+      this.currentContact$ = globe.currentContact$
+      if(this.contactMessagesSub) { this.contactMessagesSub.unsubscribe() }
+
+      this.contactMessagesSub = this.contactMessages$.pipe(delay(250)).subscribe( ms => {
+        this.onMessageUpdate()
+      })
+      prodContactMessages$.next({})
+    })
+  }
 
   ngOnInit() {
     if (!globe.password) {
         this.navCtrl.navigateRoot('signin')
     }
-
     prodContacts$.next()
-
-    globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
-    this.currentContact$ = globe.watchCurrentContact()
   }
 
-  async onContactUpdate(c: Contact | undefined): Promise<void> {
-    if (!c) { return }
-    this.contactMessages$ = globe.watchAllContactMessages(c).pipe(map(
-      ms => { this.onMessageUpdate(ms); return ms }
-    ))
-    this.jumpToBottom()
-  }
-
-  async onMessageUpdate(ms: DisplayMessage[]): Promise<void> {
+  async onMessageUpdate(): Promise<void> {
     this.jumpIfAtBottom()
   }
 
-  getContact(): Contact | undefined {
-    return globe.getCurrentContact()
-  }
-
-  sendMessage() {
-    const contact = this.getContact()
+  sendMessage(contact: Contact) {
     const messageText = this.messageToSend
     if (!contact) { return }
+
     const messageToAttend: AttendingMessage = {
       id: uuidv4(),
       timestamp: new Date(),
@@ -77,8 +73,7 @@ export class ContactChatPage implements OnInit {
       attending: true
     }
 
-    globe.pokeAppendAttendingMessage(contact, messageToAttend)
-
+    of(messageToAttend).subscribe(globe.observeAttendingMessage(contact))
     $prodSendMessage.next({contact, text: messageText})
     this.messageToSend = ''
   }
@@ -88,28 +83,30 @@ export class ContactChatPage implements OnInit {
     this.addContactNameForm = val
   }
 
-  async updateContact() {
+  async updateContact(contact: Contact) {
     this.error$.next(undefined)
     this.updatingContact$.next(true)
-    const contact = this.getContact()
     const updatedContact = {...contact, name: this.contactNameToAdd }
 
     try {
-      await this.cups.contactsAdd(updatedContact).handle(e => {throw e})
-      this.addContactNameForm = false
-      this.contactNameToAdd = undefined
-      globe.pokeCurrentContact(updatedContact)
-      this.updatingContact$.next(false)
+      globe.contacts$.pipe(
+        filter(contacts => contacts.map(c => [c.name, c.torAddress]).indexOf( [contact.name, contact.torAddress] ) > 1),
+        take(1)
+      ).subscribe(() => {
+        this.updatingContact$.next(false)
+        this.addContactNameForm = false
+        this.contactNameToAdd = undefined
+      })
+      $prodAddContact.next({contact: updatedContact })
     } catch (e) {
       this.error$.next(`Contact update failed: ${e.message}`)
-    } finally {
       this.updatingContact$.next(false)
     }
   }
 
   private jumpIfAtBottom() {
     if (this.isAtBottom()) {
-      pauseFor(125).then(() => this.jumpToBottom())
+      this.jumpToBottom()
     }
   }
 

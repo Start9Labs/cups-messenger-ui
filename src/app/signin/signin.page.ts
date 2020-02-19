@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, NgZone } from '@angular/core'
 
 import { NavController } from '@ionic/angular'
 import { globe } from '../services/global-state'
@@ -18,6 +18,7 @@ export class SigninPage implements OnInit {
   constructor(
     private readonly cups: CupsMessenger,
     private readonly navCtrl: NavController,
+    private readonly ngZone: NgZone
   ) { }
 
   ngOnInit() {
@@ -27,20 +28,24 @@ export class SigninPage implements OnInit {
   async enterCupsMessengerPassword() {
     this.error$.next(undefined)
     this.loading$.next(true)
-    await globe.setPassword(this.password)
 
-    await this.cups.contactsShow().handle(async () => {
+    const pass = this.password
+
+    try {
+      await this.cups.contactsShow(pass)
+      await globe.setPassword(pass)
+      this.signin()
+    } catch (e) {
       this.error$.next(`Invalid Password`)
-      await globe.clearPassword()
-    })
-    this.loading$.next(false)
-    this.signin()
+    } finally {
+      this.loading$.next(false)
+    }
   }
 
   private signin() {
     if (globe.password) {
-        console.log('signed in successfully!', globe.password)
-        this.navCtrl.navigateRoot('contact-chat')
+        console.log('signed in successfully!')
+        this.ngZone.run(() => this.navCtrl.navigateRoot('contact-chat'))
     }
   }
 }

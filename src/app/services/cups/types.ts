@@ -20,15 +20,14 @@ export interface MessageBase {
     otherParty: Contact
     text: string
     attending: boolean
+    timestamp: Date
 }
 export interface ServerMessage extends MessageBase {
     attending: false
-    timestamp: Date
 }
 export interface AttendingMessage extends MessageBase {
     attending: true
     direction: 'Outbound'
-    timestamp: Date
 }
 
 export function serverMessageFulfills(s: ServerMessage | AttendingMessage, a: AttendingMessage): boolean {
