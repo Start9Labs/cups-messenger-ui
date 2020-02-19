@@ -7,7 +7,7 @@ import { PyroDaemon } from '../services/daemons/pyro-daemon'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, Subject } from 'rxjs'
-import { map, mergeMap } from 'rxjs/operators'
+import { map, mergeMap, tap } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contact-chat',
@@ -63,15 +63,10 @@ export class ContactChatPage implements OnInit {
   async onContactUpdate(c: Contact | undefined): Promise<void> {
     if (!c) { return }
     await this.restartPyro()
-    this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
-      ms => { this.onMessageUpdate(ms); return ms }
+    this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(mergeMap(
+      async (ms : DisplayMessage[]) => await this.jumpIfAtBottom().then(() => ms)
     ))
-    // this.jumpToBottom()
     this.pyro.start()
-  }
-
-  async onMessageUpdate(ms: DisplayMessage[]): Promise<void> {
-    // this.jumpIfAtBottom()
   }
 
   getContact(): Contact | undefined {
@@ -92,9 +87,8 @@ export class ContactChatPage implements OnInit {
       attending: true
     }
 
-    this.globe.pokeAppendAttendingMessage(contact, messageToAttend)
     this.messageToSend = ''
-
+    this.globe.pokeAppendAttendingMessage(contact, messageToAttend)
     this.sendMessage$.next([contact, messageText])
   }
 
@@ -128,31 +122,29 @@ export class ContactChatPage implements OnInit {
     await this.pyro.refresh()
   }
 
-  // private jumpIfAtBottom() {
-  //   // if (this.isAtBottom()) {
-  //   //   pauseFor(125).then(() => this.jumpToBottom())
-  //   // }
-  // }
+  private async jumpIfAtBottom() {
+    if (this.isAtBottom()) {
+      await this.jumpToBottom()
+    }
+  }
 
-  // private isAtBottom() {
-  //   const targetElements = []
-  //   targetElements[0] = document.getElementById('0')
-  //   targetElements[1] = document.getElementById('1')
-  //   targetElements[2] = document.getElementById('2')
-  //   return targetElements.some( e => e && isElementInViewport(e))
-  // }
+  private isAtBottom() {
+    const targetElements = []
+    targetElements[0] = document.getElementById('0')
+    return targetElements.some( e => e && isElementInViewport(e))
+  }
 
   toggleUnreads() {
-      // if (this.isAtBottom()) {
-      //   this.unreads = false
-      // } else {
-      //   this.unreads = true
-      // }
+      if (this.isAtBottom()) {
+        this.unreads = false
+      } else {
+        this.unreads = true
+      }
       this.unreads = false
   }
 
-  jumpToBottom() {
-  //   // this.content.scrollToBottom(300)
+  async jumpToBottom() {
+    await this.content.scrollToBottom(300)
     this.unreads = false
   }
 }
