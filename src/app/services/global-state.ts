@@ -33,9 +33,7 @@ export class GlobalState {
     }
 
     watchContacts(): Observable<ContactWithMessageCount[]> {
-        return this.contacts$.pipe(
-            map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
-        )
+        return this.contacts$
     }
 
     watchCurrentContact(): Observable<Contact | undefined> {

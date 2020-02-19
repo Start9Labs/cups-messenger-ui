@@ -6,7 +6,6 @@ import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
 import { Subscription, interval, Observable, Subject, merge } from 'rxjs'
 import { map, mergeMap } from 'rxjs/operators'
 
-
 export function main(cups: CupsMessenger) {
     const c0: ContactsDaemonConfig = {
         frequency: config.contactsDaemon.frequency,
@@ -34,17 +33,24 @@ export function main(cups: CupsMessenger) {
 export const prodMessageContacts$ = new Subject()
 export interface ContactMessagesDaemonConfig { frequency: number, cups: CupsMessenger, contact: Contact }
 export const contactMessagesProvider: (p: ContactMessagesDaemonConfig) => Observable<ServerMessage[]> = ({frequency, cups, contact}) =>
-            merge(interval(frequency), prodMessageContacts$)
+            merge(interval(frequency), prodMessageContacts$, sendMessageFire({cups}))
             .pipe(
                 mergeMap(() => cups.messagesShow(contact)),
             )
 
-export const prodContacts$ = new Subject()            
+export const prodContacts$ = new Subject()
 export interface ContactsDaemonConfig { frequency: number, cups: CupsMessenger }
 export const contactsProvider: (p: ContactsDaemonConfig) => Observable<ContactWithMessageCount[]> = ({frequency, cups}) =>
             merge(interval(frequency), prodContacts$)
             .pipe(
                 mergeMap(() => cups.contactsShow().handle(console.error)),
+                map(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
             )
 
-export const $sendMessageManual = new Subject()
+export const $prodSendMessage: Subject<SendMessage> = new Subject()
+export interface SendMessage { contact: Contact, text: string }
+export interface SendMessageConfig { cups: CupsMessenger }
+export const sendMessageFire: (c: SendMessageConfig) => Observable<void> = ({cups}) => 
+    $prodSendMessage.pipe(mergeMap(
+        ({contact, text}) => cups.messagesSend(contact, text)
+    ))

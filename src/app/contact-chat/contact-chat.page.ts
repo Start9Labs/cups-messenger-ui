@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { globe } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { prodContacts$, prodMessageContacts$ } from '../services/rx/paths'
+import { prodContacts$, $prodSendMessage } from '../services/rx/paths'
+import { globe } from '../services/global-state'
 
 @Component({
   selector: 'app-contact-chat',
@@ -65,24 +65,21 @@ export class ContactChatPage implements OnInit {
   }
 
   sendMessage() {
-    if (!this.getContact()) { return }
+    const contact = this.getContact()
+    const messageText = this.messageToSend
+    if (!contact) { return }
     const messageToAttend: AttendingMessage = {
       id: uuidv4(),
       timestamp: new Date(),
       direction: 'Outbound',
-      otherParty: this.getContact(),
+      otherParty: contact,
       text: this.messageToSend,
       attending: true
     }
 
-    globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
-    this.cups.messagesSend(this.getContact(), this.messageToSend).then(
-      () => {
-        globe.logState('cups-message-send complete: ', this.getContact())
-        prodMessageContacts$.next()
-      }
-    )
-    this.jumpToBottom()
+    globe.pokeAppendAttendingMessage(contact, messageToAttend)
+
+    $prodSendMessage.next({contact, text: messageText})
     this.messageToSend = ''
   }
 
