@@ -1,5 +1,5 @@
 import { Contact, DisplayMessage, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills } from './cups/types'
-import { BehaviorSubject, Observable, NextObserver } from 'rxjs'
+import { BehaviorSubject, Observable, NextObserver, combineLatest } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { DeltaSubject } from './delta-subject'
 import { map } from 'rxjs/operators'
@@ -9,14 +9,16 @@ const passwordKey = { key: 'password' }
 
 export interface CategorizedMessages { server: ServerMessage[], attending: AttendingMessage[] }
 
+export type CategorizedMessages2 = [ BehaviorSubject<AttendingMessage[]>, BehaviorSubject<ServerMessage[]> ]
 export interface Globe {
     contacts$: BehaviorSubject<ContactWithMessageCount[]>,
     currentContact$: BehaviorSubject<Contact | undefined>,
     password: string | undefined,
-    contactMessages: { 
-        [contactTorAddress: string]: { attending: BehaviorSubject<AttendingMessage[]>, server: BehaviorSubject<ServerMessage[]> } 
+    contactMessages: {
+        [contactTorAddress: string]: CategorizedMessages2
     }
 }
+
 export const globe2 : Globe = {
     contacts$: new BehaviorSubject([]) ,
     currentContact$: new BehaviorSubject(undefined) ,
@@ -24,8 +26,9 @@ export const globe2 : Globe = {
     contactMessages: {} ,
 }
 
-export function getContactMessages(g : Globe) {
-    
+export function getContactMessages(g : Globe, tor: string): Observable<[AttendingMessage[], ServerMessage[]]> {
+    if(!globe2.contactMessages[tor]) globe2.contactMessages[tor] = [new BehaviorSubject([]), new BehaviorSubject([])]
+    return combineLatest(globe2.contactMessages[tor])
 }
 
 export class GlobalState {
