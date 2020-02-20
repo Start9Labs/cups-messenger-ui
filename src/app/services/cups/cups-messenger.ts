@@ -19,10 +19,10 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): Promise<ContactWithMessageCount[]> {
-        return this.impl.contactsShow()
+        return this.impl.contactsShow(loginTestPassword || globe.password)
     }
 
-    contactsAdd(contact: Contact): Promise<void>{ 
+    contactsAdd(contact: Contact): Promise<void> { 
         return this.impl.contactsAdd(contact)
     }
 
@@ -49,7 +49,7 @@ export class LiveCupsMessenger {
         return config.cupsMessenger.url
     }
 
-    async contactsShow(loginTestPassword?: string): Promise<ContactWithMessageCount[]> {
+    async contactsShow(loginTestPassword: string): Promise<ContactWithMessageCount[]> {
         try {
             return this.http.get(
                 this.hostUrl,
@@ -57,7 +57,7 @@ export class LiveCupsMessenger {
                     params: {
                         type: 'users'
                     },
-                    headers: this.authHeaders(loginTestPassword || globe.password),
+                    headers: this.authHeaders(loginTestPassword),
                     responseType: 'arraybuffer'
                 }
             ).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
@@ -119,10 +119,6 @@ export class MockCupsMessenger {
     counter = 0
 
     constructor() {}
-
-    setTempPassword(password: string){
-        console.log('setting temp password', password)
-    }
 
     async contactsShow(): Promise<ContactWithMessageCount[]> {
         if (this.counter % 5 === 0) {

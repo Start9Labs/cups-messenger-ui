@@ -2,35 +2,16 @@
     <ion-toolbar>
         <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
-          </ion-buttons>
-        <ion-item *ngIf="(this.currentContact$ | async) as current"lines="none">
-            <ion-title color="charcoal" *ngIf="!addContactNameForm" class="center">
-                {{(this.currentContact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
-            </ion-title>
-            <ion-item *ngIf="addContactNameForm">
-                <form (ngSubmit)="updateContact(current)" >
-                    <ion-input type="text" size="150" [disabled]="updatingContact$ | async" placeholder="new contact name" [(ngModel)]="contactNameToAdd" name="contactNameToAdd">
-                    </ion-input>
-                </form>
-                <ion-spinner *ngIf="updatingContact$ | async" name="lines" class="right-spinner" color="warning"></ion-spinner>    
-                <ion-button fill="clear" color="charcoal" (click)="contactNameForm(false)">
-                    <ion-icon color="charcoal" name="arrow-dropright"></ion-icon>
-                </ion-button> 
-            </ion-item>
-            <ion-button fill="clear" color="charcoal" (click)="contactNameForm(true)" *ngIf="current && !addContactNameForm">
-                edit
-            </ion-button>
-        </ion-item>
+        </ion-buttons>
+		<ion-title color="charcoal" *ngIf="(globe.currentContact$ | async)" [routerLink]="['/profile']">
+			{{ (globe.currentContact$ | async | truncateEllipses:50:"shortDisplay")?.shortDisplay }}
+		</ion-title>
     </ion-toolbar>
-    
-    <div *ngIf="error$ | async" style="min-height: 2em; text-align: center;">
-        <ion-label class="error-bar" color="danger">{{ error$ | async }}</ion-label>
-    </div>
-
 </ion-header>
-<ion-content #content [scrollEvents]="true" (ionScrollEnd)="toggleUnreads()">
+
+<ion-content #content [scrollEvents]="true" >
     
-    <ion-list background="url('../../assets/cupsbackground.png')" class="chat">
+    <ion-list #chat background="url('../../assets/cupsbackground.png')" class="chat">
         <div *ngFor="let message of (contactMessages$ | async); let i = index">
             <div class="chat-message" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
                 <div class="chat-message left-bubble">
@@ -40,13 +21,13 @@
             </div>
             <div class="chat-message" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none" [attr.id]="i">
                 <div class="chat-message" class="chat-message right-bubble">
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                    <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
                     <p class="ionic-text-wrap">{{message.text}}</p>
                 </div>
             </div>
             <div class="chat-message" *ngIf="message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message right-bubble-attending">
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                <div class="chat-message right-bubble">
+                    <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
                     <p class="ionic-text-wrap">{{message.text}}</p>
                 </div>
             </div>
@@ -54,9 +35,15 @@
         <div id="end-of-scroll"></div>
     </ion-list>
 
+    <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button color="primary" (click)="jumpToBottom()">
+            <ion-icon name="arrow-down-outline"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
+
 </ion-content>
 
-<ion-footer *ngIf="(currentContact$ | async) as current">
+<ion-footer *ngIf="(globe.currentContact$ | async) as current">
     <form (ngSubmit)="sendMessage(current)">
         <ion-grid >
             <ion-row>
@@ -67,7 +54,4 @@
             </ion-row>
         </ion-grid>
     </form>
-    <ion-button *ngIf="unreads" (click)="jumpToBottom()">
-        Jump to bottom
-    </ion-button>
 </ion-footer>

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core'
 
-import { NavController } from '@ionic/angular'
 import { globe } from './services/global-state'
+import { NavController, MenuController } from '@ionic/angular'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable, BehaviorSubject } from 'rxjs'
 import { AppPaths } from './services/rx/paths'
@@ -27,12 +27,14 @@ export class AppComponent {
   constructor(
     private readonly paths: AppPaths,
     private readonly navCtrl: NavController,
+    private menu: MenuController,
   ) {
   }
 
   jumpToChat(c: Contact) {
     globe.currentContact$.next(c)
     this.navCtrl.navigateRoot('contact-chat')
+    this.menu.close('main-menu')
   }
 
   toggleNewContact() {

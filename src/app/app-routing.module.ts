@@ -15,6 +15,10 @@ const routes: Routes = [
     path: 'contact-chat',
     loadChildren: () => import('./contact-chat/contact-chat.module').then( m => m.ContactChatPageModule)
   },
+  {
+    path: 'profile',
+    loadChildren: () => import('./profile/profile.module').then( m => m.ProfilePageModule)
+  },
 ]
 
 @NgModule({

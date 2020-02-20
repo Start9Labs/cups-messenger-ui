@@ -8,7 +8,8 @@ import { AppComponent } from './app.component'
 import { AppRoutingModule } from './app-routing.module'
 import { FormsModule } from '@angular/forms'
 import { ContactChatPageModule } from './contact-chat/contact-chat.module'
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http'
+import { TextAvatarModule } from './text-avatar'
 
 @NgModule({
   declarations: [AppComponent ],
@@ -19,7 +20,8 @@ import { HttpClientModule } from '@angular/common/http';
     AppRoutingModule,
     FormsModule,
     ContactChatPageModule,
-    HttpClientModule
+    HttpClientModule,
+    TextAvatarModule,
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
