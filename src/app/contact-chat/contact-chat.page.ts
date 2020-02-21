@@ -4,7 +4,7 @@ import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of } from 'rxjs'
 import { globe } from '../services/global-state'
-import { AppPaths } from '../services/rx/paths'
+import { AppDaemons } from '../services/rx/paths'
 import { tap, delay } from 'rxjs/operators'
 
 @Component({
@@ -36,7 +36,7 @@ export class ContactChatPage implements OnInit {
 
   constructor(
       private readonly navCtrl: NavController,
-      private readonly paths: AppPaths,
+      private readonly paths: AppDaemons,
   ) {
     globe.currentContact$.subscribe(c => {
       if(!c) return

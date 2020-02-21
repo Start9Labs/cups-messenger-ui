@@ -7,60 +7,44 @@ import { interval,
          combineLatest,
          OperatorFunction,
         } from 'rxjs'
-import { map, switchMap, filter, catchError } from 'rxjs/operators'
+import { map, switchMap, filter } from 'rxjs/operators'
 import { Injectable } from '@angular/core'
-import { PathSubject, compSub } from './path-subject'
+import { LongSubject } from './path-subject'
 
 @Injectable({providedIn: 'root'})
-export class AppPaths {
-    $showContacts$:         PathSubject<ShowContacts, ContactWithMessageCount[]>
-    $showContactMessages$:  PathSubject<ContactMessages, {contact: Contact, messages: ServerMessage[]}>
-    $sendMessage$:          PathSubject<SendMessage, { contact: Contact }>
-    $addContact$:           PathSubject<AddContact, {contact: Contact}>
+export class AppDaemons {
+    $showContacts$:         LongSubject<{},                               ContactWithMessageCount[]>
+    $showContactMessages$:  LongSubject<{contact: Contact},               {contact: Contact, messages: ServerMessage[]}>
 
     constructor(cups: CupsMessenger){
-        this.$showContacts$         = new PathSubject(showContactsPipe(cups))
-        this.$showContactMessages$  = new PathSubject(showContactMessagesPipe(cups))
-        this.$sendMessage$          = new PathSubject(sendMessagePipe(cups))
-        this.$addContact$           = new PathSubject(addContactPipe(cups))
+        this.$showContacts$         = new LongSubject(showContactsOp(cups))
+        this.$showContactMessages$  = new LongSubject(showContactMessagesOp(cups))
         this.init()
     }
 
     private init() {
-        this.$showContacts$
-            .subscribe(globe.$contacts$)
-        this.$addContact$
-            .subscribeM(globe.currentContact$, c => c.contact)
-        compSub(this.$addContact$, this.$showContacts$)
+        interval(config.contactsDaemon.frequency).subscribe(this.$showContacts$)
+        combineLatest([
+            interval(config.contactMessagesDaemon.frequency),
+            globe.currentContact$.pipe(filter(c => !!c))
+        ]).pipe(map(([_, c]) => ({contact: c}))).subscribe(this.$showContactMessages$)
 
+        this.$showContacts$.subscribe(globe.$contacts$)
         this.$showContactMessages$.subscribe(globe.$observeServerMessages)
-        compSub(this.$sendMessage$, this.$showContactMessages$)
-
-        combineLatest([intervalStr(config.contactsDaemon.frequency), of({})])
-            .subscribe(this.$showContacts$)
-        combineLatest([intervalStr(config.contactMessagesDaemon.frequency), globe.currentContact$.pipe(filter(c => !!c))])
-            .pipe(
-                map((([i , c]) => ([i, {contact: c}] as [string, {contact: Contact}]))),
-                catchError(e => of(console.error(e)))
-            )
-            .subscribe(this.$showContactMessages$)
     }
 }
 
 export const intervalStr = frequency => interval(frequency).pipe(map(i => String(i)))
 
-export type ShowContacts = {}
-const showContactsPipe : (cups: CupsMessenger) => OperatorFunction<ShowContacts, ContactWithMessageCount[]> =
+export const showContactsOp: (cups: CupsMessenger) => OperatorFunction<{}, ContactWithMessageCount[]> =
     cups => switchMap(() => cups.contactsShow().then(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)))
 
-export interface ContactMessages { contact: Contact }
-const showContactMessagesPipe : (cups: CupsMessenger) => OperatorFunction<ContactMessages, {contact: Contact, messages: ServerMessage[]}> =
+export const showContactMessagesOp: (cups: CupsMessenger) => 
+        OperatorFunction<{contact: Contact}, {contact: Contact, messages: ServerMessage[]}> =
     cups => switchMap(({contact}) => cups.messagesShow(contact).then(messages => ({contact, messages})))
 
-export interface SendMessage { contact: Contact, text: string }
-const sendMessagePipe : (cups: CupsMessenger) => OperatorFunction<SendMessage, { contact: Contact }> =
+export const sendMessageOp : (cups: CupsMessenger) => OperatorFunction<{contact: Contact, text: string}, { contact: Contact }> =
     cups => switchMap(({contact, text}) => cups.messagesSend(contact, text).then(() => ({contact})))
 
-export interface AddContact { contact: Contact }
-const addContactPipe : (cups: CupsMessenger) => OperatorFunction<AddContact, { contact: Contact }> =
+export const addContactOp : (cups: CupsMessenger) => OperatorFunction<{contact: Contact}, { contact: Contact }> =
     cups => switchMap(({contact}) => cups.contactsAdd(contact).then( _ => ({ contact })))

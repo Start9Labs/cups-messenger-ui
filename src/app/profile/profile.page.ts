@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core'
 import { Contact } from '../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
 import { globe } from '../services/global-state'
-import { AppPaths } from '../services/rx/paths'
+import { AppDaemons } from '../services/rx/paths'
 import * as uuidv4 from 'uuid/v4'
 import { Observable } from 'rxjs'
 import { take } from 'rxjs/operators'
@@ -20,7 +20,7 @@ export class ProfilePage {
   constructor (
     private readonly loadingCtrl: LoadingController,
     private readonly navCtrl: NavController,
-    private readonly paths: AppPaths,
+    private readonly paths: AppDaemons,
     private readonly ngZone: NgZone
   ) { }
 

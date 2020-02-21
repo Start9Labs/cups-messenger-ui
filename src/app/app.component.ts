@@ -4,9 +4,12 @@ import { globe } from './services/global-state'
 import { NavController, MenuController } from '@ionic/angular'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable, BehaviorSubject } from 'rxjs'
-import { AppPaths } from './services/rx/paths'
+import { AppDaemons, addContactOp, showContactsOp } from './services/rx/paths'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import * as uuidv4 from 'uuid/v4'
+import { LongSubject } from './services/rx/path-subject'
+import { CupsMessenger } from './services/cups/cups-messenger'
+import { tap, filter, switchMap, map } from 'rxjs/operators'
 
 @Component({
   selector: 'app-root',
@@ -25,8 +28,9 @@ export class AppComponent {
   public globe = globe
 
   constructor(
-    private readonly paths: AppPaths,
+    private readonly paths: AppDaemons,
     private readonly navCtrl: NavController,
+    private readonly cups: CupsMessenger,
     private menu: MenuController,
   ) {
   }
@@ -66,17 +70,17 @@ export class AppComponent {
       name: sanitizedName
     }
 
-    const pid = uuidv4()
-    this.paths.$showContacts$.subscribeToId(
-      pid,
-      () => {
-        this.submittingNewContact$.next(false)
-        this.newContactTorAddress = undefined
-        this.newContactName = undefined
-        this.makeNewContactForm = false
-      },
-      e => this.error$.next(e),
-      10000)
-    this.paths.$addContact$.next([pid, { contact }])
+    new LongSubject(addContactOp(this.cups))
+        .asObservable()
+        .pipe(
+          map(({contact: c}) => c)
+        ).subscribe(c => {
+          globe.currentContact$.next(c)
+          this.paths.$showContacts$.next({})
+          this.submittingNewContact$.next(false)
+          this.newContactTorAddress = undefined
+          this.newContactName = undefined
+          this.makeNewContactForm = false
+        })
   }
 }
