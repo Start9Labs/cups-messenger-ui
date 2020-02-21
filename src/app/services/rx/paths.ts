@@ -19,14 +19,14 @@ export function main(cups: CupsMessenger) {
         cups
     }
 
-    contactsSubscription = contactsProvider(c0).subscribe(globe.$contacts$)
+    contactsSubscription = contactsProvider(c0).subscribe(globe.observeContacts)
     contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
 
     interval(1000).pipe(filter(
         () => contactsSubscription.closed
     )).subscribe(() => {
         console.warn(`restarting contacts daemon`)
-        contactsSubscription = contactsProvider(c0).subscribe(globe.$contacts$)
+        contactsSubscription = contactsProvider(c0).subscribe(globe.observeContacts)
     })
 
     interval(1000).pipe(filter(
@@ -51,7 +51,7 @@ export const contactMessagesProvider: (p: ContactMessagesDaemonConfig)
                     switchMap(([contact]) =>
                         of(contact).pipe(
                             switchMap(() => cups.messagesShow(contact)),
-                            map(messages => { console.log('mapping contacts') ; return { contact, messages }}),
+                            map(messages => { console.log('mapping messages') ; return { contact, messages }}),
                             catchError(e => {
                                 console.error(`Error in contact messages daemon ${e.message}`)
                                 return of(undefined)
@@ -69,7 +69,10 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                 .pipe(
                     switchMap(() => cups.contactsShow()),
                     tap((res) => `received contacts from daemon 1 ${res}`),
-                    map(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)),
+                    map(contacts => { 
+                        console.log('mapping contacts' , JSON.stringify(contacts))
+                        return contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)
+                    }),
                     catchError(e => {
                         console.error(`Error in contacts daemon ${e.message}`)
                         return of(undefined)
