@@ -1,5 +1,5 @@
 import { Contact, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills, MessageBase } from './cups/types'
-import { BehaviorSubject, NextObserver, combineLatest, Observable } from 'rxjs'
+import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
 const { Storage } = Plugins
@@ -10,7 +10,7 @@ export interface CategorizedMessages { server: ServerMessage[], attending: Atten
 export type CategorizedMessagesSubject = [ BehaviorSubject<AttendingMessage[]>, BehaviorSubject<ServerMessage[]> ]
 
 export class Globe {
-    constructor() {}
+
     $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
     contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
@@ -18,6 +18,10 @@ export class Globe {
     contactMessages: {
         [contactTorAddress: string]: CategorizedMessagesSubject
     } = {}
+
+
+    constructor() {
+    }
 
     private latestOutboundServerMessageTime: Date = new Date(0)
     private latestOverallServerMessageTime: Date = new Date(0)
@@ -54,7 +58,7 @@ export class Globe {
         }
     }
 
-    observeAttendingMessage: NextObserver<{contact: Contact, attendingMessage: AttendingMessage}> = 
+    observeAttendingMessage: NextObserver<{contact: Contact, attendingMessage: AttendingMessage}> =
         {
             next : ({contact, attendingMessage}) => {
                 this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(messages => {
@@ -97,6 +101,8 @@ export class Globe {
         this.contactMessagesSubjects(c.torAddress)[1].next(ss.sort(sortByTimestamp))
     }
 }
+
+
 
 export const globe = new Globe()
 

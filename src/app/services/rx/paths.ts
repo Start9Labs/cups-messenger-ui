@@ -7,7 +7,7 @@ import { interval,
          combineLatest,
          OperatorFunction,
         } from 'rxjs'
-import { map, switchMap, filter } from 'rxjs/operators'
+import { map, switchMap, filter, catchError } from 'rxjs/operators'
 import { Injectable } from '@angular/core'
 import { PathSubject, compSub } from './path-subject'
 
@@ -39,7 +39,10 @@ export class AppPaths {
         combineLatest([intervalStr(config.contactsDaemon.frequency), of({})])
             .subscribe(this.$showContacts$)
         combineLatest([intervalStr(config.contactMessagesDaemon.frequency), globe.currentContact$.pipe(filter(c => !!c))])
-            .pipe(map((([i , c]) => ([i, {contact: c}] as [string, {contact: Contact}]))))
+            .pipe(
+                map((([i , c]) => ([i, {contact: c}] as [string, {contact: Contact}]))),
+                catchError(e => of(console.error(e)))
+            )
             .subscribe(this.$showContactMessages$)
     }
 }

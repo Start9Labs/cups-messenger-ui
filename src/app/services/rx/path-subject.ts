@@ -10,8 +10,15 @@ export class PathSubject<S, T> implements NextObserver<[string, S]>{
         private readonly internalTrigger = new Subject<[string, S]>()
     ) {
         this.path = this.internalTrigger.pipe(
-            switchMap(([pid, s]) =>  of(s).pipe(toPipe, map(t => ([pid, t] as [string, T]))))
-        )
+            switchMap(([pid, s]) =>
+                of(s).pipe(
+                    toPipe,
+                    map(t => ([pid, t] as [string, T])),
+                    catchError(e => {
+                        console.error(e)
+                        return of([pid, undefined] as [string, T])
+                    }))
+        ))
     }
 
     next([pid, s]: [string, S]): void {
@@ -31,7 +38,7 @@ export class PathSubject<S, T> implements NextObserver<[string, S]>{
             this.path.pipe(filter(([id,_]) => id === pid)), interval(timeout)
         ).pipe(
             take(1),
-            map(res => { 
+            map(res => {
                 if(res[0] === pid) {
                     return res[1]
                 } else {
