@@ -31,3 +31,4 @@ platforms
 plugins
 www
 *.tar.gz
+*.s9pk
