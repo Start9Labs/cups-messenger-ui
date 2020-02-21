@@ -1,5 +1,5 @@
 import { Contact, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills, MessageBase, attendingMessageFulfills, FailedMessage } from './cups/types'
-import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject } from 'rxjs'
+import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
 const { Storage } = Plugins
@@ -24,6 +24,14 @@ export class Globe {
 
     private latestOutboundServerMessageTime: Date = new Date(0)
     private latestOverallServerMessageTime: Date = new Date(0)
+
+    observeContacts: PartialObserver<ContactWithMessageCount[]> = {
+        next: contacts => {
+            if(contacts) {
+                this.$contacts$.next(contacts)
+            }
+        },
+    }
 
     $observeServerMessages: NextObserver<{ contact: Contact, messages: ServerMessage[] }> = {
         next : ({contact, messages}) => {

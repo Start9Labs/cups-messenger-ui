@@ -58,7 +58,6 @@ export const contactMessagesProvider: (p: ContactMessagesDaemonConfig)
                             }),
                         )
                     ),
-                    filter(res => !!res)
                 )
 
 export const prodContacts$ = new Subject()
@@ -75,6 +74,4 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                         console.error(`Error in contacts daemon ${e.message}`)
                         return of(undefined)
                     }),
-                    filter(res => !!res),
-                    tap((res) => `received contacts from daemon 2 ${res}`),
                 )
