@@ -51,7 +51,7 @@ export const contactMessagesProvider: (p: ContactMessagesDaemonConfig)
                     switchMap(([contact]) =>
                         of(contact).pipe(
                             switchMap(() => cups.messagesShow(contact)),
-                            map(messages => ({ contact, messages })),
+                            map(messages => { console.log('mapping contacts') ; return { contact, messages }}),
                             catchError(e => {
                                 console.error(`Error in contact messages daemon ${e.message}`)
                                 return of(undefined)

@@ -37,23 +37,13 @@
                 <ion-item-group>
                     <div *ngFor="let contact of (globe.$contacts$ | async)" >
                         <div *ngIf="(globe.currentContact$ | async) || {}; let cc" >
-                            <div *ngIf="cc?.torAddress === contact.torAddress; else notCC">
-                                <ion-item button detail="false" (click)="jumpToChat(cc)" [color]="'light'">
-                                    <ion-avatar slot="start">
-                                        <text-avatar [text]='(cc | truncateEllipses:18:"shortDisplay")?.shortDisplay'></text-avatar>
-                                    </ion-avatar>
-                                    <ion-label>{{ (cc | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
-                                </ion-item>
-                            </div>
-                            <ng-template #notCC>
-                                <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="undefined">
-                                    <ion-avatar slot="start">
-                                        <text-avatar [text]='(contact | truncateEllipses:18:"shortDisplay")?.shortDisplay'></text-avatar>
-                                    </ion-avatar>
-                                    <ion-label>{{ (contact | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
-                                    <ion-badge slot="end" color="danger" *ngIf="contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
-                                </ion-item>
-                            </ng-template>
+                            <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(globe.currentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
+                                <ion-avatar slot="start">
+                                    <text-avatar [text]='(contact | truncateEllipses:18:"shortDisplay")?.shortDisplay'></text-avatar>
+                                </ion-avatar>
+                                <ion-label>{{ (contact | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
+                                <ion-badge slot="end" color="danger" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
+                            </ion-item>
                         </div>
                     </div>
                 </ion-item-group>

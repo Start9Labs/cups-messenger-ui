@@ -1,4 +1,12 @@
-import { Contact, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills, MessageBase, attendingMessageFulfills, FailedMessage } from './cups/types'
+import { Contact,
+        ContactWithMessageCount,
+        ServerMessage,
+        AttendingMessage,
+        serverMessageFulfills,
+        MessageBase,
+        attendingMessageFulfills,
+        FailedMessage
+       } from './cups/types'
 import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
@@ -18,15 +26,14 @@ export class Globe {
         [contactTorAddress: string]: CategorizedMessagesSubject
     } = {}
 
-
-    constructor() {
-    }
+    constructor() {}
 
     private latestOutboundServerMessageTime: Date = new Date(0)
     private latestOverallServerMessageTime: Date = new Date(0)
 
     observeContacts: PartialObserver<ContactWithMessageCount[]> = {
         next: contacts => {
+            console.log(`nexting contacts`)
             if(contacts) {
                 this.$contacts$.next(contacts)
             }
