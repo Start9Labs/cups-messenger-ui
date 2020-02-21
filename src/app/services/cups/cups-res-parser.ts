@@ -88,7 +88,7 @@ function pullMessage(p: ArrayBufferParser): CupsMessageShow {
     const epochTime: number = p.chopNParse(8, bigEndian)
     const messageLength = p.chopNParse(8, bigEndian)
     const text = p.chopNParse(messageLength, a => utf8Decoder.decode(a))
-    return { direction, timestamp: new Date(epochTime), text }
+    return { direction, timestamp: new Date(epochTime * 1000), text }
 }
 
 function pubkeyToOnion(pubkey: ArrayBuffer) {
