@@ -105,8 +105,8 @@ export class ContactChatPage implements OnInit {
   // }
 
   async jumpToBottom() {
-    this.unreads = false
-    this.content.scrollToBottom(200)
+    // this.unreads = false
+    // this.content.scrollToBottom(200)
   }
 }
 

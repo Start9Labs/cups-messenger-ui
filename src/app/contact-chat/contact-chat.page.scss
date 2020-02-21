@@ -46,8 +46,9 @@
     }
 }
 .chat-message {
-    min-height: 40px;
+    // min-height: 40px;
     background: none;
+    text-align: left;
     // width: 100%;
 }
 
@@ -60,15 +61,13 @@
     margin-left: 2%;
     float: left;
     max-width: 60%;
-    text-align: left;
+    min-width: 23%;
+    text-align: right;
     span.msg-date {
         font-size: 10px;
     }
 }
 
-.right {
-    text-align: right;
-}
 .right-bubble {
     // position: relative;
     float: right;
@@ -79,6 +78,7 @@
     margin: 10px;
     margin-right: 2%;
     max-width: 60%;
+    min-width: 23%;
     span.msg-date {
         font-size: 10px;
     }

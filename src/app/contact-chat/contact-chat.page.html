@@ -13,23 +13,17 @@
     
     <ion-list #chat class="chat">
         <div *ngFor="let message of (contactMessages$ | async); let i = index">
-            <div class="chat-message" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message left-bubble">
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
-                    <p class="ionic-text-wrap">{{message.text}}</p>
-                </div>
+            <div class="left-bubble" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{message.timestamp | date:'short'}}</span>
             </div>
-            <div class="chat-message" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message" class="chat-message right-bubble">
-                    <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
-                    <p class="ionic-text-wrap">{{message.text}}</p>
-                </div>
+            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none" [attr.id]="i">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
             </div>
-            <div class="chat-message" *ngIf="message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message right-bubble">
+            <div class="right-bubble" *ngIf="message.attending" lines="none" [attr.id]="i">
+                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                     <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
-                    <p class="ionic-text-wrap">{{message.text}}</p>
-                </div>
             </div>
         </div>    
         <div id="end-of-scroll"></div>
