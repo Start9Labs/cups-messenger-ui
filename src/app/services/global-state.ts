@@ -10,7 +10,6 @@ export interface CategorizedMessages { server: ServerMessage[], attending: Atten
 export type CategorizedMessagesSubject = [ BehaviorSubject<AttendingMessage[]>, BehaviorSubject<ServerMessage[]> ]
 
 export class Globe {
-
     $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
     contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)

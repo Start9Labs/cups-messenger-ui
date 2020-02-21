@@ -71,8 +71,7 @@ export class AppComponent {
     }
 
     of(this.cups.contactsAdd(contact)).pipe(
-      switchMap(() => this.cups.contactsShow()),
-      tap(() => prodContacts$.next())
+      switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
     ).subscribe({
       next: () => {
         globe.currentContact$.next(contact)

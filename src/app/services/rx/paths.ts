@@ -3,7 +3,7 @@ import { globe } from '../global-state'
 import { config } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
-import { interval, Observable, Subject, merge, combineLatest, of } from 'rxjs'
+import { interval, Observable, Subject, merge, combineLatest, of, Subscribable, Subscription } from 'rxjs'
 import { map, catchError, filter, switchMap } from 'rxjs/operators'
 
 export function main(cups: CupsMessenger) {
