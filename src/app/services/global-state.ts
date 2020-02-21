@@ -1,4 +1,4 @@
-import { Contact, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills, MessageBase } from './cups/types'
+import { Contact, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills, MessageBase, attendingMessageFulfills, FailedMessage } from './cups/types'
 import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
@@ -60,8 +60,21 @@ export class Globe {
     observeAttendingMessage: NextObserver<{contact: Contact, attendingMessage: AttendingMessage}> =
         {
             next : ({contact, attendingMessage}) => {
-                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(messages => {
-                    this.pokeAttendingMessages(contact, [...messages, attendingMessage])
+                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
+                    this.pokeAttendingMessages(contact, [...attendingMessages, attendingMessage])
+                })
+            }
+        }
+
+    observeFailedMessage: NextObserver<{contact: Contact, failedMessage: FailedMessage}> =
+        {
+            next : ({contact, failedMessage}) => {
+                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
+                    const i = attendingMessages.findIndex( m => {
+                        attendingMessageFulfills(failedMessage, m)
+                    } )
+                    attendingMessages.splice(i, 1, failedMessage)
+                    this.pokeAttendingMessages(contact, attendingMessages)
                 })
             }
         }

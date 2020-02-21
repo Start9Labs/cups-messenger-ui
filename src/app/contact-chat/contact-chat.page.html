@@ -21,9 +21,9 @@
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
             </div>
-            <div class="right-bubble" *ngIf="message.attending" lines="none" [attr.id]="i">
-                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
+            <div class="right-bubble" [class.failed]="message.failed" *ngIf="message.attending" lines="none" [attr.id]="i">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" [color]="message.failed ? 'danger' : undefined" [name]="message.failed ? 'close' : 'time-outline'"></ion-icon></span>
             </div>
         </div>    
         <div id="end-of-scroll"></div>

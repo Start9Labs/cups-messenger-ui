@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core'
-import { Contact, MessageBase, pauseFor } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject, of } from 'rxjs'
+import { Observable, Subscription, BehaviorSubject, of, merge, interval, from } from 'rxjs'
 import { globe } from '../services/global-state'
-import { tap } from 'rxjs/operators'
+import { tap, map, take } from 'rxjs/operators'
 import { prodMessageContacts$, prodContacts$ } from '../services/rx/paths'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 
@@ -70,23 +70,36 @@ export class ContactChatPage implements OnInit {
     const messageText = this.messageToSend
     if (!contact) { return }
 
-    of({contact, attendingMessage: {
+    const attendingMessage: AttendingMessage = {
       id: uuidv4(),
       timestamp: new Date(),
       direction: 'Outbound',
       otherParty: contact,
       text: this.messageToSend,
-      attending: true
-    }}).subscribe(s => {
+      attending: true,
+      attemptedAt: new Date(),
+      failed: false
+    }
+
+    of({contact, attendingMessage }).subscribe(s => {
       globe.observeAttendingMessage.next(s as any)
     })
 
-    of(this.cups.messagesSend(contact, messageText)).subscribe({
-      next: () => {
+    merge(
+      from(this.cups.messagesSend(contact, messageText)).pipe(map(() => true)),
+      interval(20000)                                   .pipe(map(() => false), take(1))
+    )
+    .subscribe({
+      next: res => {
+        if(!res) {
+          console.error(`message timedout ${attendingMessage.text}`)
+          globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
+        }
         prodMessageContacts$.next()
       },
       error: e => {
         console.error(e.message)
+        globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
       }
     })
     this.messageToSend = ''

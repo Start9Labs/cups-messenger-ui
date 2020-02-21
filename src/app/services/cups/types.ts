@@ -28,12 +28,25 @@ export interface ServerMessage extends MessageBase {
 export interface AttendingMessage extends MessageBase {
     attending: true
     direction: 'Outbound'
+    failed: boolean
+    attemptedAt: Date
+}
+export interface FailedMessage extends AttendingMessage {
+    failed: true
 }
 
 export function serverMessageFulfills(s: ServerMessage | AttendingMessage, a: AttendingMessage): boolean {
     if (s.direction !== a.direction) { return false }
     if (s.otherParty.torAddress !== a.otherParty.torAddress) { return false }
     if (s.text !== a.text) { return false }
+    return true
+}
+
+export function attendingMessageFulfills(s: AttendingMessage, a: AttendingMessage): boolean {
+    if (s.direction !== a.direction) { return false }
+    if (s.otherParty.torAddress !== a.otherParty.torAddress) { return false }
+    if (s.text !== a.text) { return false }
+    if (s.attemptedAt !== a.attemptedAt) { return false }
     return true
 }
 

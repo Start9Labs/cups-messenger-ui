@@ -3,7 +3,7 @@ import { Component } from '@angular/core'
 import { globe } from './services/global-state'
 import { NavController, MenuController } from '@ionic/angular'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
-import { Observable, BehaviorSubject, of } from 'rxjs'
+import { Observable, BehaviorSubject, of, from } from 'rxjs'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import * as uuidv4 from 'uuid/v4'
 import { LongSubject } from './services/rx/path-subject'
@@ -70,7 +70,7 @@ export class AppComponent {
       name: sanitizedName
     }
 
-    of(this.cups.contactsAdd(contact)).pipe(
+    from(this.cups.contactsAdd(contact)).pipe(
       switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
     ).subscribe({
       next: () => {

@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core'
 import { Contact } from '../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
 import { globe } from '../services/global-state'
-import { Observable, of } from 'rxjs'
+import { Observable, of, from } from 'rxjs'
 import { take, switchMap } from 'rxjs/operators'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 
@@ -39,7 +39,7 @@ export class ProfilePage {
 
     const updatedContact = { ...c, name: this.contactName }
 
-    of(this.cups.contactsAdd(updatedContact)).pipe(
+    from(this.cups.contactsAdd(updatedContact)).pipe(
       switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
     ).subscribe(
       {
