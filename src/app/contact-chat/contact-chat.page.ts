@@ -4,8 +4,9 @@ import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of } from 'rxjs'
 import { globe } from '../services/global-state'
-import { AppDaemons } from '../services/rx/paths'
-import { tap, delay } from 'rxjs/operators'
+import { tap } from 'rxjs/operators'
+import { prodMessageContacts$, prodContacts$ } from '../services/rx/paths'
+import { CupsMessenger } from '../services/cups/cups-messenger'
 
 @Component({
   selector: 'app-contact-chat',
@@ -36,12 +37,11 @@ export class ContactChatPage implements OnInit {
 
   constructor(
       private readonly navCtrl: NavController,
-      private readonly paths: AppDaemons,
+      private readonly cups: CupsMessenger
   ) {
     globe.currentContact$.subscribe(c => {
       if(!c) return
       this.contactMessages$ = globe.watchMessages(c).pipe(tap(async (ms) => {
-        console.log('tapping', ms)
         await pauseFor(125)
         this.jumpToBottom()
         // if(this.isAtBottom()){
@@ -55,7 +55,7 @@ export class ContactChatPage implements OnInit {
       this.currentContactTorAddress = c.torAddress
 
       if(this.contactMessagesSub) { this.contactMessagesSub.unsubscribe() }
-      this.paths.$showContactMessages$.next([uuidv4(), { contact: c }])
+      prodMessageContacts$.next({})
     })
   }
 
@@ -63,14 +63,8 @@ export class ContactChatPage implements OnInit {
     if (!globe.password) {
         this.navCtrl.navigateRoot('signin')
     }
-    this.paths.$showContacts$.next([uuidv4(), {}])
+    prodContacts$.next({})
   }
-
-  // ionViewWillEnter(){
-  //   if(!this.isAtBottom()){
-  //     this.unreads = true
-  //   }
-  // }
 
   sendMessage(contact: Contact) {
     const messageText = this.messageToSend
@@ -87,22 +81,16 @@ export class ContactChatPage implements OnInit {
       globe.observeAttendingMessage.next(s as any)
     })
 
+    of(this.cups.messagesSend(contact, messageText)).subscribe({
+      next: () => {
+        prodMessageContacts$.next()
+      },
+      error: e => {
+        console.error(e.message)
+      }
+    })
     this.messageToSend = ''
-    this.paths.$sendMessage$.next([uuidv4(), {contact, text: messageText}])
   }
-
-  // private isAtBottom() {
-  //   debugger
-  //   console.log(this.content.scrollTop)
-  //   console.log(this.content.scrollHeight)
-  //   console.log(this.content.contentHeight)
-  //   return Math.abs(this.content.scrollTop - (this.content.scrollHeight - this.content.contentHeight)) < 250
-
-  //   // const targetElements = []
-  //   // targetElements[0] = document.getElementById('0')
-  //   // targetElements[1] = document.getElementById('1')
-  //   // return targetElements.some( e => e && isElementInViewport(e))
-  // }
 
   async jumpToBottom() {
     // this.unreads = false

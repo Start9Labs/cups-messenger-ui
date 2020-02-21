@@ -2,10 +2,11 @@ import { Component, NgZone } from '@angular/core'
 import { Contact } from '../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
 import { globe } from '../services/global-state'
-import { AppDaemons } from '../services/rx/paths'
 import * as uuidv4 from 'uuid/v4'
-import { Observable } from 'rxjs'
-import { take } from 'rxjs/operators'
+import { Observable, of } from 'rxjs'
+import { take, switchMap, tap } from 'rxjs/operators'
+import { CupsMessenger } from '../services/cups/cups-messenger'
+import { prodContacts$ } from '../services/rx/paths'
 
 @Component({
   selector: 'profile',
@@ -20,8 +21,8 @@ export class ProfilePage {
   constructor (
     private readonly loadingCtrl: LoadingController,
     private readonly navCtrl: NavController,
-    private readonly paths: AppDaemons,
-    private readonly ngZone: NgZone
+    private readonly ngZone: NgZone,
+    private readonly cups: CupsMessenger
   ) { }
 
   ngOnInit () {
@@ -40,20 +41,24 @@ export class ProfilePage {
 
     const updatedContact = { ...c, name: this.contactName }
     console.log('updated b', updatedContact.name)
-    const pid = uuidv4()
-    this.paths.$showContacts$.subscribeToId(
-        pid,
-        async () => {
+
+    of(this.cups.contactsAdd(updatedContact)).pipe(
+      switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
+    ).subscribe(
+      {
+        next: async contacts => {
+          // globe.$contacts$.next(contacts)
+          globe.currentContact$.next(updatedContact)
           await loader.dismiss()
           this.ngZone.run(() => {
             this.navCtrl.navigateBack(['contact-chat'])
           })
         },
-        e => {
-          loader.dismiss()
-          this.error = e
-        }, 10000)
-    this.paths.$addContact$.next([pid, { contact: updatedContact }])
+        error: e => {
+          console.error(e)
+        }
+      }
+    )
   }
 }
 

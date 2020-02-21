@@ -1,50 +1,60 @@
 import { globe } from '../global-state'
+// import { cryoProvider, CryoDaemonConfig, PyroDaemonConfig, pyroProvider } from './providers'
 import { config } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
-import { interval,
-         of,
-         combineLatest,
-         OperatorFunction,
-        } from 'rxjs'
-import { map, switchMap, filter } from 'rxjs/operators'
-import { Injectable } from '@angular/core'
-import { LongSubject } from './path-subject'
+import { interval, Observable, Subject, merge, combineLatest, of } from 'rxjs'
+import { map, catchError, filter, switchMap } from 'rxjs/operators'
 
-@Injectable({providedIn: 'root'})
-export class AppDaemons {
-    $showContacts$:         LongSubject<{},                               ContactWithMessageCount[]>
-    $showContactMessages$:  LongSubject<{contact: Contact},               {contact: Contact, messages: ServerMessage[]}>
+export function main(cups: CupsMessenger) {
+    const c0: ContactsDaemonConfig = {
+        frequency: config.contactsDaemon.frequency,
+        cups
+    }
+    contactsProvider(c0).subscribe(globe.$contacts$)
 
-    constructor(cups: CupsMessenger){
-        this.$showContacts$         = new LongSubject(showContactsOp(cups))
-        this.$showContactMessages$  = new LongSubject(showContactMessagesOp(cups))
-        this.init()
+    const c1: ContactMessagesDaemonConfig = {
+        frequency: config.contactMessagesDaemon.frequency,
+        cups
     }
 
-    private init() {
-        interval(config.contactsDaemon.frequency).subscribe(this.$showContacts$)
-        combineLatest([
-            interval(config.contactMessagesDaemon.frequency),
-            globe.currentContact$.pipe(filter(c => !!c))
-        ]).pipe(map(([_, c]) => ({contact: c}))).subscribe(this.$showContactMessages$)
-
-        this.$showContacts$.subscribe(globe.$contacts$)
-        this.$showContactMessages$.subscribe(globe.$observeServerMessages)
-    }
+    contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
 }
 
-export const intervalStr = frequency => interval(frequency).pipe(map(i => String(i)))
 
-export const showContactsOp: (cups: CupsMessenger) => OperatorFunction<{}, ContactWithMessageCount[]> =
-    cups => switchMap(() => cups.contactsShow().then(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)))
+export const prodMessageContacts$ = new Subject()
+export interface ContactMessagesDaemonConfig { frequency: number, cups: CupsMessenger }
+export const contactMessagesProvider: (p: ContactMessagesDaemonConfig)
+    => Observable<{contact: Contact, messages: ServerMessage[]}>
+        = ({frequency, cups}) =>
+                combineLatest([globe.currentContact$, interval(frequency), prodMessageContacts$])
+                .pipe(
+                    filter(([contact]) => !!contact),
+                    switchMap(([contact]) =>
+                        of(contact).pipe(
+                            switchMap(() => cups.messagesShow(contact)),
+                            map(messages => ({ contact, messages })),
+                            catchError(e => {
+                                console.error(`Error in contact messages daemon ${e.message}`)
+                                return of(undefined)
+                            }),
+                        )
+                    ),
+                    filter(res => !!res)
+                )
 
-export const showContactMessagesOp: (cups: CupsMessenger) => 
-        OperatorFunction<{contact: Contact}, {contact: Contact, messages: ServerMessage[]}> =
-    cups => switchMap(({contact}) => cups.messagesShow(contact).then(messages => ({contact, messages})))
-
-export const sendMessageOp : (cups: CupsMessenger) => OperatorFunction<{contact: Contact, text: string}, { contact: Contact }> =
-    cups => switchMap(({contact, text}) => cups.messagesSend(contact, text).then(() => ({contact})))
-
-export const addContactOp : (cups: CupsMessenger) => OperatorFunction<{contact: Contact}, { contact: Contact }> =
-    cups => switchMap(({contact}) => cups.contactsAdd(contact).then( _ => ({ contact })))
+export const prodContacts$ = new Subject()
+export interface ContactsDaemonConfig { frequency: number, cups: CupsMessenger }
+export const contactsProvider: (p: ContactsDaemonConfig)
+    => Observable<ContactWithMessageCount[]>
+        = ({frequency, cups}) =>
+                merge(interval(frequency), prodContacts$)
+                .pipe(
+                    switchMap(() => cups.contactsShow()),
+                    map(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)),
+                    catchError(e => {
+                        console.error(`Error in contacts daemon ${e.message}`)
+                        return of(undefined)
+                    }),
+                    filter(res => !!res)
+                )

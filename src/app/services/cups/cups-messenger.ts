@@ -22,7 +22,7 @@ export class CupsMessenger {
         return this.impl.contactsShow(loginTestPassword || globe.password)
     }
 
-    contactsAdd(contact: Contact): Promise<void> { 
+    contactsAdd(contact: Contact): Promise<void> {
         return this.impl.contactsAdd(contact)
     }
 
@@ -64,8 +64,6 @@ export class LiveCupsMessenger {
             ).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
         } catch (e) {
             console.error('Contacts show', e)
-            console.error('Contacts show', JSON.stringify(e))
-            console.error('Contacts show', loginTestPassword)
             throw e
         }
     }

@@ -3,13 +3,13 @@ import { Component } from '@angular/core'
 import { globe } from './services/global-state'
 import { NavController, MenuController } from '@ionic/angular'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
-import { Observable, BehaviorSubject } from 'rxjs'
-import { AppDaemons, addContactOp, showContactsOp } from './services/rx/paths'
+import { Observable, BehaviorSubject, of } from 'rxjs'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import * as uuidv4 from 'uuid/v4'
 import { LongSubject } from './services/rx/path-subject'
 import { CupsMessenger } from './services/cups/cups-messenger'
 import { tap, filter, switchMap, map } from 'rxjs/operators'
+import { main, prodContacts$ } from './services/rx/paths'
 
 @Component({
   selector: 'app-root',
@@ -28,11 +28,11 @@ export class AppComponent {
   public globe = globe
 
   constructor(
-    private readonly paths: AppDaemons,
     private readonly navCtrl: NavController,
     private readonly cups: CupsMessenger,
     private menu: MenuController,
   ) {
+    main(this.cups)
   }
 
   jumpToChat(c: Contact) {
@@ -70,17 +70,21 @@ export class AppComponent {
       name: sanitizedName
     }
 
-    new LongSubject(addContactOp(this.cups))
-        .asObservable()
-        .pipe(
-          map(({contact: c}) => c)
-        ).subscribe(c => {
-          globe.currentContact$.next(c)
-          this.paths.$showContacts$.next({})
-          this.submittingNewContact$.next(false)
-          this.newContactTorAddress = undefined
-          this.newContactName = undefined
-          this.makeNewContactForm = false
-        })
+    of(this.cups.contactsAdd(contact)).pipe(
+      switchMap(() => this.cups.contactsShow()),
+      tap(() => prodContacts$.next())
+    ).subscribe({
+      next: () => {
+        globe.currentContact$.next(contact)
+        this.submittingNewContact$.next(false)
+        this.newContactTorAddress = undefined
+        this.newContactName = undefined
+        this.makeNewContactForm = false
+      },
+      error: e => {
+        this.error$.next(e.message)
+        this.submittingNewContact$.next(false)
+      },
+    })
   }
 }
