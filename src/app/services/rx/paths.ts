@@ -4,22 +4,38 @@ import { config } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
 import { interval, Observable, Subject, merge, combineLatest, of, Subscribable, Subscription } from 'rxjs'
-import { map, catchError, filter, switchMap } from 'rxjs/operators'
+import { map, catchError, filter, switchMap, take, takeWhile, tap } from 'rxjs/operators'
 
+let contactsSubscription: Subscription
+let contactMessagesSubscription: Subscription
 export function main(cups: CupsMessenger) {
     const c0: ContactsDaemonConfig = {
         frequency: config.contactsDaemon.frequency,
         cups
     }
-    contactsProvider(c0).subscribe(globe.$contacts$)
 
     const c1: ContactMessagesDaemonConfig = {
         frequency: config.contactMessagesDaemon.frequency,
         cups
     }
 
-    contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
+    contactsSubscription = contactsProvider(c0).subscribe(globe.$contacts$)
+    contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
+
+    interval(1000).pipe(filter(
+        () => contactsSubscription.closed
+    )).subscribe(() => {
+        contactsSubscription = contactsProvider(c0).subscribe(globe.$contacts$)
+    })
+
+    interval(1000).pipe(filter(
+        () => contactMessagesSubscription.closed
+    )).subscribe(() => {
+        contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
+    })
 }
+
+
 
 
 export const prodMessageContacts$ = new Subject()
@@ -56,5 +72,6 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                         console.error(`Error in contacts daemon ${e.message}`)
                         return of(undefined)
                     }),
-                    filter(res => !!res)
+                    filter(res => !!res),
+                    tap((res) => `received contacts from daemon ${res}`)
                 )

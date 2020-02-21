@@ -5,11 +5,9 @@ import { NavController, MenuController } from '@ionic/angular'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable, BehaviorSubject, of, from } from 'rxjs'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
-import * as uuidv4 from 'uuid/v4'
-import { LongSubject } from './services/rx/path-subject'
 import { CupsMessenger } from './services/cups/cups-messenger'
-import { tap, filter, switchMap, map } from 'rxjs/operators'
-import { main, prodContacts$ } from './services/rx/paths'
+import { switchMap } from 'rxjs/operators'
+import { main } from './services/rx/paths'
 
 @Component({
   selector: 'app-root',
