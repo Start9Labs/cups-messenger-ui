@@ -25,12 +25,14 @@ export function main(cups: CupsMessenger) {
     interval(1000).pipe(filter(
         () => contactsSubscription.closed
     )).subscribe(() => {
+        console.warn(`restarting contacts daemon`)
         contactsSubscription = contactsProvider(c0).subscribe(globe.$contacts$)
     })
 
     interval(1000).pipe(filter(
         () => contactMessagesSubscription.closed
     )).subscribe(() => {
+        console.warn(`restarting contact messages daemon`)
         contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
     })
 }
@@ -67,11 +69,12 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                 merge(interval(frequency), prodContacts$)
                 .pipe(
                     switchMap(() => cups.contactsShow()),
+                    tap((res) => `received contacts from daemon 1 ${res}`),
                     map(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)),
                     catchError(e => {
                         console.error(`Error in contacts daemon ${e.message}`)
                         return of(undefined)
                     }),
                     filter(res => !!res),
-                    tap((res) => `received contacts from daemon ${res}`)
+                    tap((res) => `received contacts from daemon 2 ${res}`),
                 )
