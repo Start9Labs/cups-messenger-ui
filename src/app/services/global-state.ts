@@ -20,6 +20,7 @@ export class Globe {
     } = {}
 
     private latestOutboundServerMessageTime: Date = new Date(0)
+    private latestOverallServerMessageTime: Date = new Date(0)
 
     $observeServerMessages: NextObserver<{ contact: Contact, messages: ServerMessage[] }> = {
         next : ({contact, messages}) => {
@@ -27,10 +28,16 @@ export class Globe {
                 if(!messages || !messages.length) { return }
 
                 const newMessages = messages
-                    .filter(m => m.timestamp.getTime() > this.latestOutboundServerMessageTime.getTime())
+                    .filter(m => m.timestamp.getTime() > this.latestOverallServerMessageTime.getTime())
                     .sort(sortByTimestamp)
 
-                const newOutboundMessages = newMessages.filter(m => m.direction === 'Outbound')
+                if(newMessages && newMessages.length){
+                    this.latestOverallServerMessageTime = newMessages[0].timestamp
+                }
+
+                const newOutboundMessages = newMessages
+                    .filter(m => m.direction === 'Outbound')
+                    .filter(m => m.timestamp.getTime() > this.latestOutboundServerMessageTime.getTime())
 
                 if(newOutboundMessages && newOutboundMessages.length){
                     this.latestOutboundServerMessageTime = newOutboundMessages[0].timestamp

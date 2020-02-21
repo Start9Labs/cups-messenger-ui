@@ -40,19 +40,20 @@ export class ProfilePage {
 
     const updatedContact = { ...c, name: this.contactName }
     console.log('updated b', updatedContact.name)
-    try {
-      const pid = uuidv4()
-      this.paths.$showContacts$.subscribeToId(pid, async () => {
-        await loader.dismiss()
-        this.ngZone.run(() => {
-          this.navCtrl.navigateBack(['contact-chat'])
-        })
-      }, 10000)
-      this.paths.$addContact$.next([pid, { contact: updatedContact }])
-    } catch (e) {
-      this.error = `Contact update failed: ${e.message}`
-      await loader.dismiss()
-    }
+    const pid = uuidv4()
+    this.paths.$showContacts$.subscribeToId(
+        pid,
+        async () => {
+          await loader.dismiss()
+          this.ngZone.run(() => {
+            this.navCtrl.navigateBack(['contact-chat'])
+          })
+        },
+        e => {
+          loader.dismiss()
+          this.error = e
+        }, 10000)
+    this.paths.$addContact$.next([pid, { contact: updatedContact }])
   }
 }
 

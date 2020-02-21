@@ -29,7 +29,8 @@ export class SigninPage implements OnInit {
     this.error$.next(undefined)
     this.loading$.next(true)
 
-    const pass = this.password
+    const pass = this.password.trim()
+    console.log('password submitted: ', pass)
 
     try {
       await this.cups.contactsShow(pass)

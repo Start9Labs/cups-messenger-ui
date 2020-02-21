@@ -11,7 +11,7 @@
 
 <ion-content #content [scrollEvents]="true" >
     
-    <ion-list #chat background="url('../../assets/cupsbackground.png')" class="chat">
+    <ion-list #chat class="chat">
         <div *ngFor="let message of (contactMessages$ | async); let i = index">
             <div class="chat-message" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
                 <div class="chat-message left-bubble">

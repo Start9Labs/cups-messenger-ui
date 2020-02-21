@@ -61,23 +61,22 @@ export class AppComponent {
 
     this.submittingNewContact$.next(true)
 
-    try {
-      const contact = {
-        torAddress: sanitizedTorOnion,
-        name: sanitizedName
-      }
+    const contact = {
+      torAddress: sanitizedTorOnion,
+      name: sanitizedName
+    }
 
-      const pid = uuidv4()
-      this.paths.$showContacts$.subscribeToId(pid, () => {
+    const pid = uuidv4()
+    this.paths.$showContacts$.subscribeToId(
+      pid,
+      () => {
         this.submittingNewContact$.next(false)
         this.newContactTorAddress = undefined
         this.newContactName = undefined
         this.makeNewContactForm = false
-      }, 10000)
-      this.paths.$addContact$.next([pid, { contact }])
-
-    } catch (e) {
-      this.error$.next(e.message)
-    }
+      },
+      e => this.error$.next(e),
+      10000)
+    this.paths.$addContact$.next([pid, { contact }])
   }
 }

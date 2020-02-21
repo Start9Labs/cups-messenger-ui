@@ -1,6 +1,6 @@
 import { NextObserver, Observable, OperatorFunction, Subject, of, PartialObserver, Subscription, race, interval } from 'rxjs'
 
-import { switchMap, map, filter, take } from 'rxjs/operators'
+import { switchMap, map, filter, take, catchError } from 'rxjs/operators'
 
 export class PathSubject<S, T> implements NextObserver<[string, S]>{
     readonly path: Observable<[string, T]>
@@ -26,16 +26,20 @@ export class PathSubject<S, T> implements NextObserver<[string, S]>{
         return this.path.pipe(map(([_, t]) => project(t))).subscribe(o)
     }
 
-    subscribeToId(pid: string, next: (t: T) => void, timeout: number): Subscription {
+    subscribeToId(pid: string, next: (t: T) => void, err: (msg: string) => void, timeout: number): Subscription {
         return race(
             this.path.pipe(filter(([id,_]) => id === pid)), interval(timeout)
-        ).pipe(take(1)).subscribe(res => {
-            if(res[0] === pid){
-                next(res[1])
-            } else {
-                throw new Error(`${pid} timed out`)
-            }
-        })
+        ).pipe(
+            take(1),
+            map(res => { 
+                if(res[0] === pid) {
+                    return res[1]
+                } else {
+                    throw new Error(`time out for pipeId ${pid}`)
+                }
+            }),
+            catchError(e => of(err(e.message)))
+        ).subscribe(next)
     }
 
     subscribePath<U>(p : PathSubject<T, U>): Subscription {

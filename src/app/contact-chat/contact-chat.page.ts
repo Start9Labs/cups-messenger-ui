@@ -5,7 +5,7 @@ import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of } from 'rxjs'
 import { globe } from '../services/global-state'
 import { AppPaths } from '../services/rx/paths'
-import { tap } from 'rxjs/operators'
+import { tap, delay } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contact-chat',
@@ -14,16 +14,12 @@ import { tap } from 'rxjs/operators'
 })
 export class ContactChatPage implements OnInit {
   @ViewChild('content', { static: false }) private content: any
-  @ViewChild('chat', {read: ElementRef}) chatList: ElementRef
 
   currentContactTorAddress: string
   currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
   contactMessages$: Observable<MessageBase[]> = new Observable()
 
   contactMessagesSub: Subscription
-  shouldJumpToBottom = true
-
-  mutationObserver: MutationObserver
 
   // Detecting a new message
   unreads = false
@@ -44,14 +40,19 @@ export class ContactChatPage implements OnInit {
   ) {
     globe.currentContact$.subscribe(c => {
       if(!c) return
-      this.jumpToBottom()
-      this.contactMessages$ = globe.watchMessages(c).pipe(tap( () => {
-        if(this.isAtBottom()){
-          this.shouldJumpToBottom = true
-        }
+      this.contactMessages$ = globe.watchMessages(c).pipe(tap(async (ms) => {
+        console.log('tapping', ms)
+        await pauseFor(125)
+        this.jumpToBottom()
+        // if(this.isAtBottom()){
+        //   await pauseFor(500)
+        //   this.jumpToBottom()
+        // } else {
+        //   this.unreads = true
+        // }
       }))
+
       this.currentContactTorAddress = c.torAddress
-      this.initMutationObserver()
 
       if(this.contactMessagesSub) { this.contactMessagesSub.unsubscribe() }
       this.paths.$showContactMessages$.next([uuidv4(), { contact: c }])
@@ -65,29 +66,11 @@ export class ContactChatPage implements OnInit {
     this.paths.$showContacts$.next([uuidv4(), {}])
   }
 
-  initMutationObserver(){
-    if(this.mutationObserver){
-      return
-    }
-
-    this.mutationObserver = new MutationObserver((mutations) => {
-      if(this.shouldJumpToBottom){
-        this.shouldJumpToBottom = false
-        this.jumpToBottom()
-      } else {
-        this.unreads = true
-      }
-    })
-    this.mutationObserver.observe(this.chatList.nativeElement, {
-        childList: true
-    })
-  }
-
-  ionViewWillEnter(){
-    if(!this.isAtBottom()){
-      this.unreads = true
-    }
-  }
+  // ionViewWillEnter(){
+  //   if(!this.isAtBottom()){
+  //     this.unreads = true
+  //   }
+  // }
 
   sendMessage(contact: Contact) {
     const messageText = this.messageToSend
@@ -108,12 +91,18 @@ export class ContactChatPage implements OnInit {
     this.paths.$sendMessage$.next([uuidv4(), {contact, text: messageText}])
   }
 
-  private isAtBottom() {
-    const targetElements = []
-    targetElements[0] = document.getElementById('0')
-    targetElements[1] = document.getElementById('1')
-    return targetElements.some( e => e && isElementInViewport(e))
-  }
+  // private isAtBottom() {
+  //   debugger
+  //   console.log(this.content.scrollTop)
+  //   console.log(this.content.scrollHeight)
+  //   console.log(this.content.contentHeight)
+  //   return Math.abs(this.content.scrollTop - (this.content.scrollHeight - this.content.contentHeight)) < 250
+
+  //   // const targetElements = []
+  //   // targetElements[0] = document.getElementById('0')
+  //   // targetElements[1] = document.getElementById('1')
+  //   // return targetElements.some( e => e && isElementInViewport(e))
+  // }
 
   async jumpToBottom() {
     this.unreads = false

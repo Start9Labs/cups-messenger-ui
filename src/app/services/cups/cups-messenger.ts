@@ -41,15 +41,16 @@ export class LiveCupsMessenger {
 
     private authHeaders(password: string = globe.password): HttpHeaders {
         if (!password) { throw new Error('Unauthenticated request to server attempted.') }
+        console.log(`authing with`, password)
         return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${password}`)})
     }
 
     private get hostUrl(): string {
-        if (!globe.password) { throw new Error('Unauthenticated request to server attempted.') }
         return config.cupsMessenger.url
     }
 
     async contactsShow(loginTestPassword: string): Promise<ContactWithMessageCount[]> {
+        console.log('showing with ', loginTestPassword)
         try {
             return this.http.get(
                 this.hostUrl,
@@ -64,6 +65,7 @@ export class LiveCupsMessenger {
         } catch (e) {
             console.error('Contacts show', e)
             console.error('Contacts show', JSON.stringify(e))
+            console.error('Contacts show', loginTestPassword)
             throw e
         }
     }
