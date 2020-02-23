@@ -1,21 +1,16 @@
 import { Contact,
         ContactWithMessageCount,
-        ServerMessage,
         AttendingMessage,
-        serverMessageFulfills,
         MessageBase,
-        attendingMessageFulfills,
-        FailedMessage
+        FailedMessage,
        } from './cups/types'
 import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
-import { take, map } from 'rxjs/operators'
+import { take, map, retry } from 'rxjs/operators'
+import { BrowserTransferStateModule } from '@angular/platform-browser'
 const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
-
-export interface CategorizedMessages { server: ServerMessage[], attending: AttendingMessage[] }
-export type CategorizedMessagesSubject = [ BehaviorSubject<AttendingMessage[]>, BehaviorSubject<ServerMessage[]> ]
 
 export class Globe {
     $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
@@ -23,12 +18,11 @@ export class Globe {
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
     password: string | undefined = undefined
     contactMessages: {
-        [contactTorAddress: string]: CategorizedMessagesSubject
+        [contactTorAddress: string]: BehaviorSubject<MessageBase[]>
     } = {}
 
     constructor() {}
 
-    private latestOutboundServerMessageTime: Date = new Date(0)
     private latestOverallServerMessageTime: Date = new Date(0)
 
     observeContacts: PartialObserver<ContactWithMessageCount[]> = {
@@ -40,46 +34,38 @@ export class Globe {
         },
     }
 
-    $observeServerMessages: NextObserver<{ contact: Contact, messages: ServerMessage[] }> = {
+    $observeServerMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
-            combineLatest(this.contactMessagesSubjects(contact.torAddress)).pipe(take(1)).subscribe( ([attendingMs, serverMs]) => {
-                if(!messages || !messages.length) { return }
+            this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe( existingMessages => {
+                const {yes : finalized, no : attending} = partition(messages.concat(existingMessages), isFinalized)
+                uniqueBy(finalized, m => (m.result as any).id)
 
-                const newMessages = messages
-                    .filter(m => m.timestamp.getTime() > this.latestOverallServerMessageTime.getTime())
-                    .sort(sortByTimestamp)
+                const finalizedMs = existingMessages.map(m => (m.result as any).id).filter(m => m)
 
-                if(newMessages && newMessages.length){
-                    this.latestOverallServerMessageTime = newMessages[0].timestamp
-                }
-
-                const newOutboundMessages = newMessages
-                    .filter(m => m.direction === 'Outbound')
-                    .filter(m => m.timestamp.getTime() > this.latestOutboundServerMessageTime.getTime())
-
-                if(newOutboundMessages && newOutboundMessages.length){
-                    this.latestOutboundServerMessageTime = newOutboundMessages[0].timestamp
-                    newOutboundMessages.forEach(newOutbound => {
-                        const i = attendingMs.findIndex(attending => serverMessageFulfills(newOutbound, attending))
-                        attendingMs.splice(i, 1)
-                    })
-                }
-                const newMessageState = newMessages.concat(serverMs)
-
-                this.pokeServerMessages(contact, newMessageState)
-                this.pokeAttendingMessages(contact, attendingMs)
+                newMessages = newMessages.filter(m => {
+                    if(m.result.id){
+                        m.result.id
+                    }
+                })
             })
+            // combineLatest(this.contactMessagesSubjects(contact.torAddress)).pipe(take(1)).subscribe( ms => {
+            //     if(!messages || !messages.length) { return }
+
+            //     const newMessages = messages
+            //         .filter(m => m.timestamp.getTime() > this.latestOverallServerMessageTime.getTime())
+            //         .sort(sortByTimestamp)
+
+            //     if(newMessages && newMessages.length){
+            //         this.latestOverallServerMessageTime = newMessages[0].timestamp
+            //     }
+
+            //     const newMessageState = newMessages.concat(ms)
+
+            //     this.contactMessagesSubjects(contact.torAddress).next(newMessages.sort(sortByTimestamp))
+            // })
         }
     }
 
-    observeAttendingMessage: NextObserver<{contact: Contact, attendingMessage: AttendingMessage}> =
-        {
-            next : ({contact, attendingMessage}) => {
-                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
-                    this.pokeAttendingMessages(contact, [...attendingMessages, attendingMessage])
-                })
-            }
-        }
 
     observeFailedMessage: NextObserver<{contact: Contact, failedMessage: FailedMessage}> =
         {
@@ -108,9 +94,7 @@ export class Globe {
         }
 
     watchMessages(c: Contact): Observable<MessageBase[]> {
-        return combineLatest(this.contactMessagesSubjects(c.torAddress)).pipe(map(
-            ([attending, server]) => (attending as MessageBase[]).concat(server)
-        ))
+        return this.contactMessagesSubjects(c.torAddress)
     }
 
     async init(): Promise<void> {
@@ -130,15 +114,9 @@ export class Globe {
         return
     }
 
-    private contactMessagesSubjects(tor: string): CategorizedMessagesSubject {
-        if(!this.contactMessages[tor]) { this.contactMessages[tor] = [new BehaviorSubject([]), new BehaviorSubject([])] }
+    private contactMessagesSubjects(tor: string): BehaviorSubject<MessageBase[]> {
+        if(!this.contactMessages[tor]) { this.contactMessages[tor] = new BehaviorSubject([]) }
         return this.contactMessages[tor]
-    }
-    private pokeAttendingMessages( c: Contact, as : AttendingMessage[] ): void {
-        this.contactMessagesSubjects(c.torAddress)[0].next(as.sort(sortByTimestamp))
-    }
-    private pokeServerMessages( c: Contact, ss : ServerMessage[] ): void {
-        this.contactMessagesSubjects(c.torAddress)[1].next(ss.sort(sortByTimestamp))
     }
 }
 
@@ -149,3 +127,21 @@ export const globe = new Globe()
 
 const sortByTimestamp =
     (a: MessageBase, b: MessageBase) => b.timestamp.getTime() - a.timestamp.getTime()
+
+function uniqueBy<T>(ts : T[], projection: (t: T) => string): T[] {
+    const tracking = { } as { [projected: string] : T }
+    ts.forEach( t => tracking[projection(t)] = t )
+    return Object.values(tracking)
+}
+
+function categorize<T>(ts: T[], predicates: ((t: T) => boolean)[]): [T[]] {
+    const toReturn = []
+    ts.forEach(t => {
+        predicates.forEach(pred => {
+
+        })
+    })
+    return toReturn
+}
+
+// retry, logout, jump to bottom, pagination

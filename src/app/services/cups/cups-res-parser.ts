@@ -4,7 +4,7 @@ import { ContactWithMessageCount, MessageDirection } from './types'
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
 
-interface CupsMessageShow { text: string, timestamp: Date, direction: MessageDirection }
+interface CupsMessageShow { text: string, timestamp: Date, direction: MessageDirection, id: string }
 export class CupsResParser {
     constructor() {}
 

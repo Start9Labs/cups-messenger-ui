@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core'
 import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, AttendingMessage } from './types'
+import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, AttendingMessage, MessageBase } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
 import { globe } from '../global-state'
 
-// @TODO get rid of .catch enforcing error handling everywhere
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private impl: LiveCupsMessenger | MockCupsMessenger
@@ -29,7 +28,7 @@ export class CupsMessenger {
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
         return this.impl.messagesShow(contact, limit)
     }
-    async messagesSend(contact: Contact, message: string): Promise<void> {
+    async messagesSend(contact: Contact, message: string): Promise<{id: string}> {
         console.log('sending message', message)
         return this.impl.messagesSend(contact, message)
     }
@@ -91,11 +90,7 @@ export class LiveCupsMessenger {
             ).toPromise()
 
             return this.parser.deserializeMessagesShow(arrayBuffer).map(m =>
-                ({...m,
-                    attending: false,
-                    id: uuidv4(),
-                    otherParty: contact
-                })
+                ({...m, otherParty: contact, result: { id: m.id } })
             )
         } catch (e) {
             console.error('Messages show', e)
@@ -104,9 +99,9 @@ export class LiveCupsMessenger {
         }
     }
 
-    async messagesSend(contact: Contact, message: string): Promise<void> {
+    async messagesSend(contact: Contact, message: string): Promise<{id: string}> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, message)
-        return this.http.post<void>(
+        return this.http.post<{id: string}>(
             this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders() }
         ).toPromise()
     }
@@ -153,19 +148,20 @@ export class MockCupsMessenger {
         )
     }
 
-    async messagesSend(contact: Contact, message: string): Promise<void> {
+    async messagesSend(contact: Contact, message: string): Promise< {id: string} > {
         await pauseFor(1000000)
+        const id = uuidv4()
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
             direction: 'Outbound',
             otherParty: contact,
             text: message,
-            id: uuidv4(),
-            attending: false
+            result: { id }
         })
+        return { id }
     }
 
-    private getMessageMocks(c: Contact) {
+    private getMessageMocks(c: Contact): MessageBase[] {
         mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 2))
         return mocks[c.torAddress]
     }

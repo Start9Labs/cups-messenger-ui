@@ -86,14 +86,14 @@ export class ContactChatPage implements OnInit {
     if (!contact) { return }
 
     const attendingMessage: AttendingMessage = {
-      id: uuidv4(),
       timestamp: new Date(),
       direction: 'Outbound',
       otherParty: contact,
       text: this.messageToSend,
-      attending: true,
       attemptedAt: new Date(),
-      failed: false
+      result: this.cups.messagesSend(contact, this.messageToSend).catch(e => {
+        return {error: e.message}
+      })
     }
 
     of({contact, attendingMessage }).subscribe(globe.observeAttendingMessage)

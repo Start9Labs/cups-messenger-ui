@@ -1,4 +1,5 @@
 import * as uuidv4 from 'uuid/v4'
+import { Message } from '@angular/compiler/src/i18n/i18n_ast'
 
 export function pauseFor(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -15,42 +16,36 @@ export interface ContactWithMessageCount extends Contact {
 export type MessageDirection = 'Inbound' | 'Outbound'
 export type DisplayMessage = ServerMessage | AttendingMessage
 export interface MessageBase {
-    id: string
     direction: MessageDirection
     otherParty: Contact
     text: string
-    attending: boolean
-    timestamp: Date
+    result:         { id: string, timestamp: Date } | { error: string, id: string } |
+            Promise<{ id: string, timestamp: Date } | { error: string, id: string }>
 }
 export interface ServerMessage extends MessageBase {
-    attending: false
+    result: {id: string, timestamp: Date}
 }
 export interface AttendingMessage extends MessageBase {
-    attending: true
+    result: Promise<{id: string, timestamp: Date} | {error: string, id: string}>
     direction: 'Outbound'
-    failed: boolean
-    attemptedAt: Date
 }
-export interface FailedMessage extends AttendingMessage {
-    failed: true
-}
-
-export function serverMessageFulfills(s: ServerMessage | AttendingMessage, a: AttendingMessage): boolean {
-    if (s.direction !== a.direction) { return false }
-    if (s.otherParty.torAddress !== a.otherParty.torAddress) { return false }
-    if (s.text !== a.text) { return false }
-    return true
+export interface FailedMessage extends MessageBase {
+    result: {error : string, id: string}
+    direction: 'Outbound'
 }
 
-export function attendingMessageFulfills(s: AttendingMessage, a: AttendingMessage): boolean {
-    if (s.direction !== a.direction) { console.log(1) ; return false }
-    if (s.otherParty.torAddress !== a.otherParty.torAddress) { console.log(1) ; return false }
-    if (s.text !== a.text) { console.log(1) ; return false }
-    if (s.attemptedAt !== a.attemptedAt) { console.log(1) ; return false }
-    return true
+export function isServer(t: MessageBase) : t is ServerMessage {
+    return t.result && (t.result as any).timestamp
 }
 
-// Mocks //
+export function isFailed(t: MessageBase) : t is ServerMessage {
+    return t.result && (t.result as any).error
+}
+
+export function isAttending(t: MessageBase) : t is AttendingMessage {
+    return !isServer(t) && !isFailed(t)
+}
+
 
 export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
     const toReturn = []
@@ -68,12 +63,10 @@ export function mockContact(i: number): ContactWithMessageCount {
 }
 export function mockMessage(i: number): ServerMessage {
     return {
-        timestamp: new Date(),
         direction: 'Inbound',
         otherParty: mockContact(i),
         text: mockL(mockWord, 10).join(' '),
-        id: uuidv4(),
-        attending: false
+        result: {id: uuidv4(), timestamp: new Date()}
     }
 }
 function mockWord(i: number): string {
