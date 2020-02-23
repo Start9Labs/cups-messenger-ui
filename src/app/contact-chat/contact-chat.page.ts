@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, merge, interval, from } from 'rxjs'
 import { globe } from '../services/global-state'
-import { tap, map, take } from 'rxjs/operators'
+import { tap, map, take, delay } from 'rxjs/operators'
 import { prodMessageContacts$, prodContacts$ } from '../services/rx/paths'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 
@@ -20,8 +20,6 @@ export class ContactChatPage implements OnInit {
   currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
   contactMessages$: Observable<MessageBase[]> = new Observable()
 
-  contactMessagesSub: Subscription
-
   // Detecting a new message
   unreads = false
 
@@ -32,8 +30,13 @@ export class ContactChatPage implements OnInit {
   addContactNameForm = false
   contactNameToAdd: string
   updatingContact$ = new BehaviorSubject(false)
+
   error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
   globe = globe
+
+  shouldJump = false
+  jumpSub: Subscription
+  mostRecentMessage: Date = new Date(0)
 
   constructor(
       private readonly navCtrl: NavController,
@@ -41,30 +44,34 @@ export class ContactChatPage implements OnInit {
   ) {
     globe.currentContact$.subscribe(c => {
       if(!c) return
-      this.contactMessages$ = globe.watchMessages(c).pipe(tap(async (ms) => {
-        await pauseFor(125)
-        this.jumpToBottom()
-        // if(this.isAtBottom()){
-        //   await pauseFor(500)
-        //   this.jumpToBottom()
-        // } else {
-        //   this.unreads = true
-        // }
+      this.contactMessages$ = globe.watchMessages(c).pipe(tap(() => {
+        this.shouldJump = this.isAtBottom()
+        if(this.shouldJump) { this.unreads = false }
       }))
+
+      if(this.jumpSub) { this.jumpSub.unsubscribe() }
+
+      this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
+        const mostRecent = ms[0]
+        if(this.shouldJump){
+          this.unreads = false
+          this.jumpToBottom()
+          this.shouldJump = false
+        } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessage) {
+          this.unreads = true
+        }
+        this.mostRecentMessage = (mostRecent && mostRecent.timestamp) || this.mostRecentMessage
+      })
 
       this.currentContactTorAddress = c.torAddress
 
-      if(this.contactMessagesSub) { this.contactMessagesSub.unsubscribe() }
       prodMessageContacts$.next({})
     })
   }
 
-  logScrolling(e){
-    console.log(this.isAtBottom())
-  }
-
   isAtBottom(): boolean {
-
+    const el = document.getElementById('end-of-scroll')
+    return el ? isElementInViewport(el) : true
   }
 
   ngOnInit() {
@@ -89,13 +96,11 @@ export class ContactChatPage implements OnInit {
       failed: false
     }
 
-    of({contact, attendingMessage }).subscribe(s => {
-      globe.observeAttendingMessage.next(s as any)
-    })
+    of({contact, attendingMessage }).subscribe(globe.observeAttendingMessage)
 
     merge(
       from(this.cups.messagesSend(contact, messageText)).pipe(map(() => true)),
-      interval(20000)                                   .pipe(map(() => false), take(1))
+      interval(1000).pipe(map(() => false), take(1)) // TODO up to 12000
     )
     .subscribe({
       next: res => {
@@ -111,11 +116,25 @@ export class ContactChatPage implements OnInit {
       }
     })
     this.messageToSend = ''
+    pauseFor(125).then(() => { this.unreads = false; this.jumpToBottom() })
   }
 
   async jumpToBottom() {
-    // this.unreads = false
-    // this.content.scrollToBottom(200)
+    if(this.content) { this.content.scrollToBottom(200) }
+  }
+
+  onScrollEnd(){
+    if(this.isAtBottom()){
+      this.unreads = false
+    }
+  }
+
+  ngOnDestroy(): void {
+    return this.jumpSub && this.jumpSub.unsubscribe()
+  }
+
+  delete(contact: Contact, failedMessage : FailedMessage): void {
+    globe.observeDeleteMessage.next({contact, failedMessage})
   }
 }
 

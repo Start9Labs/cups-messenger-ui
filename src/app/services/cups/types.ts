@@ -43,10 +43,10 @@ export function serverMessageFulfills(s: ServerMessage | AttendingMessage, a: At
 }
 
 export function attendingMessageFulfills(s: AttendingMessage, a: AttendingMessage): boolean {
-    if (s.direction !== a.direction) { return false }
-    if (s.otherParty.torAddress !== a.otherParty.torAddress) { return false }
-    if (s.text !== a.text) { return false }
-    if (s.attemptedAt !== a.attemptedAt) { return false }
+    if (s.direction !== a.direction) { console.log(1) ; return false }
+    if (s.otherParty.torAddress !== a.otherParty.torAddress) { console.log(1) ; return false }
+    if (s.text !== a.text) { console.log(1) ; return false }
+    if (s.attemptedAt !== a.attemptedAt) { console.log(1) ; return false }
     return true
 }
 

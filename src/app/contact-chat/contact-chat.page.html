@@ -9,34 +9,37 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content [scrollEvents]="true" (ionScroll)="logScrolling($event)">
-    
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" *ngIf="(globe.currentContact$ | async) as contact">
     <ion-list #chat class="chat">
-        <div *ngFor="let message of (contactMessages$ | async); let i = index">
-            <div class="left-bubble" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
+        <div *ngFor="let message of (contactMessages$ | async)">
+            <div class="left-bubble" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date">{{message.timestamp | date:'short'}}</span>
             </div>
-            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none" [attr.id]="i">
+            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
             </div>
-            <div class="right-bubble" [class.failed]="message.failed" *ngIf="message.attending" lines="none" [attr.id]="i">
+            <div class="right-bubble" *ngIf="message.attending && !message.failed" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" [color]="message.failed ? 'danger' : undefined" [name]="message.failed ? 'close' : 'time-outline'"></ion-icon></span>
+                <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
+            </div>
+            <div class="right-bubble failed" *ngIf="message.attending && message.failed" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{message.timestamp | date:'short'}}
+                    <ion-button fill="clear" style="padding-bottom: 0.7em; width: 33%; color: #fccdcd;" (click)="delete(contact, message)"size="small">
+                        <ion-icon class="message-icon" name="close"></ion-icon>
+                    </ion-button>
+                </span>
             </div>
         </div>    
-        <div id="end-of-scroll1"></div>
     </ion-list>
-    <div id="end-of-scroll2"></div>
-
-
+    <div id="end-of-scroll"></div>
     <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button color="primary" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </ion-fab>
-
 </ion-content>
 
 <ion-footer *ngIf="(globe.currentContact$ | async) as current">

@@ -136,22 +136,25 @@ export class MockCupsMessenger {
     }
 
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
-        this.counter = 1
+        this.counter++
         if (this.counter % 5 === 0) {
             if (this.counter % 10 === 0) {
                 await pauseFor(2000)
             }
-
             this.getMessageMocks(contact).push(mockMessage(this.counter))
         }
-        const toReturn = JSON.parse(JSON.stringify(this.getMessageMocks(contact))).map(x => { x.timestamp = new Date(x.timestamp); return x })
+        const toReturn = JSON.parse(
+            JSON.stringify(
+                this.getMessageMocks(contact)
+            )).map(x => { x.timestamp = new Date(x.timestamp); return x }
+        )
         return Promise.resolve(
             toReturn
         )
     }
 
     async messagesSend(contact: Contact, message: string): Promise<void> {
-        await pauseFor(2000)
+        await pauseFor(1000000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
             direction: 'Outbound',
@@ -163,7 +166,7 @@ export class MockCupsMessenger {
     }
 
     private getMessageMocks(c: Contact) {
-        mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 6))
+        mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 2))
         return mocks[c.torAddress]
     }
 }

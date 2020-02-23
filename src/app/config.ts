@@ -20,6 +20,6 @@ export const config: Config = {
         frequency: 10000
     },
     contactMessagesDaemon: {
-        frequency: 2500
+        frequency: 1000
     }
 }

@@ -85,11 +85,22 @@ export class Globe {
         {
             next : ({contact, failedMessage}) => {
                 this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
-                    const i = attendingMessages.findIndex( m => {
-                        attendingMessageFulfills(failedMessage, m)
-                    } )
+                    const i = attendingMessages.findIndex( m => attendingMessageFulfills(failedMessage, m))
                     if(i >= 0) {
                         attendingMessages.splice(i, 1, failedMessage)
+                        this.pokeAttendingMessages(contact, attendingMessages)
+                    }
+                })
+            }
+        }
+
+    observeDeleteMessage: NextObserver<{contact: Contact, failedMessage: FailedMessage}> =
+        {
+            next : ({contact, failedMessage}) => {
+                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
+                    const i = attendingMessages.findIndex( m => attendingMessageFulfills(failedMessage, m))
+                    if(i >= 0) {
+                        attendingMessages.splice(i, 1)
                         this.pokeAttendingMessages(contact, attendingMessages)
                     }
                 })
