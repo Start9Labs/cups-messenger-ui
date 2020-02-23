@@ -1,13 +1,11 @@
 import { Contact,
         ContactWithMessageCount,
-        AttendingMessage,
         MessageBase,
-        FailedMessage,
+        isServer,
        } from './cups/types'
-import { BehaviorSubject, NextObserver, combineLatest, Observable, Subject, PartialObserver } from 'rxjs'
+import { BehaviorSubject, NextObserver, Observable, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
-import { take, map, retry } from 'rxjs/operators'
-import { BrowserTransferStateModule } from '@angular/platform-browser'
+import { take } from 'rxjs/operators'
 const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
@@ -23,8 +21,6 @@ export class Globe {
 
     constructor() {}
 
-    private latestOverallServerMessageTime: Date = new Date(0)
-
     observeContacts: PartialObserver<ContactWithMessageCount[]> = {
         next: contacts => {
             console.log(`nexting contacts`)
@@ -34,64 +30,15 @@ export class Globe {
         },
     }
 
-    $observeServerMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
+    $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
             this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe( existingMessages => {
-                const {yes : finalized, no : attending} = partition(messages.concat(existingMessages), isFinalized)
-                uniqueBy(finalized, m => (m.result as any).id)
-
-                const finalizedMs = existingMessages.map(m => (m.result as any).id).filter(m => m)
-
-                newMessages = newMessages.filter(m => {
-                    if(m.result.id){
-                        m.result.id
-                    }
-                })
+                this.contactMessagesSubjects(contact.torAddress).next(
+                    uniqueBy(messages.concat(existingMessages), t => t.trackingId, serverErrorAttending).sort(sortByTimestamp)
+                )
             })
-            // combineLatest(this.contactMessagesSubjects(contact.torAddress)).pipe(take(1)).subscribe( ms => {
-            //     if(!messages || !messages.length) { return }
-
-            //     const newMessages = messages
-            //         .filter(m => m.timestamp.getTime() > this.latestOverallServerMessageTime.getTime())
-            //         .sort(sortByTimestamp)
-
-            //     if(newMessages && newMessages.length){
-            //         this.latestOverallServerMessageTime = newMessages[0].timestamp
-            //     }
-
-            //     const newMessageState = newMessages.concat(ms)
-
-            //     this.contactMessagesSubjects(contact.torAddress).next(newMessages.sort(sortByTimestamp))
-            // })
         }
     }
-
-
-    observeFailedMessage: NextObserver<{contact: Contact, failedMessage: FailedMessage}> =
-        {
-            next : ({contact, failedMessage}) => {
-                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
-                    const i = attendingMessages.findIndex( m => attendingMessageFulfills(failedMessage, m))
-                    if(i >= 0) {
-                        attendingMessages.splice(i, 1, failedMessage)
-                        this.pokeAttendingMessages(contact, attendingMessages)
-                    }
-                })
-            }
-        }
-
-    observeDeleteMessage: NextObserver<{contact: Contact, failedMessage: FailedMessage}> =
-        {
-            next : ({contact, failedMessage}) => {
-                this.contactMessagesSubjects(contact.torAddress)[0].pipe(take(1)).subscribe(attendingMessages => {
-                    const i = attendingMessages.findIndex( m => attendingMessageFulfills(failedMessage, m))
-                    if(i >= 0) {
-                        attendingMessages.splice(i, 1)
-                        this.pokeAttendingMessages(contact, attendingMessages)
-                    }
-                })
-            }
-        }
 
     watchMessages(c: Contact): Observable<MessageBase[]> {
         return this.contactMessagesSubjects(c.torAddress)
@@ -120,28 +67,25 @@ export class Globe {
     }
 }
 
-
-
 export const globe = new Globe()
 
-
 const sortByTimestamp =
-    (a: MessageBase, b: MessageBase) => b.timestamp.getTime() - a.timestamp.getTime()
+    (a: MessageBase, b: MessageBase) => {
+        const aT = isServer(a) ? a.timestamp : a.sentToServer
+        const bT = isServer(b) ? b.timestamp : b.sentToServer
+        return bT.getTime() - aT.getTime()
+    }
 
-function uniqueBy<T>(ts : T[], projection: (t: T) => string): T[] {
+function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T, t2: T) => boolean): T[] {
     const tracking = { } as { [projected: string] : T }
-    ts.forEach( t => tracking[projection(t)] = t )
+    ts.forEach( t => {
+        if(tracking[projection(t)] && prioritized(t, tracking[projection(t)])) {
+            tracking[projection(t)] = t
+        } else {
+            tracking[projection(t)] = t
+        }
+    })
     return Object.values(tracking)
 }
 
-function categorize<T>(ts: T[], predicates: ((t: T) => boolean)[]): [T[]] {
-    const toReturn = []
-    ts.forEach(t => {
-        predicates.forEach(pred => {
 
-        })
-    })
-    return toReturn
-}
-
-// retry, logout, jump to bottom, pagination

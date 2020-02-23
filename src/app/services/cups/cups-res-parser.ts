@@ -4,7 +4,7 @@ import { ContactWithMessageCount, MessageDirection } from './types'
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
 
-interface CupsMessageShow { text: string, timestamp: Date, direction: MessageDirection, id: string }
+interface CupsMessageShow { text: string, timestamp: Date, direction: MessageDirection, id: string, trackingId: string }
 export class CupsResParser {
     constructor() {}
 
@@ -83,12 +83,15 @@ function pullContact(p: ArrayBufferParser): ContactWithMessageCount {
     return { torAddress, unreadMessages: unreadsCount, name }
 }
 
+// @TODO fix this parsing
 function pullMessage(p: ArrayBufferParser): CupsMessageShow {
     const direction: MessageDirection   = p.chopNParse(1, byteToMessageDirection)
     const epochTime: number = p.chopNParse(8, bigEndian)
     const messageLength = p.chopNParse(8, bigEndian)
     const text = p.chopNParse(messageLength, a => utf8Decoder.decode(a))
-    return { direction, timestamp: new Date(epochTime * 1000), text }
+    const id = 'id'
+    const trackingId = ''
+    return { direction, timestamp: new Date(epochTime * 1000), text, id, trackingId }
 }
 
 function pubkeyToOnion(pubkey: ArrayBuffer) {

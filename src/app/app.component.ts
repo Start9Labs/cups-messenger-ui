@@ -15,73 +15,73 @@ import { main } from './services/rx/paths'
   styleUrls: ['app.component.scss']
 })
 export class AppComponent {
-  public contacts$: Observable<ContactWithMessageCount[]>
-  public makeNewContactForm = false
-  public submittingNewContact$ = new BehaviorSubject(false)
-  public newContactTorAddress: string
-  public newContactName: string
+    public contacts$: Observable<ContactWithMessageCount[]>
+    public makeNewContactForm = false
+    public submittingNewContact$ = new BehaviorSubject(false)
+    public newContactTorAddress: string
+    public newContactName: string
 
-  public loading$ = new BehaviorSubject(false)
-  public error$ = new BehaviorSubject(undefined)
-  public globe = globe
+    public loading$ = new BehaviorSubject(false)
+    public error$ = new BehaviorSubject(undefined)
+    public globe = globe
 
-  constructor(
-    private readonly navCtrl: NavController,
-    private readonly cups: CupsMessenger,
-    private menu: MenuController,
-  ) {
-    main(this.cups)
-  }
-
-  jumpToChat(c: Contact) {
-    globe.currentContact$.next(c)
-    this.navCtrl.navigateRoot('contact-chat')
-    this.menu.close('main-menu')
-  }
-
-  toggleNewContact() {
-    this.makeNewContactForm = !this.makeNewContactForm
-    this.error$.next(undefined)
-  }
-
-  async submitNewContact() {
-    this.error$.next(undefined)
-    const sanitizedTorOnion = this.newContactTorAddress.trim().split('.onion')[0].concat('.onion')
-
-    try {
-      onionToPubkeyString(sanitizedTorOnion)
-    } catch (e) {
-      this.error$.next(`Invalid V3 Tor Address: ${e.message}`)
-      return
+    constructor(
+        private readonly navCtrl: NavController,
+        private readonly cups: CupsMessenger,
+        private menu: MenuController,
+    ) {
+        main(this.cups)
     }
 
-    const sanitizedName = this.newContactName.trim()
-    if (sanitizedName.length > 255) {
-      this.error$.next(`Name must be less than 255 characters.`)
-      return
+    jumpToChat(c: Contact) {
+        globe.currentContact$.next(c)
+        this.navCtrl.navigateRoot('contact-chat')
+        this.menu.close('main-menu')
     }
 
-    this.submittingNewContact$.next(true)
-
-    const contact = {
-      torAddress: sanitizedTorOnion,
-      name: sanitizedName
+    toggleNewContact() {
+        this.makeNewContactForm = !this.makeNewContactForm
+        this.error$.next(undefined)
     }
 
-    from(this.cups.contactsAdd(contact)).pipe(
-      switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
-    ).subscribe({
-      next: () => {
-        globe.currentContact$.next(contact)
-        this.submittingNewContact$.next(false)
-        this.newContactTorAddress = undefined
-        this.newContactName = undefined
-        this.makeNewContactForm = false
-      },
-      error: e => {
-        this.error$.next(e.message)
-        this.submittingNewContact$.next(false)
-      },
-    })
-  }
+    async submitNewContact() {
+        this.error$.next(undefined)
+        const sanitizedTorOnion = this.newContactTorAddress.trim().split('.onion')[0].concat('.onion')
+
+        try {
+            onionToPubkeyString(sanitizedTorOnion)
+        } catch (e) {
+            this.error$.next(`Invalid V3 Tor Address: ${e.message}`)
+            return
+        }
+
+        const sanitizedName = this.newContactName.trim()
+        if (sanitizedName.length > 255) {
+            this.error$.next(`Name must be less than 255 characters.`)
+            return
+        }
+
+        this.submittingNewContact$.next(true)
+
+        const contact = {
+            torAddress: sanitizedTorOnion,
+            name: sanitizedName
+        }
+
+        from(this.cups.contactsAdd(contact)).pipe(
+            switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
+        ).subscribe({
+            next: () => {
+                globe.currentContact$.next(contact)
+                this.submittingNewContact$.next(false)
+                this.newContactTorAddress = undefined
+                this.newContactName = undefined
+                this.makeNewContactForm = false
+            },
+            error: e => {
+                this.error$.next(e.message)
+                this.submittingNewContact$.next(false)
+            },
+        })
+    }
 }

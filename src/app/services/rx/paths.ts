@@ -20,7 +20,7 @@ export function main(cups: CupsMessenger) {
     }
 
     contactsSubscription = contactsProvider(c0).subscribe(globe.observeContacts)
-    contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
+    contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeMessages)
 
     interval(1000).pipe(filter(
         () => contactsSubscription.closed
@@ -33,7 +33,7 @@ export function main(cups: CupsMessenger) {
         () => contactMessagesSubscription.closed
     )).subscribe(() => {
         console.warn(`restarting contact messages daemon`)
-        contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeServerMessages)
+        contactMessagesSubscription = contactMessagesProvider(c1).subscribe(globe.$observeMessages)
     })
 }
 

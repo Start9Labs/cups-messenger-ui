@@ -19,33 +19,35 @@ export interface MessageBase {
     direction: MessageDirection
     otherParty: Contact
     text: string
-    result:         { id: string, timestamp: Date } | { error: string, id: string } |
-            Promise<{ id: string, timestamp: Date } | { error: string, id: string }>
+    trackingId: string
+    sentToServer: Date
+    id?: string
+    timestamp?: Date
+    failure?: string
 }
 export interface ServerMessage extends MessageBase {
-    result: {id: string, timestamp: Date}
+    id: string, timestamp: Date, failure?: undefined
 }
 export interface AttendingMessage extends MessageBase {
-    result: Promise<{id: string, timestamp: Date} | {error: string, id: string}>
+    id?: undefined, timestamp?: undefined, failure?: undefined
     direction: 'Outbound'
 }
 export interface FailedMessage extends MessageBase {
-    result: {error : string, id: string}
+    id?: undefined, timestamp?: undefined, failure: string
     direction: 'Outbound'
 }
 
 export function isServer(t: MessageBase) : t is ServerMessage {
-    return t.result && (t.result as any).timestamp
+    return !!t.id && !!t.timestamp
 }
 
 export function isFailed(t: MessageBase) : t is ServerMessage {
-    return t.result && (t.result as any).error
+    return !!t.failure && t.direction === 'Outbound'
 }
 
 export function isAttending(t: MessageBase) : t is AttendingMessage {
-    return !isServer(t) && !isFailed(t)
+    return !t.id && !t.timestamp && !t.failure && t.direction === 'Outbound'
 }
-
 
 export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
     const toReturn = []
@@ -66,9 +68,19 @@ export function mockMessage(i: number): ServerMessage {
         direction: 'Inbound',
         otherParty: mockContact(i),
         text: mockL(mockWord, 10).join(' '),
-        result: {id: uuidv4(), timestamp: new Date()}
+        sentToServer: new Date(),
+        trackingId: uuidv4(),
+        id: uuidv4(),
+        timestamp: new Date(),
+        failure: undefined
     }
 }
 function mockWord(i: number): string {
     return uuidv4() + i
+}
+
+export function serverErrorAttendingPrioritization(m1 : MessageBase, m2: MessageBase): boolean {
+    if(isServer(m1)) return true
+    if(isFailed(m1) && isAttending(m2)) return true
+    return false
 }

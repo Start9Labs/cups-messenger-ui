@@ -14,128 +14,124 @@ import { CupsMessenger } from '../services/cups/cups-messenger'
   styleUrls: ['./contact-chat.page.scss'],
 })
 export class ContactChatPage implements OnInit {
-  @ViewChild('content', { static: false }) private content: any
+    @ViewChild('content', { static: false }) private content: any
 
-  currentContactTorAddress: string
-  currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
-  contactMessages$: Observable<MessageBase[]> = new Observable()
+    currentContactTorAddress: string
+    currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
+    contactMessages$: Observable<MessageBase[]> = new Observable()
 
-  // Detecting a new message
-  unreads = false
+    // Detecting a new message
+    unreads = false
 
-  // Sending messages
-  messageToSend: string
+    // Sending messages
+    messageToSend: string
 
-  // Updating a contact
-  addContactNameForm = false
-  contactNameToAdd: string
-  updatingContact$ = new BehaviorSubject(false)
+    // Updating a contact
+    addContactNameForm = false
+    contactNameToAdd: string
+    updatingContact$ = new BehaviorSubject(false)
 
-  error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
-  globe = globe
+    error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
+    globe = globe
 
-  shouldJump = false
-  jumpSub: Subscription
-  mostRecentMessage: Date = new Date(0)
+    shouldJump = false
+    jumpSub: Subscription
+    mostRecentMessage: Date = new Date(0)
 
-  constructor(
-      private readonly navCtrl: NavController,
-      private readonly cups: CupsMessenger
-  ) {
-    globe.currentContact$.subscribe(c => {
-      if(!c) return
-      this.contactMessages$ = globe.watchMessages(c).pipe(tap(() => {
-        this.shouldJump = this.isAtBottom()
-        if(this.shouldJump) { this.unreads = false }
-      }))
+    constructor(
+        private readonly navCtrl: NavController,
+        private readonly cups: CupsMessenger
+    ){
+        globe.currentContact$.subscribe(c => {
+        if(!c) return
+        this.contactMessages$ = globe.watchMessages(c).pipe(tap(() => {
+            this.shouldJump = this.isAtBottom()
+            if(this.shouldJump) { this.unreads = false }
+        }))
 
-      if(this.jumpSub) { this.jumpSub.unsubscribe() }
+        if(this.jumpSub) { this.jumpSub.unsubscribe() }
 
-      this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
-        const mostRecent = ms[0]
-        if(this.shouldJump){
-          this.unreads = false
-          this.jumpToBottom()
-          this.shouldJump = false
-        } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessage) {
-          this.unreads = true
+        this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
+            const mostRecent = ms[0]
+            if(this.shouldJump){
+                this.unreads = false
+                this.jumpToBottom()
+                this.shouldJump = false
+            } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessage) {
+                this.unreads = true
+            }
+            this.mostRecentMessage = (mostRecent && mostRecent.timestamp) || this.mostRecentMessage
+        })
+
+        this.currentContactTorAddress = c.torAddress
+        prodMessageContacts$.next({})
+        })
+    }
+
+    isAtBottom(): boolean {
+        const el = document.getElementById('end-of-scroll')
+        return el ? isElementInViewport(el) : true
+    }
+
+    ngOnInit() {
+        if (!globe.password) {
+            this.navCtrl.navigateRoot('signin')
         }
-        this.mostRecentMessage = (mostRecent && mostRecent.timestamp) || this.mostRecentMessage
-      })
-
-      this.currentContactTorAddress = c.torAddress
-
-      prodMessageContacts$.next({})
-    })
-  }
-
-  isAtBottom(): boolean {
-    const el = document.getElementById('end-of-scroll')
-    return el ? isElementInViewport(el) : true
-  }
-
-  ngOnInit() {
-    if (!globe.password) {
-        this.navCtrl.navigateRoot('signin')
-    }
-    prodContacts$.next({})
-  }
-
-  sendMessage(contact: Contact) {
-    const messageText = this.messageToSend
-    if (!contact) { return }
-
-    const attendingMessage: AttendingMessage = {
-      timestamp: new Date(),
-      direction: 'Outbound',
-      otherParty: contact,
-      text: this.messageToSend,
-      attemptedAt: new Date(),
-      result: this.cups.messagesSend(contact, this.messageToSend).catch(e => {
-        return {error: e.message}
-      })
+        prodContacts$.next({})
     }
 
-    of({contact, attendingMessage }).subscribe(globe.observeAttendingMessage)
+    sendMessage(contact: Contact) {
+        const messageText = this.messageToSend
+        if (!contact) { return }
 
-    merge(
-      from(this.cups.messagesSend(contact, messageText)).pipe(map(() => true)),
-      interval(1000).pipe(map(() => false), take(1)) // TODO up to 12000
-    )
-    .subscribe({
-      next: res => {
-        if(!res) {
-          console.error(`message timedout ${attendingMessage.text}`)
-          globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
+        const attendingMessage: AttendingMessage = {
+            sentToServer: new Date(),
+            direction: 'Outbound',
+            otherParty: contact,
+            text: this.messageToSend,
+            trackingId: uuidv4(),
         }
-        prodMessageContacts$.next()
-      },
-      error: e => {
-        console.error(e.message)
-        globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
-      }
-    })
-    this.messageToSend = ''
-    pauseFor(125).then(() => { this.unreads = false; this.jumpToBottom() })
-  }
 
-  async jumpToBottom() {
-    if(this.content) { this.content.scrollToBottom(200) }
-  }
+        of({contact, messages: [attendingMessage] }).subscribe(globe.$observeMessages)
 
-  onScrollEnd(){
-    if(this.isAtBottom()){
-      this.unreads = false
+        merge(
+            from(this.cups.messagesSend(contact, messageText)).pipe(map(() => true)),
+            interval(12000)                                   .pipe(map(() => false), take(1)) // TODO up to 12000
+        )
+        .subscribe({
+            next: res => {
+                if(!res) {
+                    console.error(`message timed out ${attendingMessage.text}`)
+                    globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
+                }
+                prodMessageContacts$.next()
+            },
+            error: e => {
+                console.error(e.message)
+                globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
+            }
+        })
+        this.messageToSend = ''
+        pauseFor(125).then(() => { this.unreads = false; this.jumpToBottom() })
     }
-  }
 
-  ngOnDestroy(): void {
-    return this.jumpSub && this.jumpSub.unsubscribe()
-  }
+    async jumpToBottom() {
+        if(this.content) { this.content.scrollToBottom(200) }
+    }
 
-  delete(contact: Contact, failedMessage : FailedMessage): void {
-    globe.observeDeleteMessage.next({contact, failedMessage})
-  }
+    onScrollEnd(){
+        if(this.isAtBottom()){
+        this.unreads = false
+        }
+    }
+
+    ngOnDestroy(): void {
+        return this.jumpSub && this.jumpSub.unsubscribe()
+    }
+
+    delete(contact: Contact, failedMessage : FailedMessage): void {
+        globe.observeDeleteMessage.next({contact, failedMessage})
+    }
 }
 
 // returns true if the TOP of the element is in the view port.

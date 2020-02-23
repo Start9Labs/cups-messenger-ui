@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { config } from '../../config'
 import * as uuidv4 from 'uuid/v4'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, AttendingMessage, MessageBase } from './types'
+import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, MessageBase } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
 import { globe } from '../global-state'
 
@@ -90,7 +90,7 @@ export class LiveCupsMessenger {
             ).toPromise()
 
             return this.parser.deserializeMessagesShow(arrayBuffer).map(m =>
-                ({...m, otherParty: contact, result: { id: m.id } })
+                ({...m, otherParty: contact })
             )
         } catch (e) {
             console.error('Messages show', e)
@@ -99,9 +99,9 @@ export class LiveCupsMessenger {
         }
     }
 
-    async messagesSend(contact: Contact, message: string): Promise<{id: string}> {
+    async messagesSend(contact: Contact, message: string): Promise<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, message)
-        return this.http.post<{id: string}>(
+        return this.http.post<void>(
             this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders() }
         ).toPromise()
     }
@@ -148,17 +148,18 @@ export class MockCupsMessenger {
         )
     }
 
-    async messagesSend(contact: Contact, message: string): Promise< {id: string} > {
+    async messagesSend(contact: Contact, message: string): Promise< void > {
         await pauseFor(1000000)
         const id = uuidv4()
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
+            sentToServer: new Date(),
             direction: 'Outbound',
             otherParty: contact,
             text: message,
-            result: { id }
+            id: uuidv4(),
+            trackingId: uuidv4()
         })
-        return { id }
     }
 
     private getMessageMocks(c: Contact): MessageBase[] {
