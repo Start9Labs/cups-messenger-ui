@@ -88,8 +88,10 @@ export class Globe {
                     const i = attendingMessages.findIndex( m => {
                         attendingMessageFulfills(failedMessage, m)
                     } )
-                    attendingMessages.splice(i, 1, failedMessage)
-                    this.pokeAttendingMessages(contact, attendingMessages)
+                    if(i >= 0) {
+                        attendingMessages.splice(i, 1, failedMessage)
+                        this.pokeAttendingMessages(contact, attendingMessages)
+                    }
                 })
             }
         }

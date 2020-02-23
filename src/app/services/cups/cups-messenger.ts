@@ -136,7 +136,7 @@ export class MockCupsMessenger {
     }
 
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
-        this.counter++
+        this.counter = 1
         if (this.counter % 5 === 0) {
             if (this.counter % 10 === 0) {
                 await pauseFor(2000)
@@ -163,7 +163,7 @@ export class MockCupsMessenger {
     }
 
     private getMessageMocks(c: Contact) {
-        mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 2))
+        mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 6))
         return mocks[c.torAddress]
     }
 }

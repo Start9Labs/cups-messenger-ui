@@ -9,7 +9,7 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content [scrollEvents]="true" >
+<ion-content #content [scrollEvents]="true" (ionScroll)="logScrolling($event)">
     
     <ion-list #chat class="chat">
         <div *ngFor="let message of (contactMessages$ | async); let i = index">
@@ -26,8 +26,10 @@
                 <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" [color]="message.failed ? 'danger' : undefined" [name]="message.failed ? 'close' : 'time-outline'"></ion-icon></span>
             </div>
         </div>    
-        <div id="end-of-scroll"></div>
+        <div id="end-of-scroll1"></div>
     </ion-list>
+    <div id="end-of-scroll2"></div>
+
 
     <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button color="primary" (click)="jumpToBottom()">

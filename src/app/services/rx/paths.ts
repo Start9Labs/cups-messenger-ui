@@ -37,9 +37,6 @@ export function main(cups: CupsMessenger) {
     })
 }
 
-
-
-
 export const prodMessageContacts$ = new Subject()
 export interface ContactMessagesDaemonConfig { frequency: number, cups: CupsMessenger }
 export const contactMessagesProvider: (p: ContactMessagesDaemonConfig)

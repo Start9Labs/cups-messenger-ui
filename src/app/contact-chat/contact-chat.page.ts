@@ -59,6 +59,14 @@ export class ContactChatPage implements OnInit {
     })
   }
 
+  logScrolling(e){
+    console.log(this.isAtBottom())
+  }
+
+  isAtBottom(): boolean {
+
+  }
+
   ngOnInit() {
     if (!globe.password) {
         this.navCtrl.navigateRoot('signin')
