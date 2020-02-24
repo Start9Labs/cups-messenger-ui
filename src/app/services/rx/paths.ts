@@ -1,9 +1,9 @@
-import { globe } from '../global-state'
+import { globe, sortByTimestamp } from '../global-state'
 import { config } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
-import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
-import { interval, Observable, Subject, merge, combineLatest, of, Subscription } from 'rxjs'
-import { map, catchError, filter, switchMap, tap } from 'rxjs/operators'
+import { Contact, ServerMessage, ContactWithMessageCount, isServer } from '../cups/types'
+import { interval, Observable, Subject, merge, combineLatest, of, Subscription, from } from 'rxjs'
+import { map, catchError, filter, switchMap, tap, mergeMap } from 'rxjs/operators'
 
 let contactsSubscription: Subscription
 let contactMessagesSubscription: Subscription
@@ -64,7 +64,7 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                 merge(interval(frequency), prodContacts$)
                 .pipe(
                     switchMap(() => cups.contactsShow()),
-                    map(contacts => { 
+                    map(contacts => {
                         console.log('mapping contacts')
                         return contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)
                     }),
@@ -74,3 +74,23 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                     }),
                     filter(x => !!x)
                 )
+
+
+async function syncMessages(
+    cups: CupsMessenger,
+    c: Contact,
+    mostRecentServerMessage: ServerMessage | undefined
+) : Promise<ServerMessage[]> {
+    const limit = 15
+
+    const res = await (mostRecentServerMessage ?
+        cups.messagesShow(c, { limit, offsetDirection: 'after', offsetId: mostRecentServerMessage.id }) :
+        cups.messagesShow(c, { limit }))
+
+    const sorted = res.sort(sortByTimestamp)
+    if(res.length >= limit){
+        return (await syncMessages(cups, c,  sorted[0])).concat(sorted)
+    } else {
+        return Promise.resolve(sorted)
+    }
+}

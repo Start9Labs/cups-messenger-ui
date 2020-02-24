@@ -29,9 +29,7 @@ export class AppComponent {
         private readonly navCtrl: NavController,
         private readonly cups: CupsMessenger,
         private menu: MenuController,
-    ) {
-        main(this.cups)
-    }
+    ) { main(this.cups) }
 
     jumpToChat(c: Contact) {
         globe.currentContact$.next(c)

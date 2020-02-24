@@ -1,7 +1,6 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
 import { ContactWithMessageCount, MessageDirection } from './types'
-import * as uuidv4 from 'uuid/v4'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
@@ -88,11 +87,11 @@ function pullContact(p: ArrayBufferParser): ContactWithMessageCount {
 }
 
 function pullMessage(p: ArrayBufferParser): CupsMessageShow {
-    const direction      = p.chopNParse(1, byteToMessageDirection)
+    const direction      = p.chopNParse(1,  byteToMessageDirection)
+    const id             = p.chopNParse(8,  bigEndian)
     const trackingId     = p.chopNParse(16, bytesToUuid)
-    const id             = p.chopNParse(8, bigEndian)
-    const epochTime      = p.chopNParse(8, bigEndian)
-    const messageLength  = p.chopNParse(8, bigEndian)
+    const epochTime      = p.chopNParse(8,  bigEndian)
+    const messageLength  = p.chopNParse(8,  bigEndian)
     const text           = p.chopNParse(messageLength, utf8Decoder.decode)
     return { direction, timestamp: new Date(epochTime * 1000), text, id: String(id), trackingId }
 }
@@ -207,5 +206,5 @@ function hexToBytes(str: string): ArrayBuffer {
         str = str.substring(8, str.length)
     }
 
-    return new Uint8Array(result).buffer
+    return new Uint32Array(result).buffer
 }

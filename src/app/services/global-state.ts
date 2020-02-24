@@ -4,10 +4,11 @@ import { Contact,
         isServer,
         serverErrorAttendingPrioritization,
         isAttending,
+        ServerMessage,
        } from './cups/types'
 import { BehaviorSubject, NextObserver, Observable, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
-import { take } from 'rxjs/operators'
+import { take, map } from 'rxjs/operators'
 const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
@@ -49,6 +50,10 @@ export class Globe {
         return this.contactMessagesSubjects(c.torAddress)
     }
 
+    watchMostRecentServerMessage(c: Contact): Observable<ServerMessage | undefined> {
+        return this.watchMessages(c).pipe(map(ms => ms.filter(isServer)[0]))
+    }
+
     async init(): Promise<void> {
         return Storage.get(passwordKey).then(p => { this.password = p.value })
     }
@@ -74,7 +79,7 @@ export class Globe {
 
 export const globe = new Globe()
 
-const sortByTimestamp =
+export const sortByTimestamp =
     (a: MessageBase, b: MessageBase) => {
         const aT = isServer(a) ? a.timestamp : a.sentToServer
         const bT = isServer(b) ? b.timestamp : b.sentToServer
