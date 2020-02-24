@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, isFailed, isServer, isAttending } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, merge, interval, from } from 'rxjs'
@@ -43,28 +43,28 @@ export class ContactChatPage implements OnInit {
         private readonly cups: CupsMessenger
     ){
         globe.currentContact$.subscribe(c => {
-        if(!c) return
-        this.contactMessages$ = globe.watchMessages(c).pipe(tap(() => {
-            this.shouldJump = this.isAtBottom()
-            if(this.shouldJump) { this.unreads = false }
-        }))
+            if(!c) return
+            this.contactMessages$ = globe.watchMessages(c).pipe(tap(() => {
+                this.shouldJump = this.isAtBottom()
+                if(this.shouldJump) { this.unreads = false }
+            }))
 
-        if(this.jumpSub) { this.jumpSub.unsubscribe() }
+            if(this.jumpSub) { this.jumpSub.unsubscribe() }
 
-        this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
-            const mostRecent = ms[0]
-            if(this.shouldJump){
-                this.unreads = false
-                this.jumpToBottom()
-                this.shouldJump = false
-            } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessage) {
-                this.unreads = true
-            }
-            this.mostRecentMessage = (mostRecent && mostRecent.timestamp) || this.mostRecentMessage
-        })
+            this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
+                const mostRecent = ms[0]
+                if(this.shouldJump){
+                    this.unreads = false
+                    this.jumpToBottom()
+                    this.shouldJump = false
+                } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessage) {
+                    this.unreads = true
+                }
+                this.mostRecentMessage = (mostRecent && mostRecent.timestamp) || this.mostRecentMessage
+            })
 
-        this.currentContactTorAddress = c.torAddress
-        prodMessageContacts$.next({})
+            this.currentContactTorAddress = c.torAddress
+            prodMessageContacts$.next({})
         })
     }
 
@@ -81,9 +81,6 @@ export class ContactChatPage implements OnInit {
     }
 
     sendMessage(contact: Contact) {
-        const messageText = this.messageToSend
-        if (!contact) { return }
-
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
             direction: 'Outbound',
@@ -92,32 +89,41 @@ export class ContactChatPage implements OnInit {
             trackingId: uuidv4(),
         }
 
-        of({contact, messages: [attendingMessage] }).subscribe(globe.$observeMessages)
+        this.send(contact, attendingMessage)
+        this.messageToSend = ''
+    }
+
+    retry(contact: Contact, failedMessage: FailedMessage) {
+        const retryMessage = Object.assign(failedMessage, { sentToServer: new Date(), failure: undefined })
+        this.send(contact, retryMessage as AttendingMessage)
+    }
+
+    send(contact: Contact, message: AttendingMessage) {
+        of({contact, messages: [message] }).subscribe(globe.$observeMessages)
 
         merge(
-            from(this.cups.messagesSend(contact, messageText)).pipe(map(() => true)),
-            interval(12000)                                   .pipe(map(() => false), take(1)) // TODO up to 12000
-        )
-        .subscribe({
+            from(this.cups.messagesSend(contact, message.text)).pipe(
+                map(() =>  true)),
+            interval(4000).pipe(take(1),
+                map(() => false)) // TODO up to 12000
+        ).subscribe({
             next: res => {
                 if(!res) {
-                    console.error(`message timed out ${attendingMessage.text}`)
-                    globe.$observeMessages.next(
-                        { contact, messages: [{...attendingMessage, failure: 'timed out'}] }
-                    )
+                    console.error(`message timed out ${message.text}`)
+                    globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timed out'}] } )
                 }
                 prodMessageContacts$.next()
             },
             error: e => {
                 console.error(e.message)
-                globe.$observeMessages.next(
-                    { contact, messages: [{...attendingMessage, failure: e.message}] }
-                )
+                globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
             }
         })
-        this.messageToSend = ''
-        pauseFor(125).then(() => { this.unreads = false; this.jumpToBottom() })
+        pauseFor(125).then(() => {
+            this.unreads = false; this.jumpToBottom()
+        })
     }
+
 
     async jumpToBottom() {
         if(this.content) { this.content.scrollToBottom(200) }

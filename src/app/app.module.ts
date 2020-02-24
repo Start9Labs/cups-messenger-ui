@@ -9,13 +9,12 @@ import { AppRoutingModule } from './app-routing.module'
 import { FormsModule } from '@angular/forms'
 import { ContactChatPageModule } from './contact-chat/contact-chat.module'
 import { HttpClientModule } from '@angular/common/http'
-import { TextAvatarModule } from './text-avatar';
-import { ServiceWorkerModule } from '@angular/service-worker';
-import { environment } from '../environments/environment';
-import { ClassifyMessagePipe } from './classify-message.pipe'
+import { TextAvatarModule } from './text-avatar'
+import { ServiceWorkerModule } from '@angular/service-worker'
+import { environment } from '../environments/environment'
 
 @NgModule({
-  declarations: [AppComponent, ClassifyMessagePipe ],
+  declarations: [AppComponent ],
   entryComponents: [],
   imports: [
     BrowserModule,

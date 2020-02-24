@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core'
-import { Contact } from "./services/cups/types"
+import { Contact } from '../services/cups/types'
 
 @Pipe({
   name: 'truncateEllipses'

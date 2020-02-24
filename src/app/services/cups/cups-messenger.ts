@@ -28,7 +28,7 @@ export class CupsMessenger {
     async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
         return this.impl.messagesShow(contact, limit)
     }
-    async messagesSend(contact: Contact, message: string): Promise<{id: string}> {
+    async messagesSend(contact: Contact, message: string): Promise<void> {
         console.log('sending message', message)
         return this.impl.messagesSend(contact, message)
     }
@@ -150,7 +150,6 @@ export class MockCupsMessenger {
 
     async messagesSend(contact: Contact, message: string): Promise< void > {
         await pauseFor(1000000)
-        const id = uuidv4()
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
             sentToServer: new Date(),

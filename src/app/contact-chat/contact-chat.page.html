@@ -12,22 +12,22 @@
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" *ngIf="(globe.currentContact$ | async) as contact">
     <ion-list #chat class="chat">
         <div *ngFor="let message of (contactMessages$ | async)">
-            <div class="left-bubble" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none">
+            <div class="left-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date">{{message.timestamp | date:'short'}}</span>
             </div>
-            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none">
+            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
             </div>
-            <div class="right-bubble" *ngIf="message.attending && !message.failed" lines="none">
+            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
+                <span class="msg-date">{{message.sentToServer | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
             </div>
-            <div class="right-bubble failed" *ngIf="message.attending && message.failed" lines="none">
+            <div class="right-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{message.timestamp | date:'short'}}
-                    <ion-button fill="clear" style="padding-bottom: 0.7em; width: 33%; color: #fccdcd;" (click)="delete(contact, message)"size="small">
+                <span class="msg-date">{{message.sentToServer | date:'short'}}
+                    <ion-button fill="clear" style="padding-bottom: 0.7em; width: 33%; color: #fccdcd;" (click)="retry(contact, message)"size="small">
                         <ion-icon class="message-icon" name="close"></ion-icon>
                     </ion-button>
                 </span>

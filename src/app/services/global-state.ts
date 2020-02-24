@@ -3,6 +3,7 @@ import { Contact,
         MessageBase,
         isServer,
         serverErrorAttendingPrioritization,
+        isAttending,
        } from './cups/types'
 import { BehaviorSubject, NextObserver, Observable, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
@@ -24,7 +25,6 @@ export class Globe {
 
     observeContacts: PartialObserver<ContactWithMessageCount[]> = {
         next: contacts => {
-            console.log(`nexting contacts`)
             if(contacts) {
                 this.$contacts$.next(contacts)
             }
@@ -34,13 +34,12 @@ export class Globe {
     $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
             this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe(existingMessages => {
-                this.contactMessagesSubjects(contact.torAddress).next(
-                    uniqueBy(
-                        messages.concat(existingMessages),
-                        t => t.trackingId,
-                        serverErrorAttendingPrioritization
-                    ).sort(sortByTimestamp)
-                )
+                const newMessageState = uniqueBy(
+                    messages.concat(existingMessages),
+                    t => t.trackingId,
+                    serverErrorAttendingPrioritization
+                ).sort(sortByTimestamp)
+                this.contactMessagesSubjects(contact.torAddress).next(newMessageState)
             })
         }
     }
@@ -84,9 +83,7 @@ const sortByTimestamp =
 function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T, t2: T) => boolean): T[] {
     const tracking = { } as { [projected: string] : T }
     ts.forEach( t => {
-        if(tracking[projection(t)] && prioritized(t, tracking[projection(t)])) {
-            tracking[projection(t)] = t
-        } else {
+        if( (tracking[projection(t)] && prioritized(t, tracking[projection(t)])) || !tracking[projection(t)]) {
             tracking[projection(t)] = t
         }
     })

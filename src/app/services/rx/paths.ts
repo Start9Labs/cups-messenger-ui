@@ -1,10 +1,9 @@
 import { globe } from '../global-state'
-// import { cryoProvider, CryoDaemonConfig, PyroDaemonConfig, pyroProvider } from './providers'
 import { config } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
-import { interval, Observable, Subject, merge, combineLatest, of, Subscribable, Subscription } from 'rxjs'
-import { map, catchError, filter, switchMap, take, takeWhile, tap } from 'rxjs/operators'
+import { interval, Observable, Subject, merge, combineLatest, of, Subscription } from 'rxjs'
+import { map, catchError, filter, switchMap, tap } from 'rxjs/operators'
 
 let contactsSubscription: Subscription
 let contactMessagesSubscription: Subscription
@@ -65,13 +64,13 @@ export const contactsProvider: (p: ContactsDaemonConfig)
                 merge(interval(frequency), prodContacts$)
                 .pipe(
                     switchMap(() => cups.contactsShow()),
-                    tap((res) => `received contacts from daemon 1 ${res}`),
                     map(contacts => { 
-                        console.log('mapping contacts' , JSON.stringify(contacts))
+                        console.log('mapping contacts')
                         return contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)
                     }),
                     catchError(e => {
                         console.error(`Error in contacts daemon ${e.message}`)
                         return of(undefined)
                     }),
+                    filter(x => !!x)
                 )
