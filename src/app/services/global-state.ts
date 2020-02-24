@@ -34,6 +34,7 @@ export class Globe {
     $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
             this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe(existingMessages => {
+                console.log(existingMessages)
                 const newMessageState = uniqueBy(
                     messages.concat(existingMessages),
                     t => t.trackingId,

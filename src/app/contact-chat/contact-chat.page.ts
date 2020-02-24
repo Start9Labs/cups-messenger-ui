@@ -68,11 +68,6 @@ export class ContactChatPage implements OnInit {
         })
     }
 
-    isAtBottom(): boolean {
-        const el = document.getElementById('end-of-scroll')
-        return el ? isElementInViewport(el) : true
-    }
-
     ngOnInit() {
         if (!globe.password) {
             this.navCtrl.navigateRoot('signin')
@@ -130,9 +125,21 @@ export class ContactChatPage implements OnInit {
     }
 
     onScrollEnd(){
-        if(this.isAtBottom()){
-        this.unreads = false
+        if(this.isAtBottom()){ this.unreads = false }
+        if(this.isAtTop()) {
+            
         }
+    }
+
+
+    isAtBottom(): boolean {
+        const el = document.getElementById('end-of-scroll')
+        return el ? isElementInViewport(el) : true
+    }
+
+    isAtTop(): boolean {
+        const el = document.getElementById('top-of-scroll')
+        return el ? isElementInViewport(el) : true
     }
 
     ngOnDestroy(): void {
