@@ -11,10 +11,11 @@ import { ContactChatPageModule } from './contact-chat/contact-chat.module'
 import { HttpClientModule } from '@angular/common/http'
 import { TextAvatarModule } from './text-avatar';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { environment } from '../environments/environment'
+import { environment } from '../environments/environment';
+import { ClassifyMessagePipe } from './classify-message.pipe'
 
 @NgModule({
-  declarations: [AppComponent ],
+  declarations: [AppComponent, ClassifyMessagePipe ],
   entryComponents: [],
   imports: [
     BrowserModule,

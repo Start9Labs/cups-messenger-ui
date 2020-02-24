@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core'
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
@@ -102,13 +102,17 @@ export class ContactChatPage implements OnInit {
             next: res => {
                 if(!res) {
                     console.error(`message timed out ${attendingMessage.text}`)
-                    globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
+                    globe.$observeMessages.next(
+                        { contact, messages: [{...attendingMessage, failure: 'timed out'}] }
+                    )
                 }
                 prodMessageContacts$.next()
             },
             error: e => {
                 console.error(e.message)
-                globe.observeFailedMessage.next({contact, failedMessage: {...attendingMessage, failed: true}})
+                globe.$observeMessages.next(
+                    { contact, messages: [{...attendingMessage, failure: e.message}] }
+                )
             }
         })
         this.messageToSend = ''
@@ -127,10 +131,6 @@ export class ContactChatPage implements OnInit {
 
     ngOnDestroy(): void {
         return this.jumpSub && this.jumpSub.unsubscribe()
-    }
-
-    delete(contact: Contact, failedMessage : FailedMessage): void {
-        globe.observeDeleteMessage.next({contact, failedMessage})
     }
 }
 

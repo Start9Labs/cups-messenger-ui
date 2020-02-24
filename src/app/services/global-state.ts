@@ -2,6 +2,7 @@ import { Contact,
         ContactWithMessageCount,
         MessageBase,
         isServer,
+        serverErrorAttendingPrioritization,
        } from './cups/types'
 import { BehaviorSubject, NextObserver, Observable, PartialObserver } from 'rxjs'
 import { Plugins } from '@capacitor/core'
@@ -32,9 +33,13 @@ export class Globe {
 
     $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
-            this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe( existingMessages => {
+            this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe(existingMessages => {
                 this.contactMessagesSubjects(contact.torAddress).next(
-                    uniqueBy(messages.concat(existingMessages), t => t.trackingId, serverErrorAttending).sort(sortByTimestamp)
+                    uniqueBy(
+                        messages.concat(existingMessages),
+                        t => t.trackingId,
+                        serverErrorAttendingPrioritization
+                    ).sort(sortByTimestamp)
                 )
             })
         }
