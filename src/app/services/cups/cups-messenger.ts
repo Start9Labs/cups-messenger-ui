@@ -25,15 +25,20 @@ export class CupsMessenger {
         return this.impl.contactsAdd(contact)
     }
 
-    async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
-        return this.impl.messagesShow(contact, limit)
+    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+        return this.impl.messagesShow(contact, options)
     }
-    async messagesSend(contact: Contact, message: string): Promise<void> {
+    async messagesSend(contact: Contact, trackingId, message: string): Promise<void> {
         console.log('sending message', message)
-        return this.impl.messagesSend(contact, message)
+        return this.impl.messagesSend(contact, trackingId, message)
     }
 }
 
+type ShowMessagesOptions = { limit?: number, offsetId: string, offsetDirection: 'before' | 'after' }
+function fillDefaultOptions(options: ShowMessagesOptions): ShowMessagesOptions {
+    const limit = options.limit || 15
+    return {...options, limit }
+}
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
     constructor(private readonly http: HttpClient) {}
@@ -74,16 +79,20 @@ export class LiveCupsMessenger {
         ).toPromise()
     }
 
-    async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
+    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+        const { limit, offsetId, offsetDirection } = fillDefaultOptions(options)
+        const params = { 
+            type: 'messages', 
+            pubkey: onionToPubkeyString(contact.torAddress), 
+            limit: String(limit),
+            [offsetId]: offsetId
+        }
+
         try {
             const arrayBuffer = await this.http.get(
                     this.hostUrl,
                     {
-                        params: {
-                            type: 'messages',
-                            pubkey: onionToPubkeyString(contact.torAddress),
-                            limit: String(limit)
-                        },
+                        params,
                         headers: this.authHeaders(),
                         responseType: 'arraybuffer'
                     }
@@ -99,8 +108,8 @@ export class LiveCupsMessenger {
         }
     }
 
-    async messagesSend(contact: Contact, message: string): Promise<void> {
-        const toPost = this.parser.serializeSendMessage(contact.torAddress, message)
+    async messagesSend(contact: Contact, trackingId, message: string): Promise<void> {
+        const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         return this.http.post<void>(
             this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders() }
         ).toPromise()
@@ -130,7 +139,7 @@ export class MockCupsMessenger {
         this.contacts.push(Object.assign({unreadMessages: 0}, contact))
     }
 
-    async messagesShow(contact: Contact, limit: number = 15): Promise<ServerMessage[]> {
+    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
         this.counter++
         if (this.counter % 5 === 0) {
             if (this.counter % 10 === 0) {
@@ -148,7 +157,7 @@ export class MockCupsMessenger {
         )
     }
 
-    async messagesSend(contact: Contact, message: string): Promise< void > {
+    async messagesSend(contact: Contact, trackingId, message: string): Promise< void > {
         await pauseFor(1000000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
@@ -157,7 +166,7 @@ export class MockCupsMessenger {
             otherParty: contact,
             text: message,
             id: uuidv4(),
-            trackingId: uuidv4()
+            trackingId
         })
     }
 

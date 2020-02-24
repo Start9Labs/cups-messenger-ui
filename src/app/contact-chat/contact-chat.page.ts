@@ -36,7 +36,8 @@ export class ContactChatPage implements OnInit {
 
     shouldJump = false
     jumpSub: Subscription
-    mostRecentMessage: Date = new Date(0)
+    mostRecentMessageTime: Date = new Date(0)
+    oldestMessage: MessageBase
 
     constructor(
         private readonly navCtrl: NavController,
@@ -44,9 +45,11 @@ export class ContactChatPage implements OnInit {
     ){
         globe.currentContact$.subscribe(c => {
             if(!c) return
-            this.contactMessages$ = globe.watchMessages(c).pipe(tap(() => {
+            this.contactMessages$ = globe.watchMessages(c).pipe(map(ms => {
                 this.shouldJump = this.isAtBottom()
                 if(this.shouldJump) { this.unreads = false }
+                this.oldestMessage = ms[ms.length - 1]
+                return ms
             }))
 
             if(this.jumpSub) { this.jumpSub.unsubscribe() }
@@ -57,10 +60,10 @@ export class ContactChatPage implements OnInit {
                     this.unreads = false
                     this.jumpToBottom()
                     this.shouldJump = false
-                } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessage) {
+                } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessageTime) {
                     this.unreads = true
                 }
-                this.mostRecentMessage = (mostRecent && mostRecent.timestamp) || this.mostRecentMessage
+                this.mostRecentMessageTime = (mostRecent && mostRecent.timestamp) || this.mostRecentMessageTime
             })
 
             this.currentContactTorAddress = c.torAddress
@@ -97,7 +100,7 @@ export class ContactChatPage implements OnInit {
         of({contact, messages: [message] }).subscribe(globe.$observeMessages)
 
         merge(
-            from(this.cups.messagesSend(contact, message.text)).pipe(
+            from(this.cups.messagesSend(contact, message.trackingId, message.text)).pipe(
                 map(() =>  true)),
             interval(4000).pipe(take(1),
                 map(() => false)) // TODO up to 12000
@@ -127,10 +130,13 @@ export class ContactChatPage implements OnInit {
     onScrollEnd(){
         if(this.isAtBottom()){ this.unreads = false }
         if(this.isAtTop()) {
-            
+        //    this.fetchOlderMessages(15) 
         }
     }
 
+    async fetchOlderMessages(n : number){
+                
+    }
 
     isAtBottom(): boolean {
         const el = document.getElementById('end-of-scroll')
