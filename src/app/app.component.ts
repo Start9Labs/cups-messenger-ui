@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component, NgZone } from '@angular/core'
 
 import { globe } from './services/global-state'
 import { NavController, MenuController } from '@ionic/angular'
@@ -29,17 +29,35 @@ export class AppComponent {
         private readonly navCtrl: NavController,
         private readonly cups: CupsMessenger,
         private menu: MenuController,
-    ) { main(this.cups) }
+        private zone: NgZone
+    ) {
+        main(this.cups)
+    }
+
+    ngOnInit(){
+        globe.password$.subscribe(p => {
+            this.zone.run(() => {
+                if(p){
+                    this.navCtrl.navigateRoot('contact-chat')
+                } else {
+                    this.navCtrl.navigateRoot(['/signin'])
+                }
+            })
+        })
+    }
 
     jumpToChat(c: Contact) {
         globe.currentContact$.next(c)
-        this.navCtrl.navigateRoot('contact-chat')
         this.menu.close('main-menu')
     }
 
     toggleNewContact() {
         this.makeNewContactForm = !this.makeNewContactForm
         this.error$.next(undefined)
+    }
+
+    logout(){
+        this.globe.clearPassword()
     }
 
     async submitNewContact() {

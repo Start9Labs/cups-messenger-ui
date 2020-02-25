@@ -9,17 +9,21 @@ export interface Config {
     contactMessagesDaemon: {
         frequency: number
     }
+    loadMesageBatchSize: number
+    defaultServerTimeout: number
 }
 
 export const config: Config = {
     cupsMessenger: {
-        mock: true,
+        mock: false,
         url: window.origin + '/api'
     },
     contactsDaemon: {
         frequency: 10000
     },
     contactMessagesDaemon: {
-        frequency: 1000
-    }
+        frequency: 2500
+    },
+    loadMesageBatchSize: 10,
+    defaultServerTimeout: 12000
 }

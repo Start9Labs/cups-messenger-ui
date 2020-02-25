@@ -10,8 +10,12 @@
 </ion-header>
 
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" *ngIf="(globe.currentContact$ | async) as contact">
-    <div id="start-of-scroll"></div>    
+    <ion-infinite-scroll position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+        <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+
     <ion-list #chat class="chat">
+        <div id="start-of-scroll"></div>
         <div *ngFor="let message of (contactMessages$ | async)">
             <div class="left-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
@@ -36,6 +40,7 @@
         </div>    
     </ion-list>
     <div id="end-of-scroll"></div>
+
     <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button color="primary" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>

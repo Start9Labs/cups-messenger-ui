@@ -48,36 +48,6 @@ export function isAttending(t: MessageBase) : t is AttendingMessage {
     return !! (t.direction === 'Outbound' && !isServer(t) && !isFailed(t))
 }
 
-export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
-    const toReturn = []
-    for (let j = 0; j < i; j++) {
-        toReturn.push(mockF(j))
-    }
-    return toReturn
-}
-export function mockContact(i: number): ContactWithMessageCount {
-    return {
-        torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
-        name: 'contact-' + i + 'dfoifd',
-        unreadMessages: 0
-    }
-}
-export function mockMessage(i: number): ServerMessage {
-    return {
-        direction: 'Inbound',
-        otherParty: mockContact(i),
-        text: mockL(mockWord, 10).join(' '),
-        sentToServer: new Date(),
-        trackingId: uuidv4(),
-        id: uuidv4(),
-        timestamp: new Date(),
-        failure: undefined
-    }
-}
-function mockWord(i: number): string {
-    return uuidv4() + i
-}
-
 export function serverErrorAttendingPrioritization(m1 : MessageBase, m2: MessageBase): boolean {
     if(isServer(m1)) return true
     return m1.sentToServer > m2.sentToServer

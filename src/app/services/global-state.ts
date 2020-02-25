@@ -3,10 +3,9 @@ import { Contact,
         MessageBase,
         isServer,
         serverErrorAttendingPrioritization,
-        isAttending,
         ServerMessage,
        } from './cups/types'
-import { BehaviorSubject, NextObserver, Observable, PartialObserver } from 'rxjs'
+import { BehaviorSubject, NextObserver, Observable, PartialObserver, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
 const { Storage } = Plugins
@@ -17,19 +16,14 @@ export class Globe {
     $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
     contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
+    password$: Subject<string | undefined> = new Subject()
     password: string | undefined = undefined
     contactMessages: {
         [contactTorAddress: string]: BehaviorSubject<MessageBase[]>
     } = {}
 
-    constructor() {}
-
-    observeContacts: PartialObserver<ContactWithMessageCount[]> = {
-        next: contacts => {
-            if(contacts) {
-                this.$contacts$.next(contacts)
-            }
-        },
+    constructor() {
+        this.password$.subscribe(p => { this.password = p })
     }
 
     $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
@@ -54,21 +48,27 @@ export class Globe {
         return this.watchMessages(c).pipe(map(ms => ms.filter(isServer)[0]))
     }
 
+    watchOldestServerMessage(c: Contact): Observable<ServerMessage | undefined> {
+        return this.watchMessages(c).pipe(map(ms => ms.filter(isServer)[ms.length - 1]))
+    }
+
     async init(): Promise<void> {
-        return Storage.get(passwordKey).then(p => { this.password = p.value })
+        const p = await Storage.get(passwordKey)
+        this.password$.next(p.value)
     }
 
     async setPassword(p: string): Promise<void> {
-        return Storage.set({
+        if(!p) return
+        await Storage.set({
             key: 'password',
             value: p
-        }).then(() => this.init())
+        })
+        this.init()
     }
 
     async clearPassword(): Promise<void> {
-        Storage.remove(passwordKey)
-        this.password = undefined
-        return
+        await Storage.remove(passwordKey)
+        this.password$.next(undefined)
     }
 
     private contactMessagesSubjects(tor: string): BehaviorSubject<MessageBase[]> {

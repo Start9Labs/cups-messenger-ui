@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, isFailed, isServer, isAttending } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject, of, merge, interval, from } from 'rxjs'
-import { globe } from '../services/global-state'
-import { tap, map, take, delay } from 'rxjs/operators'
-import { prodMessageContacts$, prodContacts$ } from '../services/rx/paths'
+import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
+import { globe, sortByTimestamp } from '../services/global-state'
+import { map, delay, switchMap, tap, filter, take } from 'rxjs/operators'
+import { prodContactMessages$, prodContacts$, state } from '../services/rx/paths'
+import { withTimeout } from '../services/cups/live-messenger'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 
 @Component({
@@ -19,7 +20,7 @@ export class ContactChatPage implements OnInit {
     currentContactTorAddress: string
     currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
     contactMessages$: Observable<MessageBase[]> = new Observable()
-
+    contactMessages: MessageBase[] = []
     // Detecting a new message
     unreads = false
 
@@ -38,6 +39,7 @@ export class ContactChatPage implements OnInit {
     jumpSub: Subscription
     mostRecentMessageTime: Date = new Date(0)
     oldestMessage: MessageBase
+    canGetOlderMessages = false
 
     constructor(
         private readonly navCtrl: NavController,
@@ -67,7 +69,7 @@ export class ContactChatPage implements OnInit {
             })
 
             this.currentContactTorAddress = c.torAddress
-            prodMessageContacts$.next({})
+            prodContactMessages$.next({})
         })
     }
 
@@ -75,8 +77,25 @@ export class ContactChatPage implements OnInit {
         if (!globe.password) {
             this.navCtrl.navigateRoot('signin')
         }
-        prodContacts$.next({})
+        prodContacts$.next()
+        this.canGetOlderMessages = this.isAtTop()
     }
+
+    // initialMessages(contact: Contact) {
+    //     from(this.cups.newMessagesShow(contact)).pipe(state(
+    //         newMs => {
+    //             const sortedNewMs = (newMs || []).sort(sortByTimestamp)
+    //             const showMessageParams = {} as ShowMessagesOptions
+    //             if(sortedNewMs.length){
+    //                 const oldest = sortedNewMs[0]
+    //                 showMessageParams.offset = { id: oldest.id, direction: 'before' }
+    //             }
+    //             return from(this.cups.messagesShow(contact, showMessageParams))
+    //         }),map( ([newMs, oldMs]) => {
+                
+    //         })
+    //     ))
+    // }
 
     sendMessage(contact: Contact) {
         const attendingMessage: AttendingMessage = {
@@ -92,36 +111,27 @@ export class ContactChatPage implements OnInit {
     }
 
     retry(contact: Contact, failedMessage: FailedMessage) {
-        const retryMessage = Object.assign(failedMessage, { sentToServer: new Date(), failure: undefined })
+        const retryMessage = {...failedMessage, sentToServer: new Date() }
+        delete retryMessage.failure
         this.send(contact, retryMessage as AttendingMessage)
     }
 
     send(contact: Contact, message: AttendingMessage) {
         of({contact, messages: [message] }).subscribe(globe.$observeMessages)
 
-        merge(
-            from(this.cups.messagesSend(contact, message.trackingId, message.text)).pipe(
-                map(() =>  true)),
-            interval(4000).pipe(take(1),
-                map(() => false)) // TODO up to 12000
-        ).subscribe({
-            next: res => {
-                if(!res) {
-                    console.error(`message timed out ${message.text}`)
-                    globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timed out'}] } )
-                }
-                prodMessageContacts$.next()
-            },
-            error: e => {
+        withTimeout(
+            from(this.cups.messagesSend(contact, message.trackingId, message.text))
+        ).subscribe(Object.assign(prodContactMessages$, {
+            error: (e: Error) => {
                 console.error(e.message)
                 globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
             }
-        })
+        }))
+
         pauseFor(125).then(() => {
             this.unreads = false; this.jumpToBottom()
         })
     }
-
 
     async jumpToBottom() {
         if(this.content) { this.content.scrollToBottom(200) }
@@ -129,13 +139,30 @@ export class ContactChatPage implements OnInit {
 
     onScrollEnd(){
         if(this.isAtBottom()){ this.unreads = false }
-        if(this.isAtTop()) {
-        //    this.fetchOlderMessages(15) 
-        }
     }
 
-    async fetchOlderMessages(n : number){
-                
+    fetchOlderMessages(event: any, contact: Contact) {
+        let message: ServerMessage | undefined
+        globe.watchOldestServerMessage(contact).pipe(
+            filter(m => !!m),
+            tap(m => message = m),
+            take(1),
+            switchMap(m =>
+                withTimeout(
+                    from(this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} ))
+                )),
+            map(ms => ({ contact, messages: ms }))
+        ).subscribe( {
+            next: res => {
+                globe.$observeMessages.next(res)
+                event.target.complete()
+            },
+            error: (e : Error) => {
+                console.error(e.message)
+                globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                event.target.complete()
+            }
+        })
     }
 
     isAtBottom(): boolean {

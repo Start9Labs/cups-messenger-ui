@@ -6,7 +6,10 @@
                     <ion-title>Chats</ion-title>
                 </ion-toolbar>
             </ion-header>
-            <ion-content>
+            <ion-content *ngIf="(globe.password$ | async)">
+                <ion-button style="margin: 12px 0;" expand="full" fill="clear" (click)="logout()">
+                    Logout
+                </ion-button>
 				<!-- button to enable to contact form -->
                 <ion-button style="margin: 12px 0;" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
                     New contact

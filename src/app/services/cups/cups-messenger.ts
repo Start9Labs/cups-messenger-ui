@@ -1,20 +1,16 @@
 import { Injectable } from '@angular/core'
 import { config } from '../../config'
-import * as uuidv4 from 'uuid/v4'
-import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, mockL, mockContact, mockMessage, pauseFor, ServerMessage, MessageBase } from './types'
-import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
+import { HttpClient } from '@angular/common/http'
+import { ContactWithMessageCount, Contact, ServerMessage } from './types'
 import { globe } from '../global-state'
+import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
+import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
-    private impl: LiveCupsMessenger | MockCupsMessenger
+    private readonly impl
     constructor(http: HttpClient) {
-        if (config.cupsMessenger.mock) {
-            this.impl = new MockCupsMessenger()
-        } else {
-            this.impl = new LiveCupsMessenger(http)
-        }
+        this.impl = config.cupsMessenger.mock ? new MockCupsMessenger() : new LiveCupsMessenger(http)
     }
 
     contactsShow(loginTestPassword?: string): Promise<ContactWithMessageCount[]> {
@@ -28,150 +24,13 @@ export class CupsMessenger {
     async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
         return this.impl.messagesShow(contact, options)
     }
-    async messagesSend(contact: Contact, trackingId, message: string): Promise<void> {
+
+    async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
         console.log('sending message', message)
         return this.impl.messagesSend(contact, trackingId, message)
     }
-}
 
-type ShowMessagesOptions = { limit?: number, offsetId: string, offsetDirection: 'before' | 'after' }
-function fillDefaultOptions(options: ShowMessagesOptions): ShowMessagesOptions {
-    const limit = options.limit || 15
-    return {...options, limit }
-}
-export class LiveCupsMessenger {
-    private readonly parser: CupsResParser = new CupsResParser()
-    constructor(private readonly http: HttpClient) {}
-
-    private authHeaders(password: string = globe.password): HttpHeaders {
-        if (!password) { throw new Error('Unauthenticated request to server attempted.') }
-        console.log(`authing with`, password)
-        return new HttpHeaders({Authorization: 'Basic ' + btoa(`me:${password}`)})
-    }
-
-    private get hostUrl(): string {
-        return config.cupsMessenger.url
-    }
-
-    async contactsShow(loginTestPassword: string): Promise<ContactWithMessageCount[]> {
-        console.log('showing with ', loginTestPassword)
-        try {
-            return this.http.get(
-                this.hostUrl,
-                {
-                    params: {
-                        type: 'users'
-                    },
-                    headers: this.authHeaders(loginTestPassword),
-                    responseType: 'arraybuffer'
-                }
-            ).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
-        } catch (e) {
-            console.error('Contacts show', e)
-            throw e
-        }
-    }
-
-    async contactsAdd(contact: Contact): Promise<void> {
-        const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
-        return this.http.post<void>(
-            this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders() }
-        ).toPromise()
-    }
-
-    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
-        const { limit, offsetId, offsetDirection } = fillDefaultOptions(options)
-        const params = { 
-            type: 'messages', 
-            pubkey: onionToPubkeyString(contact.torAddress), 
-            limit: String(limit),
-            [offsetId]: offsetId
-        }
-
-        try {
-            const arrayBuffer = await this.http.get(
-                    this.hostUrl,
-                    {
-                        params,
-                        headers: this.authHeaders(),
-                        responseType: 'arraybuffer'
-                    }
-            ).toPromise()
-
-            return this.parser.deserializeMessagesShow(arrayBuffer).map(m =>
-                ({...m, otherParty: contact })
-            )
-        } catch (e) {
-            console.error('Messages show', e)
-            console.error('Messages show', JSON.stringify(e))
-            throw e
-        }
-    }
-
-    async messagesSend(contact: Contact, trackingId, message: string): Promise<void> {
-        const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
-        return this.http.post<void>(
-            this.hostUrl, new Blob([toPost]), {  headers: this.authHeaders() }
-        ).toPromise()
-    }
-}
-
-const mocks = {} // mockL(mockMessage, 2)
-
-export class MockCupsMessenger {
-    contacts = mockL(mockContact, 5)
-    counter = 0
-
-    constructor() {}
-
-    async contactsShow(): Promise<ContactWithMessageCount[]> {
-        if (this.counter % 5 === 0) {
-            this.contacts[1].unreadMessages ++
-        }
-        return this.contacts
-    }
-
-    async contactsAdd(contact: Contact): Promise<void> {
-        await pauseFor(2000)
-        const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
-        this.contacts = []
-        this.contacts.push(...nonMatchingTors)
-        this.contacts.push(Object.assign({unreadMessages: 0}, contact))
-    }
-
-    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
-        this.counter++
-        if (this.counter % 5 === 0) {
-            if (this.counter % 10 === 0) {
-                await pauseFor(2000)
-            }
-            this.getMessageMocks(contact).push(mockMessage(this.counter))
-        }
-        const toReturn = JSON.parse(
-            JSON.stringify(
-                this.getMessageMocks(contact)
-            )).map(x => { x.timestamp = new Date(x.timestamp); return x }
-        )
-        return Promise.resolve(
-            toReturn
-        )
-    }
-
-    async messagesSend(contact: Contact, trackingId, message: string): Promise< void > {
-        await pauseFor(1000000)
-        this.getMessageMocks(contact).push({
-            timestamp: new Date(),
-            sentToServer: new Date(),
-            direction: 'Outbound',
-            otherParty: contact,
-            text: message,
-            id: uuidv4(),
-            trackingId
-        })
-    }
-
-    private getMessageMocks(c: Contact): MessageBase[] {
-        mocks[c.torAddress] = (mocks[c.torAddress] || mockL(mockMessage, 2))
-        return mocks[c.torAddress]
+    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
+        return this.impl.newMessagesShow(contact)
     }
 }
