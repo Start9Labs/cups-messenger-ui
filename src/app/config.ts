@@ -19,7 +19,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: true,
+        mock: false,
         url: window.origin + '/api'
     },
     contactsDaemon: {
@@ -28,8 +28,8 @@ export const config: Config = {
     contactMessagesDaemon: {
         frequency: 2500
     },
-    loadMesageBatchSize: 10,
-    defaultServerTimeout: 5000,
+    loadMesageBatchSize: 15,
+    defaultServerTimeout: 25000,
     loglevel: 'Debug',
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
