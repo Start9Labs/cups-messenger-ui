@@ -1,5 +1,3 @@
-import * as uuidv4 from 'uuid/v4'
-
 export function pauseFor(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
 }

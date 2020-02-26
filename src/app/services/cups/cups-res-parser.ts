@@ -1,7 +1,6 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
 import { ContactWithMessageCount, MessageDirection } from './types'
-import * as uuidv4 from 'uuid'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()

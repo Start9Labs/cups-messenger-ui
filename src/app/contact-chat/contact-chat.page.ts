@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage, isAttending } from '../services/cups/types'
-import * as uuidv4 from 'uuid/v4'
+import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
 import { globe } from '../services/global-state'
@@ -108,9 +108,8 @@ export class ContactChatPage implements OnInit {
             direction: 'Outbound',
             otherParty: contact,
             text: this.messageToSend,
-            trackingId: uuidv4(),
+            trackingId: uuid.v4(),
         }
-
         this.send(contact, attendingMessage)
         this.messageToSend = ''
     }

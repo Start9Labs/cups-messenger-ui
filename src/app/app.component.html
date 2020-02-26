@@ -7,9 +7,6 @@
                 </ion-toolbar>
             </ion-header>
             <ion-content *ngIf="(globe.password$ | async)">
-                <ion-button style="margin: 12px 0;" expand="full" fill="clear" (click)="logout()">
-                    Logout
-                </ion-button>
 				<!-- button to enable to contact form -->
                 <ion-button style="margin: 12px 0;" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
                     New contact
@@ -42,11 +39,15 @@
                         <div *ngIf="(globe.currentContact$ | async) || {}; let cc" >
                             <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(globe.currentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
                                 <ion-label>{{ (contact | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
-                                <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress)">{{ contact.unreadMessages }}</ion-badge>    
+                                <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages.length > 0">{{ contact.unreadMessages }}</ion-badge>    
                             </ion-item>
                         </div>
                     </div>
                 </ion-item-group>
+
+                <ion-button style="margin: 12px 0;" expand="full" fill="clear" (click)="logout()">
+                    Logout
+                </ion-button>
             </ion-content>
         </ion-menu>
         <ion-router-outlet id="main-content"></ion-router-outlet>
