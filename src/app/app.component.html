@@ -44,7 +44,7 @@
                                     <text-avatar [text]='(contact | truncateEllipses:18:"shortDisplay")?.shortDisplay'>{{F}}</text-avatar>
                                 </ion-avatar>
                                 <ion-label>{{ (contact | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
-                                <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages.length > 0">{{ contact.unreadMessages }}</ion-badge>    
+                                <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
                             </ion-item>
                         </div>
                     </div>

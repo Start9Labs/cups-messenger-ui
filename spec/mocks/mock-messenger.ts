@@ -85,7 +85,7 @@ export function mockContact(i: number): ContactWithMessageCount {
     return {
         torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
         name: 'contact-' + i + 'dfoifd',
-        unreadMessages: 0
+        unreadMessages: 3
     }
 }
 export function mockMessage(i: number): ServerMessage {

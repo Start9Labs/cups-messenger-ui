@@ -26,7 +26,7 @@ export class ProfilePage {
     ngOnInit () {
         this.contact$ = globe.currentContact$
         this.contact$.pipe(take(1)).subscribe(c => {
-        this.contactName = c.name
+            this.contactName = c.name
         })
     }
 
@@ -44,7 +44,7 @@ export class ProfilePage {
                 if(cs.findIndex(c => c.torAddress === updatedContact.torAddress) <= -1) {
                     cs.push({...updatedContact, unreadMessages: 0} )
                 }
-                globe.$contacts$.next(cs)
+                globe.$observeContacts.next(cs)
             }))
         ).subscribe({
             next: async () => {
