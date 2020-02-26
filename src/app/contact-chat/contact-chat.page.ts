@@ -2,11 +2,10 @@ import { Component, OnInit, ViewChild } from '@angular/core'
 import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
-import { globe, sortByTimestamp } from '../services/global-state'
+import { Observable, Subscription, BehaviorSubject, of, from, config } from 'rxjs'
+import { globe } from '../services/global-state'
 import { map, delay, switchMap, tap, filter, take } from 'rxjs/operators'
 import { prodContactMessages$, prodContacts$, state } from '../services/rx/paths'
-import { withTimeout } from '../services/cups/live-messenger'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 
 @Component({
@@ -40,6 +39,8 @@ export class ContactChatPage implements OnInit {
     mostRecentMessageTime: Date = new Date(0)
     oldestMessage: MessageBase
     canGetOlderMessages = false
+
+    hasAllHistoricalMessages: { [tor: string]: true } = {}
 
     constructor(
         private readonly navCtrl: NavController,
@@ -119,9 +120,7 @@ export class ContactChatPage implements OnInit {
     send(contact: Contact, message: AttendingMessage) {
         of({contact, messages: [message] }).subscribe(globe.$observeMessages)
 
-        withTimeout(
-            from(this.cups.messagesSend(contact, message.trackingId, message.text))
-        ).subscribe(Object.assign(prodContactMessages$, {
+        from(this.cups.messagesSend(contact, message.trackingId, message.text)).subscribe(Object.assign(prodContactMessages$, {
             error: (e: Error) => {
                 console.error(e.message)
                 globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
@@ -143,17 +142,18 @@ export class ContactChatPage implements OnInit {
 
     fetchOlderMessages(event: any, contact: Contact) {
         let message: ServerMessage | undefined
+        // event.target.complete()
         globe.watchOldestServerMessage(contact).pipe(
             filter(m => !!m),
             tap(m => message = m),
             take(1),
-            switchMap(m =>
-                withTimeout(
-                    from(this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} ))
-                )),
+            switchMap(m => from(this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} ))),
             map(ms => ({ contact, messages: ms }))
         ).subscribe( {
             next: res => {
+                if(res.messages.length === 0) {
+                    this.hasAllHistoricalMessages[contact.torAddress] = true
+                }
                 globe.$observeMessages.next(res)
                 event.target.complete()
             },

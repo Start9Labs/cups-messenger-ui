@@ -1,3 +1,5 @@
+type LogLevel = 'Info' | 'Debug'
+
 export interface Config {
     cupsMessenger: {
         mock: boolean
@@ -11,11 +13,12 @@ export interface Config {
     }
     loadMesageBatchSize: number
     defaultServerTimeout: number
+    loglevel: LogLevel
 }
 
 export const config: Config = {
     cupsMessenger: {
-        mock: false,
+        mock: true,
         url: window.origin + '/api'
     },
     contactsDaemon: {
@@ -25,5 +28,10 @@ export const config: Config = {
         frequency: 2500
     },
     loadMesageBatchSize: 10,
-    defaultServerTimeout: 12000
+    defaultServerTimeout: 15000,
+    loglevel: 'Debug'
+}
+
+export function debugLog(s: string){
+    if(config.loglevel === 'Debug') console.log(s)
 }

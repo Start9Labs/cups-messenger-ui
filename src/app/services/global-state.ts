@@ -5,9 +5,10 @@ import { Contact,
         serverErrorAttendingPrioritization,
         ServerMessage,
        } from './cups/types'
-import { BehaviorSubject, NextObserver, Observable, PartialObserver, Subject } from 'rxjs'
+import { BehaviorSubject, NextObserver, Observable, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
+import { debugLog } from '../config'
 const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
@@ -26,15 +27,27 @@ export class Globe {
         this.password$.subscribe(p => { this.password = p })
     }
 
+    $observeContacts: NextObserver<ContactWithMessageCount[]> = {
+        next: contacts => {
+            debugLog(`contacts state updating: ${contacts}`)
+            this.$contacts$.next(contacts)
+        },
+        error: e => {
+            console.error(`subscribed contacts error: `, e)
+        }
+    }
+
     $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
             this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe(existingMessages => {
-                console.log(existingMessages)
-                const newMessageState = uniqueBy(
-                    messages.concat(existingMessages),
+                debugLog(`existingMessages: ${existingMessages}`)
+                const inbound  = uniqueBy(messages.concat(existingMessages).filter(m => m.direction === 'Inbound'), t => t.id)
+                const outbound = uniqueBy(
+                    messages.concat(existingMessages).filter(m => m.direction === 'Outbound'),
                     t => t.trackingId,
                     serverErrorAttendingPrioritization
-                ).sort(sortByTimestamp)
+                )
+                const newMessageState = inbound.concat(outbound).sort(sortByTimestamp)
                 this.contactMessagesSubjects(contact.torAddress).next(newMessageState)
             })
         }
@@ -86,7 +99,7 @@ export const sortByTimestamp =
         return bT.getTime() - aT.getTime()
     }
 
-function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T, t2: T) => boolean): T[] {
+function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T, t2: T) => boolean = (t1, t2) => true): T[] {
     const tracking = { } as { [projected: string] : T }
     ts.forEach( t => {
         if( (tracking[projection(t)] && prioritized(t, tracking[projection(t)])) || !tracking[projection(t)]) {

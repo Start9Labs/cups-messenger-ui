@@ -21,6 +21,7 @@ export class MockCupsMessenger {
             })
         })).subscribe(() => console.log('added messages'))
     }
+
     async contactsShow (): Promise<ContactWithMessageCount[]> {
         return this.contacts
     }
@@ -53,7 +54,6 @@ export class MockCupsMessenger {
     }
 
     async messagesSend (contact: Contact, trackingId, message: string): Promise<void> {
-        await pauseFor(2000000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),
             sentToServer: new Date(),

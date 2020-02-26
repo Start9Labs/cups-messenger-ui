@@ -8,6 +8,7 @@ import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import { CupsMessenger } from './services/cups/cups-messenger'
 import { switchMap } from 'rxjs/operators'
 import { main } from './services/rx/paths'
+import { debugLog } from './config'
 
 @Component({
   selector: 'app-root',
@@ -85,7 +86,11 @@ export class AppComponent {
         }
 
         from(this.cups.contactsAdd(contact)).pipe(
-            switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
+            switchMap(() => this.cups.contactsShow().then(cs => {
+                    debugLog(`successfully added contact. Now showing ${JSON.stringify(cs)}`)
+                    globe.$contacts$.next(cs)
+                }
+            )),
         ).subscribe({
             next: () => {
                 globe.currentContact$.next(contact)

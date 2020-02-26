@@ -26,13 +26,13 @@ export class LiveCupsMessenger {
     async contactsShow (loginTestPassword: string): Promise<ContactWithMessageCount[]> {
         console.log('showing with ', loginTestPassword)
         try {
-            return this.http.get(this.hostUrl, {
+            return withTimeout(this.http.get(this.hostUrl, {
                 params: {
                     type: 'users'
                 },
                 headers: this.authHeaders(loginTestPassword),
                 responseType: 'arraybuffer'
-            }).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
+            })).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
         }
         catch (e) {
             console.error('Contacts show', e)
@@ -42,7 +42,7 @@ export class LiveCupsMessenger {
 
     async contactsAdd (contact: Contact): Promise<void> {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
-        return this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() }).toPromise()
+        return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() })).toPromise()
     }
 
     async messagesShow (contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
@@ -53,11 +53,11 @@ export class LiveCupsMessenger {
             limit: String(limit),
         }, offset ? { [offset.direction]: offset.id } : {})
         try {
-            const arrayBuffer = await this.http.get(this.hostUrl, {
+            const arrayBuffer = await withTimeout(this.http.get(this.hostUrl, {
                 params,
                 headers: this.authHeaders(),
                 responseType: 'arraybuffer'
-            }).toPromise()
+            })).toPromise()
             return this.parser.deserializeMessagesShow(arrayBuffer).map(m => ({ ...m, otherParty: contact }))
         }
         catch (e) {
@@ -73,11 +73,11 @@ export class LiveCupsMessenger {
             pubkey: onionToPubkeyString(contact.torAddress),
         }
         try {
-            const arrayBuffer = await this.http.get(this.hostUrl, {
+            const arrayBuffer = await withTimeout(this.http.get(this.hostUrl, {
                 params,
                 headers: this.authHeaders(),
                 responseType: 'arraybuffer'
-            }).toPromise()
+            })).toPromise()
             return this.parser.deserializeMessagesShow(arrayBuffer).map(m => ({ ...m, otherParty: contact }))
         }
         catch (e) {
@@ -86,10 +86,10 @@ export class LiveCupsMessenger {
             throw e
         }
     }
-    
-    async messagesSend (contact: Contact, trackingId, message: string): Promise<void> {
+
+    async messagesSend (contact: Contact, trackingId: string, message: string): Promise<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
-        return this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() }).toPromise()
+        return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() })).toPromise()
     }
 }
 

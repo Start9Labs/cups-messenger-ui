@@ -10,7 +10,7 @@
 </ion-header>
 
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" *ngIf="(globe.currentContact$ | async) as contact">
-    <ion-infinite-scroll position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+    <ion-infinite-scroll *ngIf="!hasAllHistoricalMessages[contact.torAddress]" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
         <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
     </ion-infinite-scroll>
 

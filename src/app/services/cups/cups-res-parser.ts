@@ -1,6 +1,7 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
 import { ContactWithMessageCount, MessageDirection } from './types'
+import * as uuidv4 from 'uuid'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
@@ -82,7 +83,7 @@ function pullContact(p: ArrayBufferParser): ContactWithMessageCount {
     const torAddress     = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
     const unreadsCount   = p.chopNParse(UNREADS_LENGTH, bigEndian)
     const nameSize       = p.chopNParse(NAME_LENGTH   , bigEndian)
-    const name           = p.chopNParse(nameSize      , utf8Decoder.decode)
+    const name           = p.chopNParse(nameSize      , a => utf8Decoder.decode(a))
     return { torAddress, unreadMessages: unreadsCount, name }
 }
 
@@ -92,7 +93,7 @@ function pullMessage(p: ArrayBufferParser): CupsMessageShow {
     const trackingId     = p.chopNParse(16, bytesToUuid)
     const epochTime      = p.chopNParse(8,  bigEndian)
     const messageLength  = p.chopNParse(8,  bigEndian)
-    const text           = p.chopNParse(messageLength, utf8Decoder.decode)
+    const text           = p.chopNParse(messageLength, a => utf8Decoder.decode(a))
     return { direction, timestamp: new Date(epochTime * 1000), text, id: String(id), trackingId }
 }
 
@@ -177,6 +178,15 @@ function bufferArrayConcat(as: ArrayBuffer[]): ArrayBuffer {
     return res
 }
 
+function hexToBytes(str: string): ArrayBuffer {
+    const result = []
+    while (str.length >= 2) {
+        result.push(parseInt(str.substring(0, 2), 16))
+        str = str.substring(2, str.length)
+    }
+
+    return new Uint8Array(result).buffer
+}
 
 const byteToHex = []
 for (let i = 0; i < 256; ++i) {
@@ -186,25 +196,16 @@ for (let i = 0; i < 256; ++i) {
 function bytesToUuid(buf: ArrayBuffer, offset = 0) {
     let i = offset
     const bth = byteToHex
+    const bb = new Uint8Array(buf)
     // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
     return ([
-        bth[buf[i++]], bth[buf[i++]],
-        bth[buf[i++]], bth[buf[i++]], '-',
-        bth[buf[i++]], bth[buf[i++]], '-',
-        bth[buf[i++]], bth[buf[i++]], '-',
-        bth[buf[i++]], bth[buf[i++]], '-',
-        bth[buf[i++]], bth[buf[i++]],
-        bth[buf[i++]], bth[buf[i++]],
-        bth[buf[i++]], bth[buf[i++]]
+        bth[bb[i++]], bth[bb[i++]],
+        bth[bb[i++]], bth[bb[i++]], '-',
+        bth[bb[i++]], bth[bb[i++]], '-',
+        bth[bb[i++]], bth[bb[i++]], '-',
+        bth[bb[i++]], bth[bb[i++]], '-',
+        bth[bb[i++]], bth[bb[i++]],
+        bth[bb[i++]], bth[bb[i++]],
+        bth[bb[i++]], bth[bb[i++]]
     ]).join('')
-}
-
-function hexToBytes(str: string): ArrayBuffer {
-    const result = []
-    while (str.length >= 8) {
-        result.push(parseInt(str.substring(0, 8), 16))
-        str = str.substring(8, str.length)
-    }
-
-    return new Uint32Array(result).buffer
 }
