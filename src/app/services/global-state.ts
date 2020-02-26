@@ -31,8 +31,13 @@ export class Globe {
 
     $observeContacts: NextObserver<ContactWithMessageCount[]> = {
         next: contacts => {
-            debugLog(`contacts state updating: ${contacts}`)
-            this.$contacts$.next(contacts)
+            this.$contacts$.pipe(take(1)).subscribe(cs => {
+                debugLog(`contacts state updating: ${contacts}`)
+                const csMap = {}
+                cs.forEach(c => csMap[c.torAddress] = c)
+                contacts.forEach(c => csMap[c.torAddress] = c)
+                this.$contacts$.next(Object.values(csMap))
+            })
         },
         error: e => {
             console.error(`subscribed contacts error: `, e)
