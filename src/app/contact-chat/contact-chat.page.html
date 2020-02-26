@@ -25,7 +25,7 @@
             <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
-                <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                <div class="msg-date">{{message.timestamp | date:'short'}}</div>
             </div>
             <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
