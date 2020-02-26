@@ -1,12 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage, isAttending } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject, of, from, config } from 'rxjs'
+import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
 import { globe } from '../services/global-state'
-import { map, delay, switchMap, tap, filter, take } from 'rxjs/operators'
+import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
 import { prodContactMessages$, prodContacts$, state } from '../services/rx/paths'
 import { CupsMessenger } from '../services/cups/cups-messenger'
+import { config } from '../config'
 
 @Component({
   selector: 'app-contact-chat',
@@ -41,6 +42,9 @@ export class ContactChatPage implements OnInit {
     canGetOlderMessages = false
 
     hasAllHistoricalMessages: { [tor: string]: true } = {}
+
+
+
 
     constructor(
         private readonly navCtrl: NavController,
@@ -93,7 +97,7 @@ export class ContactChatPage implements OnInit {
     //             }
     //             return from(this.cups.messagesShow(contact, showMessageParams))
     //         }),map( ([newMs, oldMs]) => {
-                
+
     //         })
     //     ))
     // }
@@ -120,12 +124,19 @@ export class ContactChatPage implements OnInit {
     send(contact: Contact, message: AttendingMessage) {
         of({contact, messages: [message] }).subscribe(globe.$observeMessages)
 
-        from(this.cups.messagesSend(contact, message.trackingId, message.text)).subscribe(Object.assign(prodContactMessages$, {
-            error: (e: Error) => {
-                console.error(e.message)
-                globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
-            }
-        }))
+        from(this.cups.messagesSend(contact, message.trackingId, message.text)).pipe(catchError(e => {
+            console.error(`send message failure`, e.message)
+            globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+            return of(undefined)
+        })).subscribe({
+            next: () => {
+                console.log('did it')
+                prodContactMessages$.next({})
+                of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
+                    globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
+                })
+            },
+        })
 
         pauseFor(125).then(() => {
             this.unreads = false; this.jumpToBottom()

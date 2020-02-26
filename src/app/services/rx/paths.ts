@@ -44,16 +44,18 @@ export const contactMessagesProvider: (cups: CupsMessenger) => OperatorFunction<
     cups => {
         return o => o.pipe(
             filter(c => !!c),
-            state(contact => from(cups.messagesShow(contact, {/* TODO FIX THIS PLS */} as any))),
+            state(contact => 
+                from(cups.messagesShow(contact, {/* TODO FIX THIS PLS */} as any)).pipe(
+                    catchError(e => {
+                        console.error(`Error in contact messages daemon ${e.message}`)
+                        return of([])
+                    })
+                )
+            ),
             map(([contact, messages]) => {
                 debugLog(`contact messages: ${JSON.stringify(messages)}`)
                 return ({ contact, messages })
-            }),
-            catchError(e => {
-                console.error(`Error in contact messages daemon ${e.message}`)
-                return of(undefined)
-            }),
-            filter(x => !!x),
+            })
         )
     }
 
@@ -62,16 +64,16 @@ export interface ContactsDaemonConfig { frequency: number, cups: CupsMessenger }
 export const contactsProvider: (cups: CupsMessenger) => OperatorFunction<{}, ContactWithMessageCount[]> =
     cups => {
         return o => o.pipe(
-            switchMap(() => cups.contactsShow()),
+            switchMap(() => from(cups.contactsShow()).pipe(
+                catchError(e => {
+                    console.error(`Error in contacts daemon ${e.message}`)
+                    return of([])
+                })
+            )),
             map(contacts => {
                 debugLog(`contacts: ${JSON.stringify(contacts)}`)
                 return contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)
-            }),
-            catchError(e => {
-                console.error(`Error in contacts daemon ${e.message}`)
-                return of(undefined)
-            }),
-            filter(x => !!x),
+            })
         )
     }
 

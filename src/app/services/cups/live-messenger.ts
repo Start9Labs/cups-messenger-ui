@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, ServerMessage } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
 import { globe } from '../global-state'
-import { Observable, merge, from, interval } from 'rxjs'
+import { Observable, merge, from, interval, race } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 
 export class LiveCupsMessenger {
@@ -89,12 +89,17 @@ export class LiveCupsMessenger {
 
     async messagesSend (contact: Contact, trackingId: string, message: string): Promise<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
-        return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() })).toPromise()
+        try {
+            return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() })).toPromise()
+        } catch (e) {
+            console.error('messages send', e)
+            throw e
+        }
     }
 }
 
 export function withTimeout<U>(req: Observable<U>, timeout: number = config.defaultServerTimeout): Observable<U > {
-    return merge(
+    return race(
         from(req),
         interval(timeout).pipe(map(() => { throw new Error('timeout') }))
     ).pipe(take(1))

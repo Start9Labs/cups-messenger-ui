@@ -18,7 +18,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: true,
+        mock: false,
         url: window.origin + '/api'
     },
     contactsDaemon: {
