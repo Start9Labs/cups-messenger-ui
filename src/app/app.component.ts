@@ -63,7 +63,8 @@ export class AppComponent {
 
     async submitNewContact() {
         this.error$.next(undefined)
-        const sanitizedTorOnion = this.newContactTorAddress.trim().split('.onion')[0].concat('.onion')
+        const removeProtocol = this.newContactTorAddress.trim().split('//')[1] || this.newContactTorAddress
+        const sanitizedTorOnion = removeProtocol.split('.onion')[0].concat('.onion')
 
         try {
             onionToPubkeyString(sanitizedTorOnion)
