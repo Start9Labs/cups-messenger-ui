@@ -14,6 +14,7 @@ export interface Config {
     loadMesageBatchSize: number
     defaultServerTimeout: number
     loglevel: LogLevel
+    myTorAddress: string
 }
 
 export const config: Config = {
@@ -29,7 +30,8 @@ export const config: Config = {
     },
     loadMesageBatchSize: 10,
     defaultServerTimeout: 15000,
-    loglevel: 'Debug'
+    loglevel: 'Debug',
+    myTorAddress: window.origin.split('//')[1] || window.origin
 }
 
 export function debugLog(s: string){

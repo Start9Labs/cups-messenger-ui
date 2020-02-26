@@ -42,9 +42,7 @@ export class ContactChatPage implements OnInit {
     canGetOlderMessages = false
 
     hasAllHistoricalMessages: { [tor: string]: true } = {}
-
-
-
+    myTorAddress = config.myTorAddress
 
     constructor(
         private readonly navCtrl: NavController,

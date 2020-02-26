@@ -9,6 +9,8 @@ import { BehaviorSubject, NextObserver, Observable, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
 import { debugLog } from '../config'
+import * as uuid from 'uuid'
+
 const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
@@ -44,7 +46,7 @@ export class Globe {
                 const inbound  = uniqueBy(messages.concat(existingMessages).filter(m => m.direction === 'Inbound'), t => t.id)
                 const outbound = uniqueBy(
                     messages.concat(existingMessages).filter(m => m.direction === 'Outbound'),
-                    t => t.trackingId,
+                    t => t.trackingId === nillTrackingId ? uuid.v4() : t.trackingId,
                     serverErrorAttendingPrioritization
                 )
                 const newMessageState = inbound.concat(outbound).sort(sortByTimestamp)
@@ -110,3 +112,4 @@ function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T
 }
 
 
+const nillTrackingId = '00000000-0000-0000-0000-000000000000'
