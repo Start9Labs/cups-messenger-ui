@@ -17,25 +17,31 @@
     <ion-list #chat class="chat">
         <div id="start-of-scroll"></div>
         <div *ngFor="let message of (contactMessages$ | async)">
-            <div class="left-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
+            <!-- <div style="border-width:1em 0em 0em 0em; border-style: outset; width: 7%"></div> -->
+            <div class="left-bubble chat-message-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+            </div>
+            <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
                 <span class="msg-date">{{message.timestamp | date:'short'}}</span>
             </div>
-            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
+            <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{message.timestamp | date:'short'}} <ion-icon class="message-icon" name="checkmark-outline"></ion-icon></span>
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
+                <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
             </div>
-            <div class="right-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
+            <div class="right-bubble chat-message-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{message.sentToServer | date:'short'}} <ion-icon class="message-icon" name="time-outline"></ion-icon></span>
-            </div>
-            <div class="right-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
-                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{message.sentToServer | date:'short'}}
-                    <ion-button fill="clear" style="padding-bottom: 0.7em; width: 33%; color: #fccdcd;" (click)="retry(contact, message)"size="small">
-                        <ion-icon class="message-icon" name="reload-outline"></ion-icon>
-                    </ion-button>
-                </span>
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <div class="msg-date">{{message.sentToServer | date:'short'}}
+                </div>
+                <span class="msg-date" style="color:#333333" (click)="retry(contact, message)">  RETRY</span>
+
+                <!-- <span style="color:#984848; font-weight: bold;">{{message.text.split(' ')[0]}}</span>{{' ' + message.text.split(' ').slice(1,message.text.split(' ').length).join(' ')}} -->
             </div>
         </div>    
     </ion-list>

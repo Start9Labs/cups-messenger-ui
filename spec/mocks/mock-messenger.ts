@@ -92,7 +92,7 @@ export function mockMessage(i: number): ServerMessage {
     return {
         direction: 'Inbound',
         otherParty: mockContact(i),
-        text: i + '--' + mockL(mockWord, 10).join(' '),
+        text: i + '--' + mockL(mockWord, 3).join(' '),
         sentToServer: new Date(i * 1000 * 60 * 60 * 24 * 365),
         trackingId: uuidv4(),
         id: uuidv4(),
