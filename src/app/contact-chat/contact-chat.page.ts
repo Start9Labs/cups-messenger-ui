@@ -84,6 +84,12 @@ export class ContactChatPage implements OnInit {
         this.canGetOlderMessages = this.isAtTop()
     }
 
+    async checkSubmit (e: any, contact: Contact) {
+      if (e.keyCode === 13) {
+        await this.sendMessage(contact)
+      }
+    }
+
     // initialMessages(contact: Contact) {
     //     from(this.cups.newMessagesShow(contact)).pipe(state(
     //         newMs => {
@@ -101,7 +107,6 @@ export class ContactChatPage implements OnInit {
     // }
 
     sendMessage(contact: Contact) {
-      const breaks = (this.messageToSend.match(/\n/g)||[]).length
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
             direction: 'Outbound',
@@ -181,11 +186,6 @@ export class ContactChatPage implements OnInit {
     isAtTop(): boolean {
         const el = document.getElementById('top-of-scroll')
         return el ? isElementInViewport(el) : true
-    }
-
-    checkSubmit(e: any){
-        debugger
-        debugLog(e)
     }
 
     ngOnDestroy(): void {
