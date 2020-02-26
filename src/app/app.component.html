@@ -26,7 +26,7 @@
                     </ion-item>
                     
                     <ion-button style="margin-top:1em; margin-bottom:1em; color: #3542e5" fill="clear" expand="full" [disabled]="submittingNewContact$ | async" (click)="submitNewContact()">
-                        <ion-text><u>submit</u></ion-text>
+                        <ion-text>submit</ion-text>
                     </ion-button>
 
                     <ion-item text-center style="text-align: center" *ngIf="error$ | async">
@@ -51,7 +51,7 @@
                 </ion-item-group>
 
                 <ion-button style="margin: 12px 0; color: #d00909" expand="full" fill="clear" (click)="logout()">
-                    <u>Logout</u>
+                    Logout
                 </ion-button>
             </ion-content>
         </ion-menu>
