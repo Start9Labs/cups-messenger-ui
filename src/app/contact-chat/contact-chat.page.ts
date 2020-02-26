@@ -101,6 +101,9 @@ export class ContactChatPage implements OnInit {
     // }
 
     sendMessage(contact: Contact) {
+      const breaks = (this.messageToSend.match(/\n/g)||[]).length
+      console.log(breaks)
+      console.log(this.messageToSend)
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
             direction: 'Outbound',
