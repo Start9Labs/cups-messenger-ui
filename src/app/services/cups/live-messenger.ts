@@ -15,7 +15,6 @@ export class LiveCupsMessenger {
         if (!password) {
             throw new Error('Unauthenticated request to server attempted.')
         }
-        console.log(`authing with`, password)
         return new HttpHeaders({ Authorization: 'Basic ' + btoa(`me:${password}`) })
     }
 
@@ -24,7 +23,6 @@ export class LiveCupsMessenger {
     }
 
     async contactsShow (loginTestPassword: string): Promise<ContactWithMessageCount[]> {
-        console.log('showing with ', loginTestPassword)
         try {
             return withTimeout(this.http.get(this.hostUrl, {
                 params: {

@@ -30,7 +30,6 @@ export class SigninPage implements OnInit {
     this.loading$.next(true)
 
     const pass = this.password.trim()
-    console.log('password submitted: ', pass)
 
     try {
       await this.cups.contactsShow(pass)
@@ -45,7 +44,6 @@ export class SigninPage implements OnInit {
 
   private signin() {
     if (globe.password) {
-        console.log('signed in successfully!')
         this.ngZone.run(() => this.navCtrl.navigateRoot('contact-chat'))
     }
   }

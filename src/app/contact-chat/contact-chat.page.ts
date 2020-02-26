@@ -130,7 +130,6 @@ export class ContactChatPage implements OnInit {
             return of(undefined)
         })).subscribe({
             next: () => {
-                console.log('did it')
                 prodContactMessages$.next({})
                 of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
                     globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )

@@ -1,5 +1,5 @@
 import { ContactWithMessageCount, Contact, pauseFor, ServerMessage } from 'src/app/services/cups/types'
-import * as uuidv4 from 'uuid'
+import * as uuid from 'uuid'
 import { interval } from 'rxjs'
 import { tap } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
@@ -19,7 +19,7 @@ export class MockCupsMessenger {
                 const mockMessages = this.mocks[c.torAddress]
                 mockMessages.push(mockMessage(mockMessages.length))
             })
-        })).subscribe(() => console.log('added messages'))
+        })).subscribe()
     }
 
     async contactsShow (): Promise<ContactWithMessageCount[]> {
@@ -61,7 +61,7 @@ export class MockCupsMessenger {
             direction: 'Outbound',
             otherParty: contact,
             text: message,
-            id: uuidv4(),
+            id: uuid.v4(),
             trackingId
         })
     }
@@ -94,12 +94,12 @@ export function mockMessage(i: number): ServerMessage {
         otherParty: mockContact(i),
         text: i + '--' + mockL(mockWord, 3).join(' '),
         sentToServer: new Date(i * 1000 * 60 * 60 * 24 * 365),
-        trackingId: uuidv4(),
-        id: uuidv4(),
+        trackingId: uuid.v4(),
+        id: uuid.v4(),
         timestamp: new Date(i * 1000 * 60 * 60 * 24 * 365),
         failure: undefined
     }
 }
 function mockWord(i: number): string {
-    return uuidv4() + i
+    return uuid.v4() + i
 }

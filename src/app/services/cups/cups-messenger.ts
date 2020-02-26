@@ -26,7 +26,6 @@ export class CupsMessenger {
     }
 
     async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
-        console.log('sending message', message)
         return this.impl.messagesSend(contact, trackingId, message)
     }
 

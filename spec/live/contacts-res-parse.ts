@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { pullContact } from 'cups-res-parser'
-import { onionToPubkeyString, onionToPubkey } from 'src/app/services/cups/cups-res-parser'
+import { onionToPubkeyString } from 'src/app/services/cups/cups-res-parser'
 
 
 const res = fs.readFileSync('./contacts-res')
