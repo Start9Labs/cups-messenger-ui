@@ -8,8 +8,8 @@
             </ion-header>
             <ion-content *ngIf="(globe.password$ | async)">
 				<!-- button to enable to contact form -->
-                <ion-button style="margin: 12px 0; color: #3542e5; margin-right: 35%; text-align: left" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
-                    <ion-icon name="add-circle" slot="start"></ion-icon>New contact
+                <ion-button style="margin: 12px 0; color: #3542e5; text-align: left" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
+                    <ion-icon name="add-circle" slot="start"></ion-icon><span>New contact</span>
                 </ion-button>
 
                 <!-- new contact form -->
