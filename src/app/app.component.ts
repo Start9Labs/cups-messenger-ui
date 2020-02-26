@@ -88,7 +88,7 @@ export class AppComponent {
 
         from(this.cups.contactsAdd(contact)).pipe(
             switchMap(() => this.cups.contactsShow().then(cs => {
-                    debugLog(`successfully added contact. Now showing ${JSON.stringify(cs)}`)
+                    debugLog(`successfully added contact. Now showing ${JSON.stringify(cs, null, '\t')}`)
                     globe.$contacts$.next(cs)
                 }
             )),

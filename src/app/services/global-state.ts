@@ -31,13 +31,8 @@ export class Globe {
 
     $observeContacts: NextObserver<ContactWithMessageCount[]> = {
         next: contacts => {
-            this.$contacts$.pipe(take(1)).subscribe(cs => {
-                debugLog(`contacts state updating: ${contacts}`)
-                const csMap = {}
-                cs.forEach(c => csMap[c.torAddress] = c)
-                contacts.forEach(c => csMap[c.torAddress] = c)
-                this.$contacts$.next(Object.values(csMap))
-            })
+            debugLog(`contacts state updating: ${JSON.stringify(contacts, null, '\t')}`)
+            this.$contacts$.next(contacts)
         },
         error: e => {
             console.error(`subscribed contacts error: `, e)
@@ -46,8 +41,8 @@ export class Globe {
 
     $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
         next : ({contact, messages}) => {
+            debugLog(`new message state updating : ${JSON.stringify(messages, null, '\t')}`)
             this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe(existingMessages => {
-                debugLog(`existingMessages: ${existingMessages}`)
                 const inbound  = uniqueBy(messages.concat(existingMessages).filter(m => m.direction === 'Inbound'), t => t.id)
                 const outbound = uniqueBy(
                     messages.concat(existingMessages).filter(m => m.direction === 'Outbound'),

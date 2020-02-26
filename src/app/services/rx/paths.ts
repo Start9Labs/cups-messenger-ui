@@ -37,10 +37,7 @@ export const contactMessagesProvider: (cups: CupsMessenger) => OperatorFunction<
                     })
                 )
             ),
-            map(([contact, messages]) => {
-                debugLog(`contact messages: ${JSON.stringify(messages)}`)
-                return ({ contact, messages })
-            })
+            map(([contact, messages]) => ({ contact, messages }))
         )
     }
 
@@ -56,11 +53,8 @@ export const contactsProvider: (cups: CupsMessenger) => OperatorFunction<{}, Con
                     return of(null)
                 })
             )),
-            filter(cs => cs),
-            map(contacts => {
-                debugLog(`contacts: ${JSON.stringify(contacts)}`)
-                return contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)
-            })
+            filter(cs => !!cs),
+            map(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
         )
     }
 
@@ -73,7 +67,7 @@ export function state<S,T>(forked: (s: S) => Observable<T> ): OperatorFunction<S
 function cooldown<S,T>(manualTrigger$: Observable<S>, f : OperatorFunction<S,T>, cd: number): Observable<T>{
     const trigger$ = new BehaviorSubject({})
     return merge(
-        combineLatest([manualTrigger$, trigger$]).pipe(map(([s, _]) => s), f, delay(cd), tap(_ => trigger$.next({}))),
+        combineLatest([manualTrigger$, trigger$]).pipe(delay(cd), map(([s, _]) => s), f, tap(_ => trigger$.next({}))),
         manualTrigger$.pipe(f)
     )
 }
