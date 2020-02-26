@@ -54,6 +54,7 @@ export class MockCupsMessenger {
     }
 
     async messagesSend (contact: Contact, trackingId, message: string): Promise<void> {
+        // throw new Error('fuck')
         await pauseFor(2000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),

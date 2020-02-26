@@ -12,49 +12,52 @@ import { CupsMessenger } from '../services/cups/cups-messenger'
   styleUrls: ['profile.page.scss'],
 })
 export class ProfilePage {
-  error = ''
-  contactName = ''
-  contact$: Observable<Contact>
+    error = ''
+    contactName = ''
+    contact$: Observable<Contact>
 
-  constructor (
-    private readonly loadingCtrl: LoadingController,
-    private readonly navCtrl: NavController,
-    private readonly ngZone: NgZone,
-    private readonly cups: CupsMessenger
-  ) { }
+    constructor (
+        private readonly loadingCtrl: LoadingController,
+        private readonly navCtrl: NavController,
+        private readonly ngZone: NgZone,
+        private readonly cups: CupsMessenger
+    ) { }
 
-  ngOnInit () {
-    this.contact$ = globe.currentContact$
-    this.contact$.pipe(take(1)).subscribe(c => {
-      this.contactName = c.name
-    })
-  }
+    ngOnInit () {
+        this.contact$ = globe.currentContact$
+        this.contact$.pipe(take(1)).subscribe(c => {
+        this.contactName = c.name
+        })
+    }
 
-  async save(c: Contact) {
-    const loader = await this.loadingCtrl.create({
-      message: 'Updating name...',
-      spinner: 'lines',
-    })
-    await loader.present()
+    async save(c: Contact) {
+        const loader = await this.loadingCtrl.create({
+            message: 'Updating name...',
+            spinner: 'lines',
+        })
+        await loader.present()
 
-    const updatedContact = { ...c, name: this.contactName }
+        const updatedContact = { ...c, name: this.contactName }
 
-    from(this.cups.contactsAdd(updatedContact)).pipe(
-      switchMap(() => this.cups.contactsShow().then(cs => globe.$contacts$.next(cs))),
-    ).subscribe(
-      {
-        next: async () => {
-          globe.currentContact$.next(updatedContact)
-          await loader.dismiss()
-          this.ngZone.run(() => {
-            this.navCtrl.navigateBack(['contact-chat'])
-          })
-        },
-        error: e => {
-          console.error(e)
-        }
-      }
-    )
-  }
+        from(this.cups.contactsAdd(updatedContact)).pipe(
+            switchMap(() => this.cups.contactsShow().then(cs => {
+                if(cs.findIndex(c => c.torAddress === updatedContact.torAddress) <= -1) {
+                    cs.push({...updatedContact, unreadMessages: 0} )
+                }
+                globe.$contacts$.next(cs)
+            }))
+        ).subscribe({
+            next: async () => {
+                globe.currentContact$.next(updatedContact)
+                await loader.dismiss()
+                this.ngZone.run(() => {
+                    this.navCtrl.navigateBack(['contact-chat'])
+                })
+            },
+            error: e => {
+                console.error(e)
+            }
+        })
+    }
 }
 

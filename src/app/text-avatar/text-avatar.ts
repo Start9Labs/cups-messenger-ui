@@ -29,7 +29,7 @@ export class TextAvatarComponent {
 
     this.firstLetter = this.extractFirstCharacter(text)
 
-    this.styles = { ...this.styles, 'background-color': this.backgroundColorHexString(color, text), color: textColor }
+    this.styles = { ...this.styles, 'background-color': '#e8e8e8', color: textColor }
   }
 
   private extractFirstCharacter(text: string): string {

@@ -18,34 +18,35 @@
         <div id="start-of-scroll"></div>
         <div *ngFor="let message of (contactMessages$ | async)">
             <div class="left-bubble chat-message-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
-                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <span class="msg-date" style="color: #3542e5">{{(contact | truncateEllipses:15:"a")?.a}}</span>
                 <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
             </div>
             <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
+                <span class="msg-date" style="color: #d00909">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
                 <div class="msg-date">{{message.timestamp | date:'short'}}</div>
             </div>
             <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
+                <span class="msg-date" style="color: #d00909">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
                 <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
                 <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
             </div>
             <div class="right-bubble chat-message-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
-                <div class="msg-date">{{message.sentToServer | date:'short'}}
-                </div>
-                <span class="msg-date" style="color:#333333" (click)="retry(contact, message)">  RETRY</span>
+                <span class="msg-date" style="color: #d00909">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
+                <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
+                <span class="msg-date retry" (click)="retry(contact, message)"><u>RETRY</u></span>
+                <!-- <ion-button class="msg-date retry" expand="block" fill="clear" size="small" (click)="retry(contact, message)"> RETRY</ion-button> -->
             </div>
+            
         </div>    
     </ion-list>
     <div id="end-of-scroll"></div>
 
     <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button style="background-color: #ffffff; color:#333333" (click)="jumpToBottom()">
+        <ion-fab-button fill="clear" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </ion-fab>
