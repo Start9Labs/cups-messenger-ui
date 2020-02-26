@@ -1,124 +1,112 @@
-import { Injectable } from '@angular/core'
-import { Contact, DisplayMessage, ContactWithMessageCount, ServerMessage, AttendingMessage, serverMessageFulfills } from "./cups/types"
-import { BehaviorSubject, Observable } from 'rxjs'
+import { Contact,
+        ContactWithMessageCount,
+        MessageBase,
+        isServer,
+        serverErrorAttendingPrioritization,
+        ServerMessage,
+       } from './cups/types'
+import { BehaviorSubject, NextObserver, Observable, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
-import { DeltaSubject } from './delta-subject'
-import { map } from 'rxjs/operators'
+import { take, map } from 'rxjs/operators'
+import { debugLog } from '../config'
 const { Storage } = Plugins
 
 const passwordKey = { key: 'password' }
 
-export type CategorizedMessages = { server: ServerMessage[], attending: AttendingMessage[] }
-
-@Injectable({providedIn: 'root'})
-export class GlobalState {
-    public password: string | undefined
-    public contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
-    public currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
-    displayMessages: { 
-        [contactTorAddress: string]: DeltaSubject<CategorizedMessages>
+export class Globe {
+    $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
+    contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
+    currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
+    password$: Subject<string | undefined> = new Subject()
+    password: string | undefined = undefined
+    contactMessages: {
+        [contactTorAddress: string]: BehaviorSubject<MessageBase[]>
     } = {}
 
-    constructor() {}
-
-    //Subscribe to these...
-    watchAllContactMessages(c: Contact): Observable<DisplayMessage[]> {
-        return this.getCategorizedContactMessages$(c).watch().pipe(
-            map( ({server, attending}) => 
-                (attending.sort(orderTimestampDescending) as DisplayMessage[]).concat(server.sort(orderTimestampDescending) as DisplayMessage[])
-            )
-        )
+    constructor() {
+        this.password$.subscribe(p => { this.password = p })
     }
 
-    watchContacts(): Observable<ContactWithMessageCount[]> {
-        return this.contacts$.pipe(
-            map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
-        )
-    }
-
-    watchCurrentContact(): Observable<Contact | undefined> {
-        return this.currentContact$
-    }
-
-    //Notify subscribers with these...
-    pokeServerMessages(c: Contact, newServerMessagesState: ServerMessage[]): void {
-        const displayMessages = this.getCategorizedContactMessages$(c)
-
-        const { server, attending } = displayMessages.getValue()
-
-        const mostRecentServerMessageSoFar = server.sort(orderTimestampDescending)[0] ? new Date(server.sort(orderTimestampDescending)[0].timestamp).getTime() : new Date(0)
-        const serverDiff = newServerMessagesState.filter(
-            newestMessage => new Date(newestMessage.timestamp).getTime() > mostRecentServerMessageSoFar
-        )
-
-        let newAttendingState = JSON.parse(JSON.stringify(attending))
-        serverDiff.forEach( newServerMessage => {
-            const i = newAttendingState.findIndex(presentAttending => serverMessageFulfills(newServerMessage, presentAttending))
-            newAttendingState.splice(i, 1)
-        })
-
-        this.displayMessages[c.torAddress].deltaPoke({ server: newServerMessagesState, attending: newAttendingState })
-    }
-
-    pokeAppendAttendingMessage(c: Contact, a: AttendingMessage): void {
-        const displayMessages = this.getCategorizedContactMessages$(c)
-        const { attending } = displayMessages.getValue()
-        const newAttending = JSON.parse(JSON.stringify(attending))
-        this.displayMessages[c.torAddress].deltaPoke({ attending: newAttending.concat(a) })
-    }
-
-    pokeContacts(cs: ContactWithMessageCount[]): void {
-        this.contacts$.next(cs)
-    }
-
-    pokeNewContact(c: Contact): void {
-        const current = this.contacts$.getValue()
-        current.push({...c, unreadMessages: 0})
-        this.contacts$.next(current)
-    }
-
-    pokeCurrentContact(c: Contact): void {
-        this.currentContact$.next(c)
-    }
-
-    //Misc
-
-    logState(log: string, c: Contact): void {
-        if(this.displayMessages[c.torAddress]) {
-            const {server, attending} = this.displayMessages[c.torAddress].getValue()
-            console.log(log, {t: new Date(), server: server.length, attending: attending.length})
-        } else {
-            console.log(log, {t: new Date(), server: 0, attending: 0})
+    $observeContacts: NextObserver<ContactWithMessageCount[]> = {
+        next: contacts => {
+            debugLog(`contacts state updating: ${contacts}`)
+            this.$contacts$.next(contacts)
+        },
+        error: e => {
+            console.error(`subscribed contacts error: `, e)
         }
-        
     }
 
-    getCurrentContact(): Contact | undefined {
-        return this.currentContact$.getValue()
+    $observeMessages: NextObserver<{ contact: Contact, messages: MessageBase[] }> = {
+        next : ({contact, messages}) => {
+            this.contactMessagesSubjects(contact.torAddress).pipe(take(1)).subscribe(existingMessages => {
+                debugLog(`existingMessages: ${existingMessages}`)
+                const inbound  = uniqueBy(messages.concat(existingMessages).filter(m => m.direction === 'Inbound'), t => t.id)
+                const outbound = uniqueBy(
+                    messages.concat(existingMessages).filter(m => m.direction === 'Outbound'),
+                    t => t.trackingId,
+                    serverErrorAttendingPrioritization
+                )
+                const newMessageState = inbound.concat(outbound).sort(sortByTimestamp)
+                this.contactMessagesSubjects(contact.torAddress).next(newMessageState)
+            })
+        }
     }
 
-    init(): Promise<void> {
-        return Storage.get(passwordKey).then(p => { this.password = p.value })
+    watchMessages(c: Contact): Observable<MessageBase[]> {
+        return this.contactMessagesSubjects(c.torAddress)
+    }
+
+    watchMostRecentServerMessage(c: Contact): Observable<ServerMessage | undefined> {
+        return this.watchMessages(c).pipe(map(ms => ms.filter(isServer)[0]))
+    }
+
+    watchOldestServerMessage(c: Contact): Observable<ServerMessage | undefined> {
+        return this.watchMessages(c).pipe(map(ms => ms.filter(isServer)[ms.length - 1]))
+    }
+
+    async init(): Promise<void> {
+        const p = await Storage.get(passwordKey)
+        this.password$.next(p.value)
     }
 
     async setPassword(p: string): Promise<void> {
-        return Storage.set({
+        if(!p) return
+        await Storage.set({
             key: 'password',
             value: p
-        }).then(() => this.init())
+        })
+        this.init()
     }
 
     async clearPassword(): Promise<void> {
-        Storage.remove(passwordKey)
+        await Storage.remove(passwordKey)
+        this.password$.next(undefined)
     }
 
-    private getCategorizedContactMessages$(c : Contact): DeltaSubject<CategorizedMessages>{
-        this.displayMessages[c.torAddress] = this.displayMessages[c.torAddress] || new DeltaSubject({ server: [], attending: [] })
-        return this.displayMessages[c.torAddress]
+    private contactMessagesSubjects(tor: string): BehaviorSubject<MessageBase[]> {
+        if(!this.contactMessages[tor]) { this.contactMessages[tor] = new BehaviorSubject([]) }
+        return this.contactMessages[tor]
     }
 }
 
-export const orderTimestampDescending: (a: {timestamp: Date}, b: {timestamp: Date}) => number 
-    = (a, b) => {
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+export const globe = new Globe()
+
+export const sortByTimestamp =
+    (a: MessageBase, b: MessageBase) => {
+        const aT = isServer(a) ? a.timestamp : a.sentToServer
+        const bT = isServer(b) ? b.timestamp : b.sentToServer
+        return bT.getTime() - aT.getTime()
     }
+
+function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T, t2: T) => boolean = (t1, t2) => true): T[] {
+    const tracking = { } as { [projected: string] : T }
+    ts.forEach( t => {
+        if( (tracking[projection(t)] && prioritized(t, tracking[projection(t)])) || !tracking[projection(t)]) {
+            tracking[projection(t)] = t
+        }
+    })
+    return Object.values(tracking)
+}
+
+

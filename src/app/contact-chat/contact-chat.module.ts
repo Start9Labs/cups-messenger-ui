@@ -7,7 +7,10 @@ import { IonicModule } from '@ionic/angular'
 import { ContactChatPageRoutingModule } from './contact-chat-routing.module'
 
 import { ContactChatPage } from './contact-chat.page'
-import { TruncateEllipsesPipe } from '../truncate-ellipses.pipe'
+import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe'
+import { IsAttendingPipe } from '../pipes/is-attending.pipe'
+import { IsFailedPipe } from '../pipes/is-failed.pipe'
+import { IsServerPipe } from '../pipes/is-server.pipe'
 
 @NgModule({
   imports: [
@@ -16,8 +19,8 @@ import { TruncateEllipsesPipe } from '../truncate-ellipses.pipe'
     IonicModule,
     ContactChatPageRoutingModule,
   ],
-  exports: [TruncateEllipsesPipe],
-  declarations: [ContactChatPage, TruncateEllipsesPipe],
+  exports: [TruncateEllipsesPipe, IsAttendingPipe, IsFailedPipe, IsServerPipe],
+  declarations: [ContactChatPage, TruncateEllipsesPipe, IsAttendingPipe, IsFailedPipe, IsServerPipe],
   providers: []
 })
 export class ContactChatPageModule {}

@@ -1,0 +1,32 @@
+<ion-header>
+	<ion-toolbar *ngIf="(contact$ | async) as contact">
+		<ion-buttons slot="start">
+		  	<ion-back-button [defaultHref]="['contact-chat']"></ion-back-button>
+		</ion-buttons>
+		<ion-title>Profile</ion-title>
+		<ion-buttons slot="end">
+			<ion-button color="primary" (click)="save(contact)">Save</ion-button>
+	  	</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+	<ion-item *ngIf="error">
+		<ion-text class="ion-text-wrap" color="danger">{{ error }}</ion-text>
+	</ion-item>
+
+    <ion-item-group>
+		<ion-item>
+			<ion-label position="stacked">Name</ion-label>
+			<ion-input [(ngModel)]="contactName"></ion-input>
+		</ion-item>
+		<ion-item>
+			<ion-label position="stacked">Tor Address</ion-label>
+			<ion-text color="medium">
+				<p>{{ (contact$ | async).torAddress }}</p>
+			</ion-text>
+		</ion-item>
+    </ion-item-group>
+
+</ion-content>

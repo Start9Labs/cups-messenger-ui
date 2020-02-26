@@ -1,25 +1,37 @@
+type LogLevel = 'Info' | 'Debug'
+
 export interface Config {
-    cupsMessenger: { 
-        mock: boolean 
+    cupsMessenger: {
+        mock: boolean
         url: string
     }
-    cryoDaemon: {
+    contactsDaemon: {
         frequency: number
     }
-    pyroDaemon: {
+    contactMessagesDaemon: {
         frequency: number
     }
+    loadMesageBatchSize: number
+    defaultServerTimeout: number
+    loglevel: LogLevel
 }
 
 export const config: Config = {
-    cupsMessenger: { 
-        mock: false,
-        url: "/api"
+    cupsMessenger: {
+        mock: true,
+        url: window.origin + '/api'
     },
-    cryoDaemon: {
+    contactsDaemon: {
         frequency: 10000
     },
-    pyroDaemon: {
+    contactMessagesDaemon: {
         frequency: 2500
-    }
+    },
+    loadMesageBatchSize: 10,
+    defaultServerTimeout: 15000,
+    loglevel: 'Debug'
+}
+
+export function debugLog(s: string){
+    if(config.loglevel === 'Debug') console.log(s)
 }

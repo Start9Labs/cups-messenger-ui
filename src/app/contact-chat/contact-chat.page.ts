@@ -1,13 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { GlobalState, CategorizedMessages } from '../services/global-state'
-import { CupsMessenger } from '../services/cups/cups-messenger'
-import { Contact, ServerMessage, AttendingMessage, DisplayMessage, serverMessageFulfills, pauseFor } from "../services/cups/types"
-import { CryoDaemon } from '../services/daemons/cryo-daemon'
-import { PyroDaemon } from "../services/daemons/pyro-daemon"
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage, isAttending } from '../services/cups/types'
 import * as uuidv4 from 'uuid/v4'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription } from 'rxjs'
-import { map } from 'rxjs/operators'
+import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
+import { globe } from '../services/global-state'
+import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
+import { prodContactMessages$, prodContacts$, state } from '../services/rx/paths'
+import { CupsMessenger } from '../services/cups/cups-messenger'
+import { config } from '../config'
 
 @Component({
   selector: 'app-contact-chat',
@@ -15,132 +15,180 @@ import { map } from 'rxjs/operators'
   styleUrls: ['./contact-chat.page.scss'],
 })
 export class ContactChatPage implements OnInit {
-  @ViewChild('content', { static: false }) private content: any
+    @ViewChild('content', { static: false }) private content: any
 
-  private pyro: PyroDaemon
+    currentContactTorAddress: string
+    currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
+    contactMessages$: Observable<MessageBase[]> = new Observable()
+    contactMessages: MessageBase[] = []
+    // Detecting a new message
+    unreads = false
 
-  currentContact$: Observable<Contact>
-  contactMessages$: Observable<DisplayMessage[]>
-  contactMessagesSub: Subscription
+    // Sending messages
+    messageToSend: string
 
-  // Detecting a new message
-  unreads = false
+    // Updating a contact
+    addContactNameForm = false
+    contactNameToAdd: string
+    updatingContact$ = new BehaviorSubject(false)
 
-  // Sending messages
-  messageToSend: string
+    error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
+    globe = globe
 
-  // Updating a contact
-  addContactNameForm = false
-  contactNameToAdd: string
-  updatingContact = false
+    shouldJump = false
+    jumpSub: Subscription
+    mostRecentMessageTime: Date = new Date(0)
+    oldestMessage: MessageBase
+    canGetOlderMessages = false
 
-  constructor(
-      private readonly navCtrl: NavController,
-      private readonly globe: GlobalState,
-      private readonly cups: CupsMessenger,
-      private readonly cryo: CryoDaemon
-  ) { }
+    hasAllHistoricalMessages: { [tor: string]: true } = {}
 
-  ngOnInit() {
-    if(!this.globe.password){
-        this.navCtrl.navigateRoot('signin')
+
+
+
+    constructor(
+        private readonly navCtrl: NavController,
+        private readonly cups: CupsMessenger
+    ){
+        globe.currentContact$.subscribe(c => {
+            if(!c) return
+            this.contactMessages$ = globe.watchMessages(c).pipe(map(ms => {
+                this.shouldJump = this.isAtBottom()
+                if(this.shouldJump) { this.unreads = false }
+                this.oldestMessage = ms[ms.length - 1]
+                return ms
+            }))
+
+            if(this.jumpSub) { this.jumpSub.unsubscribe() }
+
+            this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
+                const mostRecent = ms[0]
+                if(this.shouldJump){
+                    this.unreads = false
+                    this.jumpToBottom()
+                    this.shouldJump = false
+                } else if (mostRecent && mostRecent.timestamp && mostRecent.timestamp > this.mostRecentMessageTime) {
+                    this.unreads = true
+                }
+                this.mostRecentMessageTime = (mostRecent && mostRecent.timestamp) || this.mostRecentMessageTime
+            })
+
+            this.currentContactTorAddress = c.torAddress
+            prodContactMessages$.next({})
+        })
     }
-    this.cryo.refresh()
-    this.globe.watchCurrentContact().subscribe(c => this.onContactUpdate(c))
-    this.currentContact$ = this.globe.watchCurrentContact()
-  }
 
-  async onContactUpdate(c: Contact | undefined): Promise<void> {
-    if(!c) return
-    await this.restartPyro()
-    this.contactMessages$ = this.globe.watchAllContactMessages(c).pipe(map(
-      ms => { this.onMessageUpdate(ms); return ms }
-    ))
-    this.jumpToBottom()
-    this.pyro.start()
-  }
-
-  async onMessageUpdate(ms: DisplayMessage[]): Promise<void> {
-    this.jumpIfAtBottom()
-  }
-
-  getContact(): Contact | undefined {
-    return this.globe.getCurrentContact()
-  }
-
-  sendMessage() {
-    if (!this.getContact()) { return }
-    const messageToAttend: AttendingMessage = {
-      id: uuidv4(),
-      timestamp: new Date(),
-      direction: 'Outbound',
-      otherParty: this.getContact(),
-      text: this.messageToSend,
-      attending: true
+    ngOnInit() {
+        if (!globe.password) {
+            this.navCtrl.navigateRoot('signin')
+        }
+        prodContacts$.next()
+        this.canGetOlderMessages = this.isAtTop()
     }
 
-    this.globe.pokeAppendAttendingMessage(this.getContact(), messageToAttend)
-    this.cups.messagesSend(this.getContact(), this.messageToSend).then(
-      () => {
-        this.globe.logState("cups-message-send complete: ", this.getContact())
-        this.pyro.refresh()
-      }
-    )
-    this.jumpToBottom() 
-    this.messageToSend = ''
-  }
+    // initialMessages(contact: Contact) {
+    //     from(this.cups.newMessagesShow(contact)).pipe(state(
+    //         newMs => {
+    //             const sortedNewMs = (newMs || []).sort(sortByTimestamp)
+    //             const showMessageParams = {} as ShowMessagesOptions
+    //             if(sortedNewMs.length){
+    //                 const oldest = sortedNewMs[0]
+    //                 showMessageParams.offset = { id: oldest.id, direction: 'before' }
+    //             }
+    //             return from(this.cups.messagesShow(contact, showMessageParams))
+    //         }),map( ([newMs, oldMs]) => {
 
-  contactNameForm(val: boolean){
-    this.addContactNameForm = val
-  }
+    //         })
+    //     ))
+    // }
 
-  async updateContact(){
-    this.updatingContact = true
-    const contact = this.getContact()
-    const updatedContact = {...contact, name: this.contactNameToAdd }
+    sendMessage(contact: Contact) {
+        const attendingMessage: AttendingMessage = {
+            sentToServer: new Date(),
+            direction: 'Outbound',
+            otherParty: contact,
+            text: this.messageToSend,
+            trackingId: uuidv4(),
+        }
 
-    await this.cups.contactsAdd(updatedContact).handle(
-      e => { console.error(e) ; this.updatingContact = false }
-    )
-
-    this.addContactNameForm = false
-    this.contactNameToAdd = undefined
-    this.globe.pokeCurrentContact(updatedContact)
-    this.updatingContact = false
-  }
-
-  private async restartPyro() {
-    if (this.pyro) { this.pyro.stop() }
-    this.pyro = new PyroDaemon(this.globe, this.cups)
-    await this.pyro.refresh()
-  }
-
-  private jumpIfAtBottom() {
-    if(this.isAtBottom()){
-      pauseFor(125).then(() => this.jumpToBottom())
+        this.send(contact, attendingMessage)
+        this.messageToSend = ''
     }
-  }
 
-  private isAtBottom(){
-    const targetElements = []
-    targetElements[0] = document.getElementById("0")
-    targetElements[1] = document.getElementById("1")
-    targetElements[2] = document.getElementById("2")
-    return targetElements.some( e => e && isElementInViewport(e))
-  }
+    retry(contact: Contact, failedMessage: FailedMessage) {
+        const retryMessage = {...failedMessage, sentToServer: new Date() }
+        delete retryMessage.failure
+        this.send(contact, retryMessage as AttendingMessage)
+    }
 
-  toggleUnreads() {
-      if (this.isAtBottom()) { 
-        this.unreads = false 
-      } else {
-        this.unreads = true
-      }
-  }
+    send(contact: Contact, message: AttendingMessage) {
+        of({contact, messages: [message] }).subscribe(globe.$observeMessages)
 
-  jumpToBottom() {
-    this.content.scrollToBottom(300)
-    this.unreads = false
-  }
+        from(this.cups.messagesSend(contact, message.trackingId, message.text)).pipe(catchError(e => {
+            console.error(`send message failure`, e.message)
+            globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+            return of(undefined)
+        })).subscribe({
+            next: () => {
+                console.log('did it')
+                prodContactMessages$.next({})
+                of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
+                    globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
+                })
+            },
+        })
+
+        pauseFor(125).then(() => {
+            this.unreads = false; this.jumpToBottom()
+        })
+    }
+
+    async jumpToBottom() {
+        if(this.content) { this.content.scrollToBottom(200) }
+    }
+
+    onScrollEnd(){
+        if(this.isAtBottom()){ this.unreads = false }
+    }
+
+    fetchOlderMessages(event: any, contact: Contact) {
+        let message: ServerMessage | undefined
+        // event.target.complete()
+        globe.watchOldestServerMessage(contact).pipe(
+            filter(m => !!m),
+            tap(m => message = m),
+            take(1),
+            switchMap(m => from(this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} ))),
+            map(ms => ({ contact, messages: ms }))
+        ).subscribe( {
+            next: res => {
+                if(res.messages.length === 0) {
+                    this.hasAllHistoricalMessages[contact.torAddress] = true
+                }
+                globe.$observeMessages.next(res)
+                event.target.complete()
+            },
+            error: (e : Error) => {
+                console.error(e.message)
+                globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                event.target.complete()
+            }
+        })
+    }
+
+    isAtBottom(): boolean {
+        const el = document.getElementById('end-of-scroll')
+        return el ? isElementInViewport(el) : true
+    }
+
+    isAtTop(): boolean {
+        const el = document.getElementById('top-of-scroll')
+        return el ? isElementInViewport(el) : true
+    }
+
+    ngOnDestroy(): void {
+        return this.jumpSub && this.jumpSub.unsubscribe()
+    }
 }
 
 // returns true if the TOP of the element is in the view port.

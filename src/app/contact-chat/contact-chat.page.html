@@ -2,58 +2,58 @@
     <ion-toolbar>
         <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
-          </ion-buttons>
-        <ion-item lines="none">
-            <ion-title color="charcoal" *ngIf="(this.currentContact$ | async) && !addContactNameForm" class="center">
-                {{(this.currentContact$ | async | truncateEllipses:50:"longDisplay")?.longDisplay}}
-            </ion-title>
-            <ion-item *ngIf="(this.currentContact$ | async) && addContactNameForm">
-                <form (ngSubmit)="updateContact()" >
-                    <ion-input type="text" size="150" [disabled]="updatingContact" placeholder="new contact name" [(ngModel)]="contactNameToAdd" name="contactNameToAdd">
-                    </ion-input>
-                </form>
-                <ion-button fill="clear" color="charcoal" (click)="contactNameForm(false)">
-                    <ion-icon color="charcoal" name="arrow-dropright"></ion-icon>
-                </ion-button>    
-            </ion-item>
-            <ion-button fill="clear" color="charcoal" (click)="contactNameForm(true)" *ngIf="(this.currentContact$ | async) && !addContactNameForm">
-                edit
-            </ion-button>
-            
-        </ion-item>
+        </ion-buttons>
+		<ion-title color="charcoal" *ngIf="(globe.currentContact$ | async)" [routerLink]="['/profile']">
+			{{ (globe.currentContact$ | async | truncateEllipses:50:"shortDisplay")?.shortDisplay }}
+		</ion-title>
     </ion-toolbar>
 </ion-header>
-<ion-content #content [scrollEvents]="true" (ionScrollEnd)="toggleUnreads()">
-    
-    <ion-list background="url('../../assets/cupsbackground.png')" class="chat">
-        <div *ngFor="let message of (contactMessages$ | async); let i = index">
-            <div class="chat-message" *ngIf="message.direction === 'Inbound' && !message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message left-bubble">
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
-                    <p class="ionic-text-wrap">{{message.text}}</p>
-                </div>
+
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" *ngIf="(globe.currentContact$ | async) as contact">
+    <ion-infinite-scroll *ngIf="!hasAllHistoricalMessages[contact.torAddress]" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+        <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+
+    <ion-list #chat class="chat">
+        <div id="start-of-scroll"></div>
+        <div *ngFor="let message of (contactMessages$ | async)">
+            <div class="left-bubble chat-message-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
             </div>
-            <div class="chat-message" *ngIf="message.direction === 'Outbound' && !message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message" class="chat-message right-bubble">
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
-                    <p class="ionic-text-wrap">{{message.text}}</p>
-                </div>
+            <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <span class="msg-date">{{message.timestamp | date:'short'}}</span>
             </div>
-            <div class="chat-message" *ngIf="message.attending" lines="none" [attr.id]="i">
-                <div class="chat-message right-bubble-attending">
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
-                    <p class="ionic-text-wrap">{{message.text}}</p>
+            <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
+                <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
+            </div>
+            <div class="right-bubble chat-message-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                <div class="msg-date">{{message.sentToServer | date:'short'}}
                 </div>
+                <span class="msg-date" style="color:#333333" (click)="retry(contact, message)">  RETRY</span>
             </div>
         </div>    
-        <div id="end-of-scroll"></div>
     </ion-list>
+    <div id="end-of-scroll"></div>
 
+    <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button style="background-color: #ffffff; color:#333333" (click)="jumpToBottom()">
+            <ion-icon name="arrow-down-outline"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
 </ion-content>
 
-<ion-footer>
-    <form (ngSubmit)="sendMessage()">
-        <ion-grid *ngIf="(currentContact$ | async)">
+<ion-footer *ngIf="(globe.currentContact$ | async) as current">
+    <form (ngSubmit)="sendMessage(current)">
+        <ion-grid >
             <ion-row>
                 <ion-col col-10>
                     <ion-input type="text" placeholder="Type a message" [(ngModel)]="messageToSend" name="message">
@@ -62,7 +62,4 @@
             </ion-row>
         </ion-grid>
     </form>
-    <ion-button *ngIf="unreads" (click)="jumpToBottom()">
-        Jump to bottom
-    </ion-button>
 </ion-footer>
