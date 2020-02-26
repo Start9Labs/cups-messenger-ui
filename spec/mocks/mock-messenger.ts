@@ -4,7 +4,6 @@ import { interval } from 'rxjs'
 import { tap } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 
-
 export class MockCupsMessenger {
     mocks: {[tor: string]: ServerMessage[]} = {}
     contacts = mockL(mockContact, 5)
@@ -54,7 +53,6 @@ export class MockCupsMessenger {
     }
 
     async messagesSend (contact: Contact, trackingId, message: string): Promise<void> {
-        // throw new Error('fuck')
         await pauseFor(2000)
         this.getMessageMocks(contact).push({
             timestamp: new Date(),

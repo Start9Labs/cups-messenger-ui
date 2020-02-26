@@ -57,7 +57,7 @@
     <ion-grid>
         <ion-row>
             <ion-col size="9">
-                <form (keydown.meta.Enter)="checkSubmit($event, current)">
+                <form (keydown.meta.Enter)="checkSubmit($event, current)" (keydown.shift.Enter)="checkSubmit($event, current)">
                     <ion-textarea autoGrow rows="4" [(ngModel)]="messageToSend" name="message" placeholder="Type a message"></ion-textarea>
                 </form>
             </ion-col>

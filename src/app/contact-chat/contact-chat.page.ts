@@ -89,23 +89,6 @@ export class ContactChatPage implements OnInit {
         await this.sendMessage(contact)
       }
     }
-
-    // initialMessages(contact: Contact) {
-    //     from(this.cups.newMessagesShow(contact)).pipe(state(
-    //         newMs => {
-    //             const sortedNewMs = (newMs || []).sort(sortByTimestamp)
-    //             const showMessageParams = {} as ShowMessagesOptions
-    //             if(sortedNewMs.length){
-    //                 const oldest = sortedNewMs[0]
-    //                 showMessageParams.offset = { id: oldest.id, direction: 'before' }
-    //             }
-    //             return from(this.cups.messagesShow(contact, showMessageParams))
-    //         }),map( ([newMs, oldMs]) => {
-
-    //         })
-    //     ))
-    // }
-
     sendMessage(contact: Contact) {
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
@@ -114,6 +97,7 @@ export class ContactChatPage implements OnInit {
             text: this.messageToSend,
             trackingId: uuid.v4(),
         }
+        console.log(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
         this.send(contact, attendingMessage)
         this.messageToSend = ''
     }
@@ -133,6 +117,7 @@ export class ContactChatPage implements OnInit {
             return of(undefined)
         })).subscribe({
             next: () => {
+                console.log(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)
                 prodContactMessages$.next({})
                 of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
                     globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )

@@ -29,8 +29,8 @@ export const config: Config = {
         frequency: 2500
     },
     loadMesageBatchSize: 15,
-    defaultServerTimeout: 25000,
-    loglevel: 'Debug',
+    defaultServerTimeout: 180000,
+    loglevel: 'Info',
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
 
