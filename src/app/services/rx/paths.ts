@@ -2,18 +2,16 @@ import { globe } from '../global-state'
 import { config, debugLog } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { Contact, ServerMessage, ContactWithMessageCount } from '../cups/types'
-import { interval, Observable, Subject, of, Subscription, OperatorFunction, from, BehaviorSubject, combineLatest, merge } from 'rxjs'
-import { map, catchError, filter, switchMap, delay, repeat, withLatestFrom, tap, take } from 'rxjs/operators'
+import { Observable, Subject, of, OperatorFunction, from, BehaviorSubject, combineLatest, merge } from 'rxjs'
+import { map, catchError, filter, switchMap, delay, tap } from 'rxjs/operators'
 
-let contactsSubscription: Subscription
-let contactMessagesSubscription: Subscription
 export function main(cups: CupsMessenger) {
     const contactsDaemon = cooldown(
         prodContacts$,
         contactsProvider(cups),
         config.contactsDaemon.frequency
     )
-    contactsSubscription = contactsDaemon.subscribe(globe.$observeContacts)
+    contactsDaemon.subscribe(globe.$observeContacts)
 
     const contactMessagesDaemon = cooldown(
         combineLatest([globe.currentContact$, prodContactMessages$]).pipe(map(([c,_]) => c)),
@@ -21,21 +19,7 @@ export function main(cups: CupsMessenger) {
         config.contactMessagesDaemon.frequency
     )
 
-    contactMessagesSubscription = contactMessagesDaemon.subscribe(globe.$observeMessages)
-
-    interval(1000).pipe(filter(
-        () => contactsSubscription.closed
-    )).subscribe(() => {
-        console.warn(`restarting contacts daemon`)
-        contactsSubscription = contactsDaemon.subscribe(globe.$observeContacts)
-    })
-
-    interval(1000).pipe(filter(
-        () => contactMessagesSubscription.closed
-    )).subscribe(() => {
-        console.warn(`restarting contact messages daemon`)
-        contactMessagesSubscription = contactMessagesDaemon.subscribe(globe.$observeMessages)
-    })
+    contactMessagesDaemon.subscribe(globe.$observeMessages)
 }
 
 export const prodContactMessages$ = new Subject()
@@ -44,7 +28,8 @@ export const contactMessagesProvider: (cups: CupsMessenger) => OperatorFunction<
     cups => {
         return o => o.pipe(
             filter(c => !!c),
-            state(contact => 
+            tap(c => { console.log('contact messages daemon running for ' + c.torAddress) }),
+            state(contact =>
                 from(cups.messagesShow(contact, {/* TODO FIX THIS PLS */} as any)).pipe(
                     catchError(e => {
                         console.error(`Error in contact messages daemon ${e.message}`)
@@ -64,12 +49,14 @@ export interface ContactsDaemonConfig { frequency: number, cups: CupsMessenger }
 export const contactsProvider: (cups: CupsMessenger) => OperatorFunction<{}, ContactWithMessageCount[]> =
     cups => {
         return o => o.pipe(
+            tap(() => console.log('contact daemon running')),
             switchMap(() => from(cups.contactsShow()).pipe(
                 catchError(e => {
                     console.error(`Error in contacts daemon ${e.message}`)
-                    return of([])
+                    return of(null)
                 })
             )),
+            filter(cs => cs),
             map(contacts => {
                 debugLog(`contacts: ${JSON.stringify(contacts)}`)
                 return contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages)

@@ -7,7 +7,7 @@ import { globe } from '../services/global-state'
 import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
 import { prodContactMessages$, prodContacts$, state } from '../services/rx/paths'
 import { CupsMessenger } from '../services/cups/cups-messenger'
-import { config } from '../config'
+import { config, debugLog } from '../config'
 
 @Component({
   selector: 'app-contact-chat',
@@ -102,8 +102,6 @@ export class ContactChatPage implements OnInit {
 
     sendMessage(contact: Contact) {
       const breaks = (this.messageToSend.match(/\n/g)||[]).length
-      console.log(breaks)
-      console.log(this.messageToSend)
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
             direction: 'Outbound',
@@ -183,6 +181,11 @@ export class ContactChatPage implements OnInit {
     isAtTop(): boolean {
         const el = document.getElementById('top-of-scroll')
         return el ? isElementInViewport(el) : true
+    }
+
+    checkSubmit(e: any){
+        debugger
+        debugLog(e)
     }
 
     ngOnDestroy(): void {
