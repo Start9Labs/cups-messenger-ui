@@ -52,11 +52,15 @@
 
 <ion-footer *ngIf="(globe.currentContact$ | async) as current">
     <form (ngSubmit)="sendMessage(current)">
-        <ion-grid >
+        <ion-grid>
             <ion-row>
-                <ion-col col-10>
-                    <ion-input type="text" placeholder="Type a message" [(ngModel)]="messageToSend" name="message">
-                    </ion-input>
+                <ion-col size="9">
+                    <ion-textarea autoGrow rows="2" [(ngModel)]="messageToSend" name="message" placeholder="Type a message"></ion-textarea>
+                </ion-col>
+                <ion-col size="3" style="text-align: right;" class="ion-align-self-center">
+                    <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(current)">
+                        <ion-icon slot="icon-only" name="send-outline" style="color: #d00909;"></ion-icon>
+                    </ion-button>
                 </ion-col>
             </ion-row>
         </ion-grid>
