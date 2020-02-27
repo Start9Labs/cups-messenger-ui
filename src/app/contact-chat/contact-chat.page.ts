@@ -142,7 +142,7 @@ export class ContactChatPage implements OnInit {
         let message: ServerMessage | undefined
         // event.target.complete()
         globe.watchOldestServerMessage(contact).pipe(
-            filter(m => !!m),
+            filter(_ => !!this.hasAllHistoricalMessages[contact.torAddress]),
             tap(m => message = m),
             take(1),
             switchMap(m => from(this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} ))),
@@ -150,6 +150,7 @@ export class ContactChatPage implements OnInit {
         ).subscribe( {
             next: res => {
                 if(res.messages.length === 0) {
+                    console.log(`fetched all historical messages`)
                     this.hasAllHistoricalMessages[contact.torAddress] = true
                 }
                 globe.$observeMessages.next(res)
