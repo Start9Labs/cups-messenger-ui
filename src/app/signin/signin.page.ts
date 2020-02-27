@@ -1,9 +1,10 @@
 import { Component, OnInit, NgZone } from '@angular/core'
 
-import { NavController } from '@ionic/angular'
+import { NavController, LoadingController } from '@ionic/angular'
 import { globe } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { BehaviorSubject } from 'rxjs'
+import { pauseFor } from '../services/cups/types'
 
 @Component({
   selector: 'app-signin',
@@ -12,13 +13,13 @@ import { BehaviorSubject } from 'rxjs'
 })
 export class SigninPage implements OnInit {
   password = ''
-  loading$ = new BehaviorSubject(false)
   error$ = new BehaviorSubject(undefined)
 
   constructor(
     private readonly cups: CupsMessenger,
     private readonly navCtrl: NavController,
-    private readonly ngZone: NgZone
+    private readonly ngZone: NgZone,
+    private readonly loadingCtrl: LoadingController,
   ) { }
 
   ngOnInit() {
@@ -27,18 +28,22 @@ export class SigninPage implements OnInit {
 
   async enterCupsMessengerPassword() {
     this.error$.next(undefined)
-    this.loading$.next(true)
-
     const pass = this.password.trim()
+
+    const loader = await this.loadingCtrl.create({
+      spinner: 'lines',
+    })
+    await loader.present()
 
     try {
       await this.cups.contactsShow(pass)
+      await pauseFor(2000)
       await globe.setPassword(pass)
       this.signin()
     } catch (e) {
       this.error$.next(`Invalid Password`)
     } finally {
-      this.loading$.next(false)
+      loader.dismiss()
     }
   }
 

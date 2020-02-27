@@ -7,17 +7,16 @@
     <form (ngSubmit)="enterCupsMessengerPassword()">
         <ion-list>
             <ion-item>
-                <ion-input disabled="{{loading$ | async}}" type="text" color="charcoal" placeholder="Cups Messenger Password" [(ngModel)]="password"
+                <ion-input type="password" color="charcoal" placeholder="Cups Messenger Password" [(ngModel)]="password"
                     name="password" required=""></ion-input>
             </ion-item>
 
-            <ion-item *ngIf="password && password != ''">
-                <button ion-button full round color="secondary">Enter</button>
-            </ion-item>
+            <ion-button [disabled]="!password" style="margin-top: 30px" expand="block" fill="outline" (click)="enterCupsMessengerPassword()">
+                Continue
+            </ion-button>
         </ion-list>
     </form>
     <ion-item text-center *ngIf="error$ | async" lines="none">
         <ion-label class="error-bar" color="danger">{{ error$ | async }}</ion-label>
     </ion-item>
-    <ion-spinner *ngIf="loading$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>    
 </ion-content>

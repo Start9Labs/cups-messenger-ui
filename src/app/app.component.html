@@ -7,7 +7,7 @@
                 </ion-toolbar>
             </ion-header>
             <ion-content *ngIf="(globe.password$ | async)">
-				<!-- button to enable to contact form -->
+				        <!-- button to enable to contact form -->
                 <ion-button style="margin: 12px 0; color: #3542e5; text-align: left" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
                     <ion-icon name="add-circle" slot="start"></ion-icon><span>New contact</span>
                 </ion-button>
@@ -52,7 +52,7 @@
 
                 
             </ion-content>
-            <ion-footer>
+            <ion-footer *ngIf="(globe.password$ | async)">
                 <ion-button style="margin: 12px 0; color: #d00909" expand="full" fill="clear" (click)="logout()">
                     Logout
                 </ion-button>
