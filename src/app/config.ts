@@ -30,7 +30,7 @@ export const config: Config = {
     },
     loadMesageBatchSize: 15,
     defaultServerTimeout: 180000,
-    loglevel: 'Debug',
+    loglevel: 'Info',
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
 

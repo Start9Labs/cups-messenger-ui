@@ -59,6 +59,7 @@ export class AppComponent {
 
     logout(){
         this.globe.clearPassword()
+        this.menu.close('main-menu')
     }
 
     async submitNewContact() {

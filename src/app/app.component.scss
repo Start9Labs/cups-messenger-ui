@@ -29,30 +29,16 @@
   color: blue;
 }
 
-
-// :root {
-//     ion-item {
-//         --border-color: white; // default underline color
-//         --highlight-color-invalid: red; // invalid underline color
-//         --highlight-color-valid: white;
-//     }
-// }
-
-// ion-item {
-//     --border-color: white; // default underline color
-//     --highlight-color-invalid: red; // invalid underline color
-//     --highlight-color-valid: white;
-// }
-
-// :host {
-//     ion-item {
-//         --border-color: white; // default underline color
-//         --highlight-color-invalid: red; // invalid underline color
-//         --highlight-color-valid: white;
-//     }
-// }
-
 .center-spinner {
     padding-left: 100%;
     margin-top: 5%;
 }
+
+:host {
+    .item-interactive.ion-invalid{
+     --highlight-background: #d00909 !important;
+   }
+   .item-interactive.ion-valid{
+     --highlight-background: #0e7717 !important;
+   }
+ }

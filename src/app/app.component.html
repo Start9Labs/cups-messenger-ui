@@ -3,7 +3,7 @@
         <ion-menu contentId="main-content" menuId="main-menu" type="overlay">
             <ion-header>
                 <ion-toolbar>
-                    <ion-title>Chats</ion-title>
+                    <ion-title>Cups Messenger V0</ion-title>
                 </ion-toolbar>
             </ion-header>
             <ion-content *ngIf="(globe.password$ | async)">
@@ -50,10 +50,13 @@
                     </div>
                 </ion-item-group>
 
+                
+            </ion-content>
+            <ion-footer>
                 <ion-button style="margin: 12px 0; color: #d00909" expand="full" fill="clear" (click)="logout()">
                     Logout
                 </ion-button>
-            </ion-content>
+            </ion-footer>
         </ion-menu>
         <ion-router-outlet id="main-content"></ion-router-outlet>
     </ion-split-pane>
