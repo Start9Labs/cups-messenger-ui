@@ -12,49 +12,53 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" *ngIf="(globe.currentContact$ | async) as contact">
-    <ion-infinite-scroll *ngIf="!hasAllHistoricalMessages[contact.torAddress]" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
-        <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
-    </ion-infinite-scroll>
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
+    <div *ngIf="(globe.currentContact$ | async) as contact">
 
-    <ion-list #chat class="chat">
-        <div id="start-of-scroll"></div>
-        <div *ngFor="let message of (contactMessages$ | async)" style="white-space: pre-line">
-            <div class="left-bubble chat-message-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
-                <span class="msg-date" style="color: #3542e5">{{(contact | truncateEllipses:15:"a")?.a}}</span>
-                <span class="msg-date">{{message.timestamp | date:'short'}}</span>
-                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-            </div>
-            <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
-                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
-                <div class="msg-date">{{message.timestamp | date:'short'}}</div>
-            </div>
-            <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
-                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
-                <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
-                <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
-            </div>
-            <div class="right-bubble chat-message-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
-                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
-                <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
-                <span class="msg-date retry" (click)="retry(contact, message)"><u>RETRY</u></span>
-            </div>
-        </div>    
-    </ion-list>
-    <div id="end-of-scroll"></div>
+        <ion-infinite-scroll *ngIf="!hasAllHistoricalMessages[contact.torAddress]" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+          <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
+        </ion-infinite-scroll>
 
-    <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button size="small" color="white" fill="clear" (click)="jumpToBottom()">
-            <ion-icon name="arrow-down-outline"></ion-icon>
-        </ion-fab-button>
-    </ion-fab>
+        <ion-list #chat class="chat">
+            <div id="start-of-scroll"></div>
+            <div *ngFor="let message of (contactMessages$ | async)" style="white-space: pre-line">
+                <div class="left-bubble chat-message-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
+                    <span class="msg-date" style="color: #3542e5">{{(contact | truncateEllipses:15:"a")?.a}}</span>
+                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                </div>
+                <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
+                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                    <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
+                    <div class="msg-date">{{message.timestamp | date:'short'}}</div>
+                </div>
+                <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
+                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                    <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
+                    <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
+                    <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
+                </div>
+                <div class="right-bubble chat-message-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
+                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                    <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
+                    <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
+                    <span class="msg-date retry" (click)="retry(contact, message)"><u>RETRY</u></span>
+                </div>
+            </div>    
+        </ion-list>
+        <div id="end-of-scroll"></div>
+
+        <ion-fab *ngIf="(contactMessages$ | async)?.length && unreads" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+            <ion-fab-button size="small" color="white" fill="clear" (click)="jumpToBottom()">
+                <ion-icon name="arrow-down-outline"></ion-icon>
+            </ion-fab-button>
+        </ion-fab>
+        
+    </div>
 </ion-content>
 
-<ion-footer *ngIf="(globe.currentContact$ | async) as current">
-    <ion-grid>
+<ion-footer>
+    <ion-grid *ngIf="(globe.currentContact$ | async) as current">
         <ion-row>
             <ion-col size="9">
                 <form (keydown.meta.Enter)="checkSubmit($event, current)" (keydown.shift.Enter)="checkSubmit($event, current)">
