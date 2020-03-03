@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core'
 import { Contact } from '../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
 import { globe } from '../services/global-state'
-import { Observable, of, from } from 'rxjs'
+import { Observable, from } from 'rxjs'
 import { take, switchMap } from 'rxjs/operators'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 
@@ -41,7 +41,7 @@ export class ProfilePage {
 
         from(this.cups.contactsAdd(updatedContact)).pipe(
             switchMap(() => this.cups.contactsShow().then(cs => {
-                if(cs.findIndex(c => c.torAddress === updatedContact.torAddress) <= -1) {
+                if(cs.findIndex(co => co.torAddress === updatedContact.torAddress) <= -1) {
                     cs.push({...updatedContact, unreadMessages: 0} )
                 }
                 globe.$observeContacts.next(cs)

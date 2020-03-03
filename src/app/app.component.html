@@ -41,7 +41,7 @@
                         <div *ngIf="(globe.currentContact$ | async) || {}; let cc" >
                             <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(globe.currentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
                                 <ion-avatar slot="start">
-                                    <text-avatar [text]='(contact | truncateEllipses:18:"shortDisplay")?.shortDisplay'>{{F}}</text-avatar>
+                                    <text-avatar [text]='(contact | truncateEllipses:18:"shortDisplay")?.shortDisplay'></text-avatar>
                                 </ion-avatar>
                                 <ion-label>{{ (contact | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
                                 <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    

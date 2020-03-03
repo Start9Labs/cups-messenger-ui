@@ -1,13 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage, isAttending } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
 import { globe } from '../services/global-state'
 import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
-import { prodContactMessages$, prodContacts$, state } from '../services/rx/paths'
+import { prodContactMessages$, prodContacts$ } from '../services/rx/paths'
 import { CupsMessenger } from '../services/cups/cups-messenger'
-import { config, debugLog } from '../config'
+import { config } from '../config'
 
 @Component({
   selector: 'app-contact-chat',
@@ -15,7 +15,7 @@ import { config, debugLog } from '../config'
   styleUrls: ['./contact-chat.page.scss'],
 })
 export class ContactChatPage implements OnInit {
-    @ViewChild('content', { static: false }) private content: any
+    @ViewChild('content') private content: any
 
     currentContactTorAddress: string
     currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
@@ -89,6 +89,7 @@ export class ContactChatPage implements OnInit {
         await this.sendMessage(contact)
       }
     }
+
     sendMessage(contact: Contact) {
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
