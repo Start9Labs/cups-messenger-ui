@@ -15,7 +15,7 @@ import { config } from '../config'
   styleUrls: ['./contact-chat.page.scss'],
 })
 export class ContactChatPage implements OnInit {
-    @ViewChild('content', { static: false }) private content: any
+    @ViewChild('content') private content: any
 
     currentContactTorAddress: string
     currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
@@ -89,6 +89,7 @@ export class ContactChatPage implements OnInit {
         await this.sendMessage(contact)
       }
     }
+
     sendMessage(contact: Contact) {
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
