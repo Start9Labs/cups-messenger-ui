@@ -8,7 +8,7 @@
         <ion-list>
             <ion-item>
                 <ion-input type="password" color="charcoal" placeholder="Cups Messenger Password" [(ngModel)]="password"
-                    name="password" required></ion-input>
+                    name="password" autocomplete="on" required></ion-input>
             </ion-item>
 
             <ion-button [disabled]="!password" style="margin-top: 30px" expand="block" fill="outline" (click)="enterCupsMessengerPassword()">
