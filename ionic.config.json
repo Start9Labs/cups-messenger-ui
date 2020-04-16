@@ -1,8 +1,7 @@
 {
   "name": "cups-ui",
   "integrations": {
-    "capacitor": {},
-    "cordova": {}
+    "capacitor": {}
   },
   "type": "angular"
 }

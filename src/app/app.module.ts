@@ -10,8 +10,6 @@ import { FormsModule } from '@angular/forms'
 import { ContactChatPageModule } from './contact-chat/contact-chat.module'
 import { HttpClientModule } from '@angular/common/http'
 import { TextAvatarModule } from './text-avatar'
-import { ServiceWorkerModule } from '@angular/service-worker'
-import { environment } from '../environments/environment'
 
 @NgModule({
   declarations: [AppComponent ],
@@ -24,7 +22,6 @@ import { environment } from '../environments/environment'
     ContactChatPageModule,
     HttpClientModule,
     TextAvatarModule,
-    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
