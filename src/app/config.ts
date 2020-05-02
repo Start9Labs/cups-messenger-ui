@@ -20,7 +20,7 @@ export interface Config {
 export const config: Config = {
     cupsMessenger: {
         mock: false,
-        url: window.origin + '/api'
+        url: '/api'
     },
     contactsDaemon: {
         frequency: 10000
@@ -34,6 +34,6 @@ export const config: Config = {
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
 
-export function debugLog(s: string){
-    if(config.loglevel === 'Debug') console.log(s)
+export function debugLog(s: string) {
+    if (config.loglevel === 'Debug') console.log(s)
 }

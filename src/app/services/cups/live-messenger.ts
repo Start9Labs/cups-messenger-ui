@@ -9,7 +9,9 @@ import { map, take } from 'rxjs/operators'
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
 
-    constructor(private readonly http: HttpClient) { }
+    constructor(private readonly http: HttpClient) {
+        window['httpClient'] = http
+    }
 
     private authHeaders(password: string = globe.password): HttpHeaders {
         if (!password) {
@@ -40,9 +42,29 @@ export class LiveCupsMessenger {
 
     async contactsAdd(contact: Contact): Promise<void> {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
-        const headers = this.authHeaders()
-        headers.set('Content-Type', 'application/octet-stream')
-        return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
+        let headers = this.authHeaders()
+        // headers = headers.set('Content-Type', 'application/octet-stream')
+        // headers = headers.set('Content-Length', toPost.byteLength.toString())
+        // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
+        return new Promise((res, rej) => {
+            const xhr = new XMLHttpRequest()
+            xhr.ontimeout = function () {
+                rej(new Error("TIMEOUT"));
+            };
+            xhr.onload = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        res();
+                    } else {
+                        rej(new Error(xhr.statusText));
+                    }
+                }
+            };
+            xhr.timeout = config.defaultServerTimeout
+            xhr.open('POST', this.hostUrl, true)
+            xhr.setRequestHeader("Authorization", headers.get("Authorization"))
+            xhr.send(toPost)
+        })
     }
 
     async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
@@ -90,9 +112,29 @@ export class LiveCupsMessenger {
     async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         try {
-            const headers = this.authHeaders()
-            headers.set('Content-Type', 'application/octet-stream')
-            return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
+            let headers = this.authHeaders()
+            // headers = headers.set('Content-Type', 'application/octet-stream')
+            // headers = headers.set('Content-Length', toPost.byteLength.toString())
+            // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
+            return new Promise((res, rej) => {
+                const xhr = new XMLHttpRequest()
+                xhr.ontimeout = function () {
+                    rej(new Error("TIMEOUT"));
+                };
+                xhr.onload = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            res();
+                        } else {
+                            rej(new Error(xhr.statusText));
+                        }
+                    }
+                };
+                xhr.timeout = config.defaultServerTimeout
+                xhr.open('POST', this.hostUrl, true)
+                xhr.setRequestHeader("Authorization", headers.get("Authorization"))
+                xhr.send(toPost)
+            })
         } catch (e) {
             console.error('messages send', e)
             throw e
