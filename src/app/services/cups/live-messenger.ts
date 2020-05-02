@@ -11,18 +11,18 @@ export class LiveCupsMessenger {
 
     constructor(private readonly http: HttpClient) { }
 
-    private authHeaders (password: string = globe.password): HttpHeaders {
+    private authHeaders(password: string = globe.password): HttpHeaders {
         if (!password) {
             throw new Error('Unauthenticated request to server attempted.')
         }
         return new HttpHeaders({ Authorization: 'Basic ' + btoa(`me:${password}`) })
     }
 
-    private get hostUrl (): string {
+    private get hostUrl(): string {
         return config.cupsMessenger.url
     }
 
-    async contactsShow (loginTestPassword: string): Promise<ContactWithMessageCount[]> {
+    async contactsShow(loginTestPassword: string): Promise<ContactWithMessageCount[]> {
         try {
             return withTimeout(this.http.get(this.hostUrl, {
                 params: {
@@ -38,12 +38,14 @@ export class LiveCupsMessenger {
         }
     }
 
-    async contactsAdd (contact: Contact): Promise<void> {
+    async contactsAdd(contact: Contact): Promise<void> {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
-        return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() })).toPromise()
+        const headers = this.authHeaders()
+        headers.set('Content-Type', 'application/octet-stream')
+        return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
     }
 
-    async messagesShow (contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
         const params = Object.assign({
             type: 'messages',
@@ -65,7 +67,7 @@ export class LiveCupsMessenger {
         }
     }
 
-    async newMessagesShow (contact: Contact): Promise<ServerMessage[]> {
+    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
         const params = {
             type: 'new',
             pubkey: onionToPubkeyString(contact.torAddress),
@@ -85,10 +87,12 @@ export class LiveCupsMessenger {
         }
     }
 
-    async messagesSend (contact: Contact, trackingId: string, message: string): Promise<void> {
+    async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         try {
-            return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers: this.authHeaders() })).toPromise()
+            const headers = this.authHeaders()
+            headers.set('Content-Type', 'application/octet-stream')
+            return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
         } catch (e) {
             console.error('messages send', e)
             throw e
@@ -96,20 +100,20 @@ export class LiveCupsMessenger {
     }
 }
 
-export function withTimeout<U>(req: Observable<U>, timeout: number = config.defaultServerTimeout): Observable<U > {
+export function withTimeout<U>(req: Observable<U>, timeout: number = config.defaultServerTimeout): Observable<U> {
     return race(
         from(req),
         interval(timeout).pipe(map(() => { throw new Error('timeout') }))
     ).pipe(take(1))
 }
 
-export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' }}
+export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' } }
 export function fillDefaultOptions(options: ShowMessagesOptions): ShowMessagesOptions {
     const limit = options.limit || config.loadMesageBatchSize
-    return {...options, limit }
+    return { ...options, limit }
 }
 export type ShowNewMessagesOptions = { atLeast?: number }
 export function fillNewDefaultOptions(options: ShowNewMessagesOptions): ShowNewMessagesOptions {
     const atLeast = options.atLeast || config.loadMesageBatchSize
-    return {...options, atLeast }
+    return { ...options, atLeast }
 }
