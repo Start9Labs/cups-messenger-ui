@@ -8,6 +8,7 @@ import { Contact,
 import { BehaviorSubject, NextObserver, Observable, Subject } from 'rxjs'
 import { Plugins } from '@capacitor/core'
 import { take, map } from 'rxjs/operators'
+import { getContext } from 'ambassador-sdk'
 import { debugLog } from '../config'
 import * as uuid from 'uuid'
 
@@ -68,8 +69,27 @@ export class Globe {
     }
 
     async init(): Promise<void> {
-        const p = await Storage.get(passwordKey)
-        this.password$.next(p.value)
+        // If we've logged in and never logged out...
+        const storedPassword = await Storage.get(passwordKey)
+        if(storedPassword){
+            this.password$.next(storedPassword.value)
+            return
+        }
+
+        // If we've logged in via cups-shell...
+        // Get the password from shell, save it to storage
+        const shellPassword = await getContext().getConfigValue(['password'], 5000)
+        if(shellPassword){
+            await Storage.set({
+                key: 'password',
+                value: shellPassword
+            })
+            this.password$.next(shellPassword)
+            return
+        }
+
+        // Otherwise we're not logged in, this will trigger arrival on the signin page
+        this.password$.next(undefined)
     }
 
     async setPassword(p: string): Promise<void> {
