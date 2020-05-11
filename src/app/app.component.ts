@@ -9,6 +9,7 @@ import { CupsMessenger } from './services/cups/cups-messenger'
 import { switchMap } from 'rxjs/operators'
 import { main } from './services/rx/paths'
 import { debugLog } from './config'
+import { getContext } from 'ambassador-sdk'
 
 @Component({
   selector: 'app-root',
@@ -59,7 +60,11 @@ export class AppComponent {
 
     logout(){
         this.globe.clearPassword()
-        this.menu.close('main-menu')
+        if(/* TODO: we're in the webview */ true){
+            getContext().close()
+        } else {
+            this.menu.close('main-menu')
+        }
     }
 
     async submitNewContact() {

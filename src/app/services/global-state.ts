@@ -78,14 +78,16 @@ export class Globe {
 
         // If we've logged in via cups-shell...
         // Get the password from shell, save it to storage
-        const shellPassword = await getContext().getConfigValue(['password'], 5000)
-        if(shellPassword){
-            await Storage.set({
-                key: 'password',
-                value: shellPassword
-            })
-            this.password$.next(shellPassword)
-            return
+        if(/* TODO:  we're in the webview... window.parent? window.platform? */ true) {
+            const shellPassword = await getContext().getConfigValue(['password'], 5000)
+            if(shellPassword){
+                await Storage.set({
+                    key: 'password',
+                    value: shellPassword
+                })
+                this.password$.next(shellPassword)
+                return
+            }
         }
 
         // Otherwise we're not logged in, this will trigger arrival on the signin page
@@ -103,6 +105,7 @@ export class Globe {
 
     async clearPassword(): Promise<void> {
         await Storage.remove(passwordKey)
+        // getContext clear password somehow?
         this.password$.next(undefined)
     }
 
