@@ -7,10 +7,10 @@ export function state<S,T>(forked: (s: S) => Observable<T> ): OperatorFunction<S
     )
 }
 
-export function cooldown<S,T>(manualTrigger$: Observable<S>, f : OperatorFunction<S,T>, cd: number): Observable<T>{
+export function cooldown<T>(f : OperatorFunction<{},T>, cd: number): Observable<T>{
     const trigger$ = new BehaviorSubject({})
     return merge(
-        combineLatest([manualTrigger$, trigger$]).pipe(delay(cd), map(([s, _]) => s), f, tap(_ => trigger$.next({}))),
-        manualTrigger$.pipe(f)
+        trigger$.pipe(delay(cd), f, tap(_ => trigger$.next({}))),
     )
 }
+
