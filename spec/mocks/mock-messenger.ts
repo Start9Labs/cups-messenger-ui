@@ -1,7 +1,7 @@
-import { ContactWithMessageCount, Contact, pauseFor, ServerMessage } from 'src/app/services/cups/types'
+import { ContactWithMessageCount, Contact, pauseFor, ServerMessage, ObservableOnce } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
-import { interval } from 'rxjs'
-import { tap } from 'rxjs/operators'
+import { interval, of, timer } from 'rxjs'
+import { tap, delay, map } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 
 export class MockCupsMessenger {
@@ -21,49 +21,52 @@ export class MockCupsMessenger {
         })).subscribe()
     }
 
-    async contactsShow (): Promise<ContactWithMessageCount[]> {
-        return this.contacts
+    contactsShow (): ObservableOnce<ContactWithMessageCount[]> {
+        return of(this.contacts)
     }
 
-    async contactsAdd (contact: Contact): Promise<void> {
-        await pauseFor(2000)
-        const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
-        this.mocks[contact.torAddress] = []
-        this.contacts = []
-        this.contacts.push(...nonMatchingTors)
-        this.contacts.push(Object.assign({ unreadMessages: 0 }, contact))
+    contactsAdd (contact: Contact): ObservableOnce<void> {
+        return timer(2000).pipe(map(() => {
+            const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
+            this.mocks[contact.torAddress] = []
+            this.contacts = []
+            this.contacts.push(...nonMatchingTors)
+            this.contacts.push(Object.assign({ unreadMessages: 0 }, contact))
+        }))
     }
 
-    async messagesShow (contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+    messagesShow (contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
-
         const messages = this.getMessageMocks(contact)
         if(offset){
             const i = messages.findIndex(m => m.id && m.id === offset.id)
             switch(offset.direction){
-                case 'after' : return messages.slice(i + 1, i + 1 + limit)
-                case 'before' : return messages.slice(i - limit, i)
+                case 'after'  : return of(messages.slice(i + 1, i + 1 + limit))
+                case 'before' : return of(messages.slice(i - limit, i))
             }
         } else {
-            return messages.slice(messages.length - limit + 1, messages.length)
+            return of(messages.slice(messages.length - limit + 1, messages.length))
         }
     }
 
-    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
-        return []
+    newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {
+        return of([])
     }
 
-    async messagesSend (contact: Contact, trackingId, message: string): Promise<void> {
-        await pauseFor(2000)
-        this.getMessageMocks(contact).push({
-            timestamp: new Date(),
-            sentToServer: new Date(),
-            direction: 'Outbound',
-            otherParty: contact,
-            text: message,
-            id: uuid.v4(),
-            trackingId
-        })
+    messagesSend (contact: Contact, trackingId, message: string): ObservableOnce<void> {
+        return timer(2000).pipe(map(
+            () => {
+                this.getMessageMocks(contact).push({
+                    timestamp: new Date(),
+                    sentToServer: new Date(),
+                    direction: 'Outbound',
+                    otherParty: contact,
+                    text: message,
+                    id: uuid.v4(),
+                    trackingId
+                })
+            }
+        ))
     }
     private getMessageMocks (c: Contact): ServerMessage[] {
         return JSON.parse(

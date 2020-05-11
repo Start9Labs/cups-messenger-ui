@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs'
+
 export function pauseFor(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -34,6 +36,14 @@ export interface FailedMessage extends MessageBase {
     direction: 'Outbound'
 }
 
+export function outbound(t: MessageBase): boolean {
+    return t.direction === 'Outbound'
+}
+
+export function inbound(t: MessageBase): boolean {
+    return t.direction === 'Inbound'
+}
+
 export function isServer(t: MessageBase) : t is ServerMessage {
     return !! (t.id && t.timestamp)
 }
@@ -50,3 +60,5 @@ export function serverErrorAttendingPrioritization(m1 : MessageBase, m2: Message
     if(isServer(m1)) return true
     return m1.sentToServer > m2.sentToServer
 }
+
+export type ObservableOnce<T> = Observable<T>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core'
 import { config } from '../../config'
 import { HttpClient } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage } from './types'
+import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
 import { globe } from '../global-state'
 import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
@@ -13,23 +13,23 @@ export class CupsMessenger {
         this.impl = config.cupsMessenger.mock ? new MockCupsMessenger() : new LiveCupsMessenger(http)
     }
 
-    contactsShow(loginTestPassword?: string): Promise<ContactWithMessageCount[]> {
+    contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
         return this.impl.contactsShow(loginTestPassword || globe.password)
     }
 
-    contactsAdd(contact: Contact): Promise<void> {
+    contactsAdd(contact: Contact): ObservableOnce<void> {
         return this.impl.contactsAdd(contact)
     }
 
-    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+    messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         return this.impl.messagesShow(contact, options)
     }
 
-    async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
+    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<void> {
         return this.impl.messagesSend(contact, trackingId, message)
     }
 
-    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
+    newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {
         return this.impl.newMessagesShow(contact)
     }
 }

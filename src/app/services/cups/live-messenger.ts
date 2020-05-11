@@ -1,15 +1,17 @@
 import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage } from './types'
+import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
 import { globe } from '../global-state'
-import { Observable, merge, from, interval, race } from 'rxjs'
-import { map, take } from 'rxjs/operators'
+import { Observable, merge, from, interval, race, of } from 'rxjs'
+import { map, take, catchError } from 'rxjs/operators'
+import { CupsMessenger } from './cups-messenger'
 
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
 
     constructor(private readonly http: HttpClient) {
+        // tslint:disable-next-line: no-string-literal
         window['httpClient'] = http
     }
 
@@ -24,7 +26,7 @@ export class LiveCupsMessenger {
         return config.cupsMessenger.url
     }
 
-    async contactsShow(loginTestPassword: string): Promise<ContactWithMessageCount[]> {
+    contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageCount[]> {
         try {
             return withTimeout(this.http.get(this.hostUrl, {
                 params: {
@@ -32,7 +34,12 @@ export class LiveCupsMessenger {
                 },
                 headers: this.authHeaders(loginTestPassword),
                 responseType: 'arraybuffer'
-            })).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
+            })).pipe(
+                    map(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer)),
+                    catchError( e => { 
+                        console.error('Contacts show', e); throw e 
+                    })
+                )
         }
         catch (e) {
             console.error('Contacts show', e)
@@ -40,105 +47,105 @@ export class LiveCupsMessenger {
         }
     }
 
-    async contactsAdd(contact: Contact): Promise<void> {
+    contactsAdd(contact: Contact): ObservableOnce<void> {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
-        let headers = this.authHeaders()
-        // headers = headers.set('Content-Type', 'application/octet-stream')
-        // headers = headers.set('Content-Length', toPost.byteLength.toString())
-        // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
-        return new Promise((res, rej) => {
+        const headers = this.authHeaders()
+
+        return new Observable(subscriber => {
             const xhr = new XMLHttpRequest()
-            xhr.ontimeout = function () {
-                rej(new Error("TIMEOUT"));
-            };
-            xhr.onload = function () {
+            xhr.ontimeout = () => subscriber.error(new Error('TIMEOUT'))
+            xhr.onload = () => {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        res();
+                        subscriber.next()
                     } else {
-                        rej(new Error(xhr.statusText));
+                        subscriber.error(new Error(xhr.statusText))
                     }
                 }
-            };
+            }
+
             xhr.timeout = config.defaultServerTimeout
-            xhr.open('POST', this.hostUrl, true)
-            xhr.setRequestHeader("Authorization", headers.get("Authorization"))
-            xhr.send(toPost)
+            try{
+                xhr.open('POST', this.hostUrl, true)
+                xhr.setRequestHeader('Authorization', headers.get('Authorization'))
+                xhr.send(toPost)
+            } catch (e) {
+                subscriber.error(e)
+            }
         })
     }
 
-    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+    messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
         const params = Object.assign({
             type: 'messages',
             pubkey: onionToPubkeyString(contact.torAddress),
             limit: String(limit),
         }, offset ? { [offset.direction]: offset.id } : {})
-        try {
-            const arrayBuffer = await withTimeout(this.http.get(this.hostUrl, {
-                params,
-                headers: this.authHeaders(),
-                responseType: 'arraybuffer'
-            })).toPromise()
-            return this.parser.deserializeMessagesShow(arrayBuffer).map(m => ({ ...m, otherParty: contact }))
-        }
-        catch (e) {
-            console.error('Messages show', e)
-            console.error('Messages show', JSON.stringify(e))
-            throw e
-        }
+
+        return withTimeout(this.http.get(this.hostUrl, {
+            params,
+            headers: this.authHeaders(),
+            responseType: 'arraybuffer'
+        })).pipe(
+                map( arrayBuffer =>  this.parser.deserializeMessagesShow(arrayBuffer)
+                                                .map(m => ({ ...m, otherParty: contact }))
+                ),
+                catchError(e => {
+                    console.error('New messages show', JSON.stringify(e)); throw e
+                })
+            )
     }
 
-    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
+    newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {
         const params = {
             type: 'new',
             pubkey: onionToPubkeyString(contact.torAddress),
         }
-        try {
-            const arrayBuffer = await withTimeout(this.http.get(this.hostUrl, {
-                params,
-                headers: this.authHeaders(),
-                responseType: 'arraybuffer'
-            })).toPromise()
-            return this.parser.deserializeMessagesShow(arrayBuffer).map(m => ({ ...m, otherParty: contact }))
-        }
-        catch (e) {
-            console.error('New messages show', e)
-            console.error('New messages show', JSON.stringify(e))
-            throw e
-        }
+
+        return withTimeout(this.http.get(this.hostUrl, {
+            params,
+            headers: this.authHeaders(),
+            responseType: 'arraybuffer'
+        })).pipe(
+                map( arrayBuffer => this.parser.deserializeMessagesShow(arrayBuffer)
+                                               .map(m => ({ ...m, otherParty: contact }))
+                ),
+                catchError(e => { 
+                    console.error('New messages show', JSON.stringify(e)); throw e
+                })
+            )
     }
 
-    async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
+    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<void> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
-        try {
-            let headers = this.authHeaders()
-            // headers = headers.set('Content-Type', 'application/octet-stream')
-            // headers = headers.set('Content-Length', toPost.byteLength.toString())
-            // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
-            return new Promise((res, rej) => {
-                const xhr = new XMLHttpRequest()
-                xhr.ontimeout = function () {
-                    rej(new Error("TIMEOUT"));
-                };
-                xhr.onload = function () {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            res();
-                        } else {
-                            rej(new Error(xhr.statusText));
-                        }
+        const headers = this.authHeaders()
+        // headers = headers.set('Content-Type', 'application/octet-stream')
+        // headers = headers.set('Content-Length', toPost.byteLength.toString())
+        // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
+
+        return new Observable(subscriber => {
+            const xhr = new XMLHttpRequest()
+            xhr.ontimeout = () => subscriber.error(new Error('TIMEOUT'))
+            xhr.onload = () => {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        subscriber.next()
+                    } else {
+                        subscriber.error(new Error(xhr.statusText))
                     }
-                };
-                xhr.timeout = config.defaultServerTimeout
+                }
+            }
+
+            xhr.timeout = config.defaultServerTimeout
+            try{
                 xhr.open('POST', this.hostUrl, true)
-                xhr.setRequestHeader("Authorization", headers.get("Authorization"))
+                xhr.setRequestHeader('Authorization', headers.get('Authorization'))
                 xhr.send(toPost)
-            })
-        } catch (e) {
-            console.error('messages send', e)
-            throw e
-        }
+            } catch (e) {
+                subscriber.error(e)
+            }
+        })
     }
 }
 

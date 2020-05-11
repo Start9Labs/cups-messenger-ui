@@ -17,7 +17,6 @@ const passwordKey = { key: 'password' }
 
 export class Globe {
     $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
-    contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
     password$: Subject<string | undefined> = new Subject()
     password: string | undefined = undefined
@@ -112,4 +111,3 @@ function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T
 }
 
 
-const nillTrackingId = '00000000-0000-0000-0000-000000000000'
