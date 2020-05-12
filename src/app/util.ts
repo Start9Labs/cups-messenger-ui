@@ -7,7 +7,7 @@ export const sortByTimestamp =
         return bT.getTime() - aT.getTime()
     }
 
-export function uniqueBy<T>(ts : T[], projection: (t: T) => string, prioritized: (t1: T, t2: T) => boolean = (t1, t2) => true): T[] {
+export function uniqueBy<T>(projection: (t: T) => string, ts : T[], prioritized: (t1: T, t2: T) => boolean = (t1, t2) => true): T[] {
     const tracking = { } as { [projected: string] : T }
     ts.forEach( t => {
         if( (tracking[projection(t)] && prioritized(t, tracking[projection(t)])) || !tracking[projection(t)]) {

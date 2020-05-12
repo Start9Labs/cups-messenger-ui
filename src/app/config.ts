@@ -8,7 +8,7 @@ export interface Config {
     contactsDaemon: {
         frequency: number
     }
-    contactMessagesDaemon: {
+    messagesDaemon: {
         frequency: number
     }
     loadMesageBatchSize: number
@@ -25,7 +25,7 @@ export const config: Config = {
     contactsDaemon: {
         frequency: 10000
     },
-    contactMessagesDaemon: {
+    messagesDaemon: {
         frequency: 2500
     },
     loadMesageBatchSize: 15,

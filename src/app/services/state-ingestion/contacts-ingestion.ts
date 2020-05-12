@@ -1,15 +1,16 @@
-import { Subject, of, Observable, OperatorFunction, from } from 'rxjs'
+import { Subject, of, Observable } from 'rxjs'
 import { CupsMessenger } from '../cups/cups-messenger'
 import { ContactWithMessageCount } from '../cups/types'
-import { catchError, filter, map, tap, switchMap } from 'rxjs/operators'
-import { cooldown } from './util'
+import { catchError, filter, map, mergeMap } from 'rxjs/operators'
+import { Path } from './util'
 
-export const prodContacts$ = new Subject()
-export interface ContactsDaemonConfig { frequency: number, cups: CupsMessenger }
+function path(cups: CupsMessenger): Path<{}, ContactWithMessageCount[]>{
+    const $trigger$ = new Subject()
+    const next = () => $trigger$.next()
+    const observable = $trigger$.asObservable().pipe(mergeMap(() => contactsProvider(cups)))
+    return Object.assign(observable, { next })
+}
 
-
-export const contactsDaemon: (conf: ContactsDaemonConfig) => Observable<ContactWithMessageCount[]> =
-    ({ frequency, cups }) => cooldown(frequency, contactsProvider(cups))
 
 function contactsProvider(cups: CupsMessenger): Observable<ContactWithMessageCount[]> {
     return cups.contactsShow().pipe(
@@ -21,3 +22,5 @@ function contactsProvider(cups: CupsMessenger): Observable<ContactWithMessageCou
         map(contacts => contacts.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
     )
 }
+
+export const RefreshContacts = { path }

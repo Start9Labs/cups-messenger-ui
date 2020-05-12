@@ -1,19 +1,26 @@
-import { Observable, OperatorFunction, BehaviorSubject, merge, combineLatest, Subject, defer, of, interval, timer } from 'rxjs'
-import { switchMap, map, delay, tap, mergeMap, concatMap } from 'rxjs/operators'
+import { NextObserver, Observable, concat, Subject, combineLatest, of, interval } from 'rxjs'
+import { delay, concatMap, first, tap } from 'rxjs/operators'
 
-export function state<S,T>(forked: (s: S) => Observable<T> ): OperatorFunction<S,[S,T]> {
-    return os => os.pipe(
-        switchMap(s => forked(s).pipe(map(t => ([s,t] as [S, T]))) )
+export interface Path<S,T> extends Observable<T>, NextObserver<S> {}
+
+function fixInputToPath<S,T>(s: S, p: Path<S,T>): Path<{},T> {
+    return Object.assign(p, { next: () => p.next(s) })
+}
+
+export function cooldownObservable<T>(cd: number, p: Observable<T>): Observable<T> {
+    const $retrigger$ = new Subject()
+    const repeatOnCooldown = $retrigger$.pipe(delay(cd), concatMap(() => p), tap(_ => $retrigger$.next()))
+    const runImmediately = p.pipe(first())
+    return concat(
+        runImmediately,
+        repeatOnCooldown
     )
 }
 
-export function cooldown<T>(cd: number, overrideTrigger$: Observable<{}>, o : Observable<T>): Observable<T>{
-    const trigger$ = new Subject()
-    return merge(
-        trigger$.pipe(delay(cd), mergeMap(() => o), tap(_ => trigger$.next({}))),
-    )
+export function cooldownPath<S,T>(cd: number, p: Path<S,T>, s: S): Observable<T> {
+    return cooldownObservable(cd, fixInputToPath(s, p))
 }
 
-export function cooldown2<T>(cd: number, o: Observable<T>): Observable<{}> {
-    return interval(0).pipe(concatMap(() => timer(cd).pipe(() => o)))
-}
+export const exists = c =>!!c
+
+cooldownObservable(1000, interval(0)).subscribe(console.log)
