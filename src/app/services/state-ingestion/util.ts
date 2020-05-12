@@ -1,5 +1,5 @@
-import { Observable, OperatorFunction, BehaviorSubject, merge, combineLatest } from 'rxjs'
-import { switchMap, map, delay, tap } from 'rxjs/operators'
+import { Observable, OperatorFunction, BehaviorSubject, merge, combineLatest, Subject, defer, of, interval, timer } from 'rxjs'
+import { switchMap, map, delay, tap, mergeMap, concatMap } from 'rxjs/operators'
 
 export function state<S,T>(forked: (s: S) => Observable<T> ): OperatorFunction<S,[S,T]> {
     return os => os.pipe(
@@ -7,10 +7,13 @@ export function state<S,T>(forked: (s: S) => Observable<T> ): OperatorFunction<S
     )
 }
 
-export function cooldown<T>(f : OperatorFunction<{},T>, cd: number): Observable<T>{
-    const trigger$ = new BehaviorSubject({})
+export function cooldown<T>(cd: number, overrideTrigger$: Observable<{}>, o : Observable<T>): Observable<T>{
+    const trigger$ = new Subject()
     return merge(
-        trigger$.pipe(delay(cd), f, tap(_ => trigger$.next({}))),
+        trigger$.pipe(delay(cd), mergeMap(() => o), tap(_ => trigger$.next({}))),
     )
 }
 
+export function cooldown2<T>(cd: number, o: Observable<T>): Observable<{}> {
+    return interval(0).pipe(concatMap(() => timer(cd).pipe(() => o)))
+}
