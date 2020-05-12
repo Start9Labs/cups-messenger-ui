@@ -3,11 +3,11 @@ import { delay, concatMap, first, tap } from 'rxjs/operators'
 
 export interface Path<S,T> extends Observable<T>, NextObserver<S> {}
 
-function fixInputToPath<S,T>(s: S, p: Path<S,T>): Path<{},T> {
+export function at<S,T>(s: S, p: Path<S,T>): Path<{},T> {
     return Object.assign(p, { next: () => p.next(s) })
 }
 
-export function cooldownObservable<T>(cd: number, p: Observable<T>): Observable<T> {
+export function cooldown<T>(cd: number, p: Observable<T>): Observable<T> {
     const $retrigger$ = new Subject()
     const repeatOnCooldown = $retrigger$.pipe(delay(cd), concatMap(() => p), tap(_ => $retrigger$.next()))
     const runImmediately = p.pipe(first())
@@ -17,10 +17,6 @@ export function cooldownObservable<T>(cd: number, p: Observable<T>): Observable<
     )
 }
 
-export function cooldownPath<S,T>(cd: number, p: Path<S,T>, s: S): Observable<T> {
-    return cooldownObservable(cd, fixInputToPath(s, p))
-}
-
 export const exists = c =>!!c
 
-cooldownObservable(1000, interval(0)).subscribe(console.log)
+cooldown(1000, interval(0)).subscribe(console.log)
