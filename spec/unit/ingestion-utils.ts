@@ -9,10 +9,11 @@ import { assertNotNull } from '@angular/compiler/src/output/output_ast';
 describe('Hello function', () => {
   it('should return hello world', () => {  
     let counter = 0
-    const promise = cooldown(100, interval(0)).pipe(map(i => {
+    let shouldContinue = true
+    const pipe = cooldown(100, interval(0)).pipe(map(i => {
         counter++
         console.log(i)
-    })).toPromise()
+    }), takeWhile(shouldContinue)).toPromise()
     
   })
 })
