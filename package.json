@@ -29,7 +29,7 @@
     "tslib": "^1.11.0",
     "uuid": "^7.0.0",
     "zone.js": "^0.10.0",
-    "ambassador-sdk": "0.0.2"
+    "ambassador-sdk": "file:../ambassador-sdk"
   },
   "devDependencies": {
     "@angular-devkit/architect": "^0.900.0",
