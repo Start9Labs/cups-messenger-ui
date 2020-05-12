@@ -60,7 +60,7 @@ export class AppComponent {
 
     logout(){
         this.globe.clearPassword()
-        if(/* TODO: we're in the webview */ true){
+        if((window as any).platform){
             getContext().close()
         } else {
             this.menu.close('main-menu')

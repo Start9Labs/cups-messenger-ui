@@ -47,6 +47,7 @@ export const contactsProvider: (cups: CupsMessenger) => OperatorFunction<{}, Con
     cups => {
         return o => o.pipe(
             tap(() => console.log('contact daemon running')),
+            tap(() => globe.flushLogs()),
             switchMap(() => from(cups.contactsShow()).pipe(
                 catchError(e => {
                     console.error(`Error in contacts daemon ${e.message}`)

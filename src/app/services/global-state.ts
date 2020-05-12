@@ -17,6 +17,8 @@ const { Storage } = Plugins
 const passwordKey = { key: 'password' }
 
 export class Globe {
+    // TODO: delete this. Log in this way because we miss the init logs in safari debug cause I can't open it in time.
+    tempLog: [Date, string,string][] = []
     $contacts$: BehaviorSubject<ContactWithMessageCount[]> = new BehaviorSubject([])
     contactsPid$: BehaviorSubject<string> = new BehaviorSubject('')
     currentContact$: BehaviorSubject<Contact | undefined> = new BehaviorSubject(undefined)
@@ -27,6 +29,9 @@ export class Globe {
     } = {}
 
     constructor() {
+        // TODO: delete this
+        // tslint:disable-next-line: no-string-literal
+        window['getContext'] = getContext
         this.password$.subscribe(p => { this.password = p })
     }
 
@@ -69,24 +74,35 @@ export class Globe {
     }
 
     async init(): Promise<void> {
+        this.toTempLog(`initting global-state`)
         // If we've logged in and never logged out...
         const storedPassword = await Storage.get(passwordKey)
-        if(storedPassword){
+        this.toTempLog(`Stored password`, storedPassword)
+        if(storedPassword && storedPassword.value){
             this.password$.next(storedPassword.value)
             return
         }
 
         // If we've logged in via cups-shell...
         // Get the password from shell, save it to storage
-        if(/* TODO:  we're in the webview... window.parent? window.platform? */ true) {
-            const shellPassword = await getContext().getConfigValue(['password'], 5000)
-            if(shellPassword){
-                await Storage.set({
-                    key: 'password',
-                    value: shellPassword
-                })
-                this.password$.next(shellPassword)
-                return
+        this.toTempLog(`window.platform`, (window as any).platform)
+        if((window as any).platform) {
+            this.toTempLog(`about to check config...`)
+            try {
+                const c = getContext()
+                this.toTempLog(`context`, c)
+                const shellPassword = await c.getConfigValue(['password'], 5000)
+                this.toTempLog(`Shell password`, shellPassword)
+                if(shellPassword){
+                    await Storage.set({
+                        key: 'password',
+                        value: shellPassword
+                    })
+                    this.password$.next(shellPassword)
+                    return
+                }
+            } catch(e) {
+                this.toTempLog('failed getting shell password', e)
             }
         }
 
@@ -112,6 +128,20 @@ export class Globe {
     private contactMessagesSubjects(tor: string): BehaviorSubject<MessageBase[]> {
         if(!this.contactMessages[tor]) { this.contactMessages[tor] = new BehaviorSubject([]) }
         return this.contactMessages[tor]
+    }
+
+    // TODO: delete all of these
+    private toTempLog(s: string, thing?: any){
+        try {
+            this.tempLog.push([new Date(), s, JSON.stringify(thing)])
+        } catch (e) {
+            this.tempLog.push([new Date(), s, thing])
+        }
+    }
+
+    // TODO: delete
+    public flushLogs(){
+        console.log(this.tempLog)
     }
 }
 
