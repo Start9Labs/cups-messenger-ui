@@ -5,8 +5,7 @@
     "types": []
   },
   "include": [
-    "src/**/*.ts",
-    "node_modules/ambassador-sdk/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "src/test.ts",
