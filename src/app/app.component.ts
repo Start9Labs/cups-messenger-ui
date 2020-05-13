@@ -6,10 +6,9 @@ import { Observable, BehaviorSubject, of, from } from 'rxjs'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import { CupsMessenger } from './services/cups/cups-messenger'
 import { tap, concatMap } from 'rxjs/operators'
-import { StateIngestion } from './services/state-ingestion/state-ingestion.service'
-import { debugLog } from './config'
+import { StateIngestionService } from './services/state-ingestion/state-ingestion.service'
 import { Auth } from './services/state/auth-state'
-import { State } from './services/state/contact-messages-state'
+import { App } from './services/state/app-state'
 
 @Component({
   selector: 'app-root',
@@ -19,20 +18,20 @@ import { State } from './services/state/contact-messages-state'
 export class AppComponent {
     public contacts$: Observable<ContactWithMessageCount[]>
     public makeNewContactForm = false
-    public submittingNewContact$ = new BehaviorSubject(false)
+    public $submittingNewContact$ = new BehaviorSubject(false)
     public newContactTorAddress: string
     public newContactName: string
 
     public loading$ = new BehaviorSubject(false)
-    public error$ = new BehaviorSubject(undefined)
-    public globe = {...State, ...Auth}
+    public $error$ = new BehaviorSubject(undefined)
+    public globe = {...App, ...Auth}
 
     constructor(
         private readonly navCtrl: NavController,
         private readonly cups: CupsMessenger,
         private menu: MenuController,
         private zone: NgZone,
-        private readonly stateIngestion: StateIngestion
+        private readonly stateIngestion: StateIngestionService
     ) {
         stateIngestion.init()
     }
@@ -50,13 +49,13 @@ export class AppComponent {
     }
 
     jumpToChat(c: Contact) {
-        State.$ingestCurrentContact.next(c)
+        App.$ingestCurrentContact.next(c)
         this.menu.close('main-menu')
     }
 
     toggleNewContact() {
         this.makeNewContactForm = !this.makeNewContactForm
-        this.error$.next(undefined)
+        this.$error$.next(undefined)
     }
 
     logout(){
@@ -65,24 +64,24 @@ export class AppComponent {
     }
 
     async submitNewContact() {
-        this.error$.next(undefined)
+        this.$error$.next(undefined)
         const removeProtocol = this.newContactTorAddress.trim().split('//')[1] || this.newContactTorAddress
         const sanitizedTorOnion = removeProtocol.split('.onion')[0].concat('.onion')
 
         try {
             onionToPubkeyString(sanitizedTorOnion)
         } catch (e) {
-            this.error$.next(`Invalid V3 Tor Address: ${e.message}`)
+            this.$error$.next(`Invalid V3 Tor Address: ${e.message}`)
             return
         }
 
         const sanitizedName = this.newContactName.trim()
         if (sanitizedName.length > 255) {
-            this.error$.next(`Name must be less than 255 characters.`)
+            this.$error$.next(`Name must be less than 255 characters.`)
             return
         }
 
-        this.submittingNewContact$.next(true)
+        this.$submittingNewContact$.next(true)
 
         const contact = {
             torAddress: sanitizedTorOnion,
@@ -90,23 +89,18 @@ export class AppComponent {
         }
 
         this.cups.contactsAdd(contact).pipe(
-            // TODO: use trigger here
-            concatMap(() => this.cups.contactsShow().pipe(tap(cs => {
-                    debugLog(`successfully added contact. Now showing ${JSON.stringify(cs, null, '\t')}`)
-                    State.$ingestContacts.next(cs)
-                }
-            ))),
+            concatMap(() => this.stateIngestion.refreshContacts()),
         ).subscribe({
             next: () => {
-                State.$ingestCurrentContact.next(contact)
-                this.submittingNewContact$.next(false)
+                App.$ingestCurrentContact.next(contact)
+                this.$submittingNewContact$.next(false)
                 this.newContactTorAddress = undefined
                 this.newContactName = undefined
                 this.makeNewContactForm = false
             },
             error: e => {
-                this.error$.next(e.message)
-                this.submittingNewContact$.next(false)
+                this.$error$.next(e.message)
+                this.$submittingNewContact$.next(false)
             },
         })
     }

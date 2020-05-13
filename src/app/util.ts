@@ -1,4 +1,5 @@
 import { MessageBase, isServer } from './services/cups/types'
+import { config } from './config'
 
 export const sortByTimestamp =
     (a: MessageBase, b: MessageBase) => {

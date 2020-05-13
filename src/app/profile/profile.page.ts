@@ -4,7 +4,7 @@ import { LoadingController, NavController } from '@ionic/angular'
 import { Observable, from } from 'rxjs'
 import { take, switchMap, map } from 'rxjs/operators'
 import { CupsMessenger } from '../services/cups/cups-messenger'
-import { State } from '../services/state/contact-messages-state'
+import { App } from '../services/state/app-state'
 
 @Component({
   selector: 'profile',
@@ -24,7 +24,7 @@ export class ProfilePage {
     ) { }
 
     ngOnInit () {
-        this.contact$ = State.emitCurrentContact$
+        this.contact$ = App.emitCurrentContact$
         this.contact$.pipe(take(1)).subscribe(c => {
             this.contactName = c.name
         })
@@ -44,11 +44,11 @@ export class ProfilePage {
                 if(cs.findIndex(co => co.torAddress === updatedContact.torAddress) <= -1) {
                     cs.push({...updatedContact, unreadMessages: 0} )
                 }
-                State.$ingestContacts.next(cs)
+                App.$ingestContacts.next(cs)
             })))
         ).subscribe({
             next: async () => {
-                State.$ingestCurrentContact.next(updatedContact)
+                App.$ingestCurrentContact.next(updatedContact)
                 await loader.dismiss()
                 this.ngZone.run(() => {
                     this.navCtrl.navigateBack(['contact-chat'])

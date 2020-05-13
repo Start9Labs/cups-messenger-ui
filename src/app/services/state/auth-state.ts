@@ -6,6 +6,10 @@ export class AuthState {
     $password$: Subject<string | undefined> = new Subject()
     password: string | undefined = undefined
 
+    constructor(){
+        this.$password$.subscribe(p => {this.password = p})
+    }
+
     async init(): Promise<void> {
         const p = await Storage.get(passwordKey)
         this.$password$.next(p.value)

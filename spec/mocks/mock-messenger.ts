@@ -13,12 +13,12 @@ export class MockCupsMessenger {
             this.mocks[c.torAddress] = mockL(mockMessage, 30)
         })
 
-        interval(5000).pipe(tap(() => {
-            this.contacts.forEach( c => {
-                const mockMessages = this.mocks[c.torAddress]
-                mockMessages.push(mockMessage(mockMessages.length))
-            })
-        })).subscribe()
+        // interval(5000).pipe(tap(() => {
+        //     this.contacts.forEach( c => {
+        //         const mockMessages = this.mocks[c.torAddress]
+        //         mockMessages.push(mockMessage(mockMessages.length))
+        //     })
+        // })).subscribe()
     }
 
     contactsShow (): ObservableOnce<ContactWithMessageCount[]> {
@@ -26,27 +26,29 @@ export class MockCupsMessenger {
     }
 
     contactsAdd (contact: Contact): ObservableOnce<void> {
-        return timer(2000).pipe(map(() => {
-            const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
-            this.mocks[contact.torAddress] = []
-            this.contacts = []
-            this.contacts.push(...nonMatchingTors)
-            this.contacts.push(Object.assign({ unreadMessages: 0 }, contact))
-        }))
+        return of()
+        // return timer(2000).pipe(map(() => {
+        //     const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
+        //     this.mocks[contact.torAddress] = []
+        //     this.contacts = []
+        //     this.contacts.push(...nonMatchingTors)
+        //     this.contacts.push(Object.assign({ unreadMessages: 0 }, contact))
+        // }))
     }
 
     messagesShow (contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
-        const { limit, offset } = fillDefaultOptions(options)
-        const messages = this.getMessageMocks(contact)
-        if(offset){
-            const i = messages.findIndex(m => m.id && m.id === offset.id)
-            switch(offset.direction){
-                case 'after'  : return of(messages.slice(i + 1, i + 1 + limit))
-                case 'before' : return of(messages.slice(i - limit, i))
-            }
-        } else {
-            return of(messages.slice(messages.length - limit + 1, messages.length))
-        }
+        return of([])
+        // const { limit, offset } = fillDefaultOptions(options)
+        // const messages = this.getMessageMocks(contact)
+        // if(offset){
+        //     const i = messages.findIndex(m => m.id && m.id === offset.id)
+        //     switch(offset.direction){
+        //         case 'after'  : return of(messages.slice(i + 1, i + 1 + limit))
+        //         case 'before' : return of(messages.slice(i - limit, i))
+        //     }
+        // } else {
+        //     return of(messages.slice(messages.length - limit + 1, messages.length))
+        // }
     }
 
     newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {
@@ -54,19 +56,20 @@ export class MockCupsMessenger {
     }
 
     messagesSend (contact: Contact, trackingId, message: string): ObservableOnce<void> {
-        return timer(2000).pipe(map(
-            () => {
-                this.getMessageMocks(contact).push({
-                    timestamp: new Date(),
-                    sentToServer: new Date(),
-                    direction: 'Outbound',
-                    otherParty: contact,
-                    text: message,
-                    id: uuid.v4(),
-                    trackingId
-                })
-            }
-        ))
+        return of()
+        // return timer(2000).pipe(map(
+        //     () => {
+        //         this.getMessageMocks(contact).push({
+        //             timestamp: new Date(),
+        //             sentToServer: new Date(),
+        //             direction: 'Outbound',
+        //             otherParty: contact,
+        //             text: message,
+        //             id: uuid.v4(),
+        //             trackingId
+        //         })
+        //     }
+        // ))
     }
     private getMessageMocks (c: Contact): ServerMessage[] {
         return JSON.parse(

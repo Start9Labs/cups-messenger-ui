@@ -1,4 +1,8 @@
-type LogLevel = 'Info' | 'Debug'
+export enum LogLevel {
+    TRACE = 0,
+    DEBUG = 1,
+    INFO = 2
+}
 
 export interface Config {
     cupsMessenger: {
@@ -19,21 +23,17 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: false,
+        mock: true,
         url: '/api'
     },
     contactsDaemon: {
-        frequency: 10000
+        frequency: 1000
     },
     messagesDaemon: {
         frequency: 2500
     },
     loadMesageBatchSize: 15,
     defaultServerTimeout: 180000,
-    loglevel: 'Info',
+    loglevel: LogLevel.DEBUG,
     myTorAddress: window.origin.split('//')[1] || window.origin
-}
-
-export function debugLog(s: string) {
-    if (config.loglevel === 'Debug') console.log(s)
 }

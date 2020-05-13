@@ -6,9 +6,10 @@ import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
 import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { config } from '../config'
-import { State } from '../services/state/contact-messages-state'
+import { App } from '../services/state/app-state'
 import { Auth } from '../services/state/auth-state'
-import { StateIngestion } from '../services/state-ingestion/state-ingestion.service'
+import { StateIngestionService } from '../services/state-ingestion/state-ingestion.service'
+import { Log } from '../log'
 
 @Component({
   selector: 'app-contact-chat',
@@ -34,7 +35,7 @@ export class ContactChatPage implements OnInit {
     updatingContact$ = new BehaviorSubject(false)
 
     error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
-    globe = {...State, ...Auth}
+    globe = {...App, ...Auth}
 
     shouldJump = false
     jumpSub: Subscription
@@ -48,11 +49,11 @@ export class ContactChatPage implements OnInit {
     constructor(
         private readonly navCtrl: NavController,
         private readonly cups: CupsMessenger,
-        private readonly stateIngestion: StateIngestion
+        private readonly stateIngestion: StateIngestionService
     ){
-        State.emitCurrentContact$.subscribe(c => {
+        App.emitCurrentContact$.subscribe(c => {
             if(!c) return
-            this.contactMessages$ = State.emitMessages$(c.torAddress).pipe(map(ms => {
+            this.contactMessages$ = App.emitMessages$(c.torAddress).pipe(map(ms => {
                 this.shouldJump = this.isAtBottom()
                 if(this.shouldJump) { this.unreads = false }
                 this.oldestMessage = ms[ms.length - 1]
@@ -100,7 +101,7 @@ export class ContactChatPage implements OnInit {
             text: this.messageToSend,
             trackingId: uuid.v4(),
         }
-        console.log(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
+        Log.info(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
         this.send(contact, attendingMessage)
         this.messageToSend = ''
     }
@@ -112,18 +113,18 @@ export class ContactChatPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        of({contact, messages: [message]}).subscribe(State.$ingestMessages)
+        of({contact, messages: [message]}).subscribe(App.$ingestMessages)
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(catchError(e => {
             console.error(`send message failure`, e.message)
-            State.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+            App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
             return of(undefined)
         })).subscribe({
             next: () => {
-                console.log(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)
+                Log.info(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)
                 this.stateIngestion.refreshMessages(contact)
                 of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
-                    State.$ingestMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
+                    App.$ingestMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
                 })
             },
         })
@@ -144,24 +145,24 @@ export class ContactChatPage implements OnInit {
     fetchOlderMessages(event: any, contact: Contact) {
         let message: ServerMessage | undefined
         // event.target.complete()
-        State.emitOldestServerMessage$(contact).pipe(
+        App.emitOldestServerMessage$(contact).pipe(
             filter(_ => !!this.hasAllHistoricalMessages[contact.torAddress]),
             tap(m => message = m),
             take(1),
-            switchMap(m => from(this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} ))),
+            switchMap(m => this.cups.messagesShow(contact, { offset: { direction: 'before', id: m.id }} )),
             map(ms => ({ contact, messages: ms }))
         ).subscribe( {
             next: res => {
                 if(res.messages.length === 0) {
-                    console.log(`fetched all historical messages`)
+                    Log.debug(`fetched all historical messages`)
                     this.hasAllHistoricalMessages[contact.torAddress] = true
                 }
-                State.$ingestMessages.next(res)
+                App.$ingestMessages.next(res)
                 event.target.complete()
             },
             error: (e : Error) => {
                 console.error(e.message)
-                State.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
                 event.target.complete()
             }
         })

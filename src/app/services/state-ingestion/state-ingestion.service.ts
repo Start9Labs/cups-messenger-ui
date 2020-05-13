@@ -1,41 +1,55 @@
 import { config } from 'src/app/config'
 import { CupsMessenger } from '../cups/cups-messenger'
-import { Subscription, Observer, PartialObserver } from 'rxjs'
-import { concatMap } from 'rxjs/operators'
-import { RefreshContacts } from './contacts-ingestion'
-import { RefreshMessages } from './messages-ingestion'
-import { State } from '../state/contact-messages-state'
-import { cooldown, at } from './util'
+import { Subscription, Observable, interval } from 'rxjs'
+import { concatMap, tap } from 'rxjs/operators'
+import { App } from '../state/app-state'
+import { cooldown } from '../rxjs/util'
 import { Injectable } from '@angular/core'
-import { Contact } from '../cups/types'
+import { Contact, ContactWithMessageCount, ServerMessage } from '../cups/types'
+import { Log } from 'src/app/log'
+import { Refresh } from './acquire-state'
 
 @Injectable({providedIn: 'root'})
-export class StateIngestion {
+export class StateIngestionService {
     private contactsCooldown: Subscription
     private messagesCooldown: Subscription
-    private contactsByHand: Subscription
-    private messagesByHand: Subscription
-    private $contactsByHandTrigger: PartialObserver<{}> =
-        {next: _ => console.warn('$contactsByHandTrigger not yet initialized')}
-    private $messagesByHandTrigger: PartialObserver<Contact> =
-        {next: _ => console.warn('$messagesByHandTrigger not yet initialized')}
+    constructor(private readonly cups: CupsMessenger){}
 
-    refreshContacts(){
-        this.$contactsByHandTrigger.next({})
+    // can sub to this to get new contacts, update state, and react to completion at callsite.
+    refreshContacts(): Observable<ContactWithMessageCount[]>{
+        return new Observable(
+            subscriber => {
+                Refresh.contacts(this.cups).subscribe(
+                    {
+                        next: cs => {
+                            App.$ingestContacts.next(cs)
+                            subscriber.next(cs)
+                        }
+                    }
+                )
+            }
+        )
     }
-
-    refreshMessages(contact: Contact){
-        this.$messagesByHandTrigger.next(contact)
-    }
-
-    constructor(private readonly cups: CupsMessenger){
+ 
+    // can sub to this to get new messages, update state, and react to completion at callsite.
+    refreshMessages(contact: Contact): Observable<{ contact: Contact, messages: ServerMessage[] }>{
+        return new Observable(
+            subscriber => {
+                Refresh.messages(this.cups, contact).subscribe(
+                    {
+                        next: ms => {
+                            App.$ingestMessages.next(ms)
+                            subscriber.next(ms)
+                        }
+                    }
+                )
+            }
+        )
     }
 
     // idempotent
     // can be used to restart any dead subs.
     init(){
-        this.startContactsByHandSub()
-        this.startMessagesByHandSub()
         this.startContactsCooldownSub()
         this.startMessagesCooldownSub()
     }
@@ -43,40 +57,24 @@ export class StateIngestion {
     shutdown(){
         if(this.contactsCooldown) this.contactsCooldown.unsubscribe()
         if(this.messagesCooldown) this.messagesCooldown.unsubscribe()
-        if(this.contactsByHand  ) this.contactsByHand.unsubscribe()
-        if(this.messagesByHand  ) this.messagesByHand.unsubscribe()
-    }
-
-    private startContactsByHandSub(){
-        if(subIsActive(this.contactsByHand)) return
-
-        const $refreshContactsPath$ = RefreshContacts.path(this.cups)
-        this.contactsByHand = $refreshContactsPath$.subscribe(State.$ingestContacts)
-        this.$contactsByHandTrigger = $refreshContactsPath$
-    }
-
-    private startMessagesByHandSub(){
-        if(subIsActive(this.messagesByHand)) return
-
-        const $refreshMessagesPath$ =  RefreshMessages.path(this.cups)
-        this.messagesByHand = $refreshMessagesPath$.subscribe(State.$ingestMessages)
-        this.$messagesByHandTrigger = $refreshMessagesPath$
     }
 
     private startContactsCooldownSub(){
         if(subIsActive(this.contactsCooldown)) return
-
-        this.contactsCooldown = cooldown(config.contactsDaemon.frequency, RefreshContacts.path(this.cups)).subscribe(State.$ingestContacts)
+        cooldown(config.contactsDaemon.frequency, Refresh.contacts(this.cups))
+        .pipe(tap(cs => Log.debug('contacts daemon running', cs)))
+        .subscribe(App.$ingestContacts)
     }
 
     private startMessagesCooldownSub(){
         if(subIsActive(this.messagesCooldown)) return
 
-        this.messagesCooldown = State.emitCurrentContact$.pipe(
+        this.messagesCooldown = App.emitCurrentContact$.pipe(
             concatMap(contact =>
-                cooldown(config.contactsDaemon.frequency, at(contact, RefreshMessages.path(this.cups)))
-            )
-        ).subscribe(State.$ingestMessages)
+                cooldown(config.messagesDaemon.frequency, Refresh.messages(this.cups, contact))
+            ),
+            tap(ms => Log.debug('messages daemon running', ms))
+        ).subscribe(App.$ingestMessages)
     }
 }
 
