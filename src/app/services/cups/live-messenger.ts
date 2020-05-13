@@ -2,10 +2,9 @@ import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
 import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
-import { globe } from '../global-state'
-import { Observable, merge, from, interval, race, of } from 'rxjs'
+import { Observable, from, interval, race } from 'rxjs'
 import { map, take, catchError } from 'rxjs/operators'
-import { CupsMessenger } from './cups-messenger'
+import { Auth } from '../state/auth-state'
 
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
@@ -15,7 +14,7 @@ export class LiveCupsMessenger {
         window['httpClient'] = http
     }
 
-    private authHeaders(password: string = globe.password): HttpHeaders {
+    private authHeaders(password: string = Auth.password): HttpHeaders {
         if (!password) {
             throw new Error('Unauthenticated request to server attempted.')
         }

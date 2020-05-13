@@ -56,7 +56,7 @@ export function isAttending(t: MessageBase) : t is AttendingMessage {
     return !! (t.direction === 'Outbound' && !isServer(t) && !isFailed(t))
 }
 
-export function serverErrorAttendingPrioritization(m1 : MessageBase, m2: MessageBase): boolean {
+export function serverMessagesOverwriteAttending(m1 : MessageBase, m2: MessageBase): boolean {
     if(isServer(m1)) return true
     return m1.sentToServer > m2.sentToServer
 }

@@ -1,10 +1,10 @@
 import { Component, OnInit, NgZone } from '@angular/core'
 
 import { NavController, LoadingController } from '@ionic/angular'
-import { globe } from '../services/global-state'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { BehaviorSubject } from 'rxjs'
 import { pauseFor } from '../services/cups/types'
+import { Auth } from '../services/state/auth-state'
 
 @Component({
   selector: 'app-signin',
@@ -23,7 +23,7 @@ export class SigninPage implements OnInit {
   ) { }
 
   ngOnInit() {
-      globe.init().then(() => this.signin())
+      Auth.init().then(() => this.signin())
   }
 
   async enterCupsMessengerPassword() {
@@ -38,7 +38,7 @@ export class SigninPage implements OnInit {
     try {
       await this.cups.contactsShow(pass)
       await pauseFor(2000)
-      await globe.setPassword(pass)
+      await Auth.setPassword(pass)
       this.signin()
     } catch (e) {
       this.error$.next(`Invalid Password`)
@@ -48,7 +48,7 @@ export class SigninPage implements OnInit {
   }
 
   private signin() {
-    if (globe.password) {
+    if (Auth.password) {
         this.ngZone.run(() => this.navCtrl.navigateRoot('contact-chat'))
     }
   }

@@ -1,14 +1,15 @@
 import { Component, NgZone } from '@angular/core'
 
-import { globe } from './services/global-state'
 import { NavController, MenuController } from '@ionic/angular'
 import { ContactWithMessageCount, Contact } from './services/cups/types'
 import { Observable, BehaviorSubject, of, from } from 'rxjs'
 import { onionToPubkeyString } from './services/cups/cups-res-parser'
 import { CupsMessenger } from './services/cups/cups-messenger'
-import { switchMap } from 'rxjs/operators'
-import { main } from './services/rx/paths'
+import { tap, concatMap } from 'rxjs/operators'
+import { StateIngestion } from './services/state-ingestion/state-ingestion.service'
 import { debugLog } from './config'
+import { Auth } from './services/state/auth-state'
+import { State } from './services/state/contact-messages-state'
 
 @Component({
   selector: 'app-root',
@@ -24,19 +25,20 @@ export class AppComponent {
 
     public loading$ = new BehaviorSubject(false)
     public error$ = new BehaviorSubject(undefined)
-    public globe = globe
+    public globe = {...State, ...Auth}
 
     constructor(
         private readonly navCtrl: NavController,
         private readonly cups: CupsMessenger,
         private menu: MenuController,
-        private zone: NgZone
+        private zone: NgZone,
+        private readonly stateIngestion: StateIngestion
     ) {
-        main(this.cups)
+        stateIngestion.init()
     }
 
     ngOnInit(){
-        globe.password$.subscribe(p => {
+        Auth.emitPassword$().subscribe(p => {
             this.zone.run(() => {
                 if(p){
                     this.navCtrl.navigateRoot('contact-chat')
@@ -48,7 +50,7 @@ export class AppComponent {
     }
 
     jumpToChat(c: Contact) {
-        globe.currentContact$.next(c)
+        State.$ingestCurrentContact.next(c)
         this.menu.close('main-menu')
     }
 
@@ -58,7 +60,7 @@ export class AppComponent {
     }
 
     logout(){
-        this.globe.clearPassword()
+        Auth.clearPassword()
         this.menu.close('main-menu')
     }
 
@@ -87,15 +89,16 @@ export class AppComponent {
             name: sanitizedName
         }
 
-        from(this.cups.contactsAdd(contact)).pipe(
-            switchMap(() => this.cups.contactsShow().then(cs => {
+        this.cups.contactsAdd(contact).pipe(
+            // TODO: use trigger here
+            concatMap(() => this.cups.contactsShow().pipe(tap(cs => {
                     debugLog(`successfully added contact. Now showing ${JSON.stringify(cs, null, '\t')}`)
-                    globe.$contacts$.next(cs)
+                    State.$ingestContacts.next(cs)
                 }
-            )),
+            ))),
         ).subscribe({
             next: () => {
-                globe.currentContact$.next(contact)
+                State.$ingestCurrentContact.next(contact)
                 this.submittingNewContact$.next(false)
                 this.newContactTorAddress = undefined
                 this.newContactName = undefined

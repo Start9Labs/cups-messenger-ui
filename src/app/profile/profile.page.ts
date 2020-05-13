@@ -1,10 +1,10 @@
 import { Component, NgZone } from '@angular/core'
 import { Contact } from '../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
-import { globe } from '../services/global-state'
 import { Observable, from } from 'rxjs'
-import { take, switchMap } from 'rxjs/operators'
+import { take, switchMap, map } from 'rxjs/operators'
 import { CupsMessenger } from '../services/cups/cups-messenger'
+import { State } from '../services/state/contact-messages-state'
 
 @Component({
   selector: 'profile',
@@ -24,7 +24,7 @@ export class ProfilePage {
     ) { }
 
     ngOnInit () {
-        this.contact$ = globe.currentContact$
+        this.contact$ = State.emitCurrentContact$
         this.contact$.pipe(take(1)).subscribe(c => {
             this.contactName = c.name
         })
@@ -40,15 +40,15 @@ export class ProfilePage {
         const updatedContact = { ...c, name: this.contactName }
 
         from(this.cups.contactsAdd(updatedContact)).pipe(
-            switchMap(() => this.cups.contactsShow().then(cs => {
+            switchMap(() => this.cups.contactsShow().pipe(map(cs => {
                 if(cs.findIndex(co => co.torAddress === updatedContact.torAddress) <= -1) {
                     cs.push({...updatedContact, unreadMessages: 0} )
                 }
-                globe.$observeContacts.next(cs)
-            }))
+                State.$ingestContacts.next(cs)
+            })))
         ).subscribe({
             next: async () => {
-                globe.currentContact$.next(updatedContact)
+                State.$ingestCurrentContact.next(updatedContact)
                 await loader.dismiss()
                 this.ngZone.run(() => {
                     this.navCtrl.navigateBack(['contact-chat'])

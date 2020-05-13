@@ -24,6 +24,12 @@ export class AuthState {
         await Storage.remove(passwordKey)
         this.$password$.next(undefined)
     }
+
+    emitPassword$() {
+        return this.$password$.asObservable()
+    }
 }
+
+export const Auth = new AuthState()
 
 const passwordKey = { key: 'password' }

@@ -3,11 +3,12 @@ import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, Server
 import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
-import { globe } from '../services/global-state'
 import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
-import { prodContactMessages$, prodContacts$ } from '../services/rx/paths'
 import { CupsMessenger } from '../services/cups/cups-messenger'
 import { config } from '../config'
+import { State } from '../services/state/contact-messages-state'
+import { Auth } from '../services/state/auth-state'
+import { StateIngestion } from '../services/state-ingestion/state-ingestion.service'
 
 @Component({
   selector: 'app-contact-chat',
@@ -33,7 +34,7 @@ export class ContactChatPage implements OnInit {
     updatingContact$ = new BehaviorSubject(false)
 
     error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
-    globe = globe
+    globe = {...State, ...Auth}
 
     shouldJump = false
     jumpSub: Subscription
@@ -46,11 +47,12 @@ export class ContactChatPage implements OnInit {
 
     constructor(
         private readonly navCtrl: NavController,
-        private readonly cups: CupsMessenger
+        private readonly cups: CupsMessenger,
+        private readonly stateIngestion: StateIngestion
     ){
-        globe.currentContact$.subscribe(c => {
+        State.emitCurrentContact$.subscribe(c => {
             if(!c) return
-            this.contactMessages$ = globe.watchMessages(c).pipe(map(ms => {
+            this.contactMessages$ = State.emitMessages$(c.torAddress).pipe(map(ms => {
                 this.shouldJump = this.isAtBottom()
                 if(this.shouldJump) { this.unreads = false }
                 this.oldestMessage = ms[ms.length - 1]
@@ -72,15 +74,15 @@ export class ContactChatPage implements OnInit {
             })
 
             this.currentContactTorAddress = c.torAddress
-            prodContactMessages$.next({})
+            this.stateIngestion.refreshMessages(c)
         })
     }
 
     ngOnInit() {
-        if (!globe.password) {
+        if (!Auth.password) {
             this.navCtrl.navigateRoot('signin')
         }
-        prodContacts$.next()
+        this.stateIngestion.refreshContacts()
         this.canGetOlderMessages = this.isAtTop()
     }
 
@@ -110,18 +112,18 @@ export class ContactChatPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        of({contact, messages: [message] }).subscribe(globe.$observeMessages)
+        of({contact, messages: [message]}).subscribe(State.$ingestMessages)
 
-        from(this.cups.messagesSend(contact, message.trackingId, message.text)).pipe(catchError(e => {
+        this.cups.messagesSend(contact, message.trackingId, message.text).pipe(catchError(e => {
             console.error(`send message failure`, e.message)
-            globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+            State.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
             return of(undefined)
         })).subscribe({
             next: () => {
                 console.log(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)
-                prodContactMessages$.next({})
+                this.stateIngestion.refreshMessages(contact)
                 of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
-                    globe.$observeMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
+                    State.$ingestMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
                 })
             },
         })
@@ -142,7 +144,7 @@ export class ContactChatPage implements OnInit {
     fetchOlderMessages(event: any, contact: Contact) {
         let message: ServerMessage | undefined
         // event.target.complete()
-        globe.watchOldestServerMessage(contact).pipe(
+        State.emitOldestServerMessage$(contact).pipe(
             filter(_ => !!this.hasAllHistoricalMessages[contact.torAddress]),
             tap(m => message = m),
             take(1),
@@ -154,12 +156,12 @@ export class ContactChatPage implements OnInit {
                     console.log(`fetched all historical messages`)
                     this.hasAllHistoricalMessages[contact.torAddress] = true
                 }
-                globe.$observeMessages.next(res)
+                State.$ingestMessages.next(res)
                 event.target.complete()
             },
             error: (e : Error) => {
                 console.error(e.message)
-                globe.$observeMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                State.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
                 event.target.complete()
             }
         })

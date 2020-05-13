@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core'
 import { config } from '../../config'
 import { HttpClient } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
-import { globe } from '../global-state'
 import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
+import { Auth } from '../state/auth-state'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -14,7 +14,7 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
-        return this.impl.contactsShow(loginTestPassword || globe.password)
+        return this.impl.contactsShow(loginTestPassword || Auth.password)
     }
 
     contactsAdd(contact: Contact): ObservableOnce<void> {

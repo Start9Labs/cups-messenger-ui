@@ -16,3 +16,7 @@ export function uniqueBy<T>(projection: (t: T) => string, ts : T[], prioritized:
     })
     return Object.values(tracking)
 }
+
+export function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
