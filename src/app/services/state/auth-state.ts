@@ -31,7 +31,7 @@ export class AuthState {
         this.$password$.next(undefined)
     }
 
-    emitPassword$() {
+    emitPassword$(){
         return this.$password$.asObservable().pipe(filter(exists))
     }
 }

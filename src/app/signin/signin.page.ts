@@ -23,6 +23,7 @@ export class SigninPage implements OnInit {
   ) { }
 
   ngOnInit() {
+      window['Auth'] = Auth
       Auth.init().then(() => this.signin())
   }
 
@@ -49,7 +50,7 @@ export class SigninPage implements OnInit {
 
   private signin() {
     if (Auth.password) {
-        this.ngZone.run(() => this.navCtrl.navigateRoot('contact-chat'))
+        this.ngZone.run(() => this.navCtrl.navigateRoot('contacts'))
     }
   }
 }

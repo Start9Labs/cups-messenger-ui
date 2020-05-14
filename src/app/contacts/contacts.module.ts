@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms'
 
 import { IonicModule } from '@ionic/angular'
 
-import { ContactChatPageRoutingModule } from './contact-chat-routing.module'
+import { ContactsPageRoutingModule } from './contacts-routing.module'
 
-import { ContactChatPage } from './contact-chat.page'
+import { ContactsPage } from './contacts.page'
+import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe'
 import { IsAttendingPipe } from '../pipes/is-attending.pipe'
 import { IsFailedPipe } from '../pipes/is-failed.pipe'
 import { IsServerPipe } from '../pipes/is-server.pipe'
@@ -17,11 +18,10 @@ import { SharingModule } from '../share-module/sharing.module'
     CommonModule,
     FormsModule,
     IonicModule,
-    ContactChatPageRoutingModule,
+    ContactsPageRoutingModule,
     SharingModule
   ],
-  exports: [IsAttendingPipe, IsFailedPipe, IsServerPipe],
-  declarations: [ContactChatPage, IsAttendingPipe, IsFailedPipe, IsServerPipe],
-  providers: []
+  declarations: [ContactsPage],
+  exports: [],
 })
-export class ContactChatPageModule {}
+export class ContactsPageModule {}

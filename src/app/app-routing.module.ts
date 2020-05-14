@@ -4,7 +4,7 @@ import { PreloadAllModules, RouterModule, Routes } from '@angular/router'
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'signin',
+    redirectTo: 'contacts',
     pathMatch: 'full'
   },
   {
@@ -18,6 +18,10 @@ const routes: Routes = [
   {
     path: 'profile',
     loadChildren: () => import('./profile/profile.module').then( m => m.ProfilePageModule)
+  },
+  {
+    path: 'contacts',
+    loadChildren: () => import('./contacts/contacts.module').then( m => m.ContactsPageModule)
   },
 ]
 
