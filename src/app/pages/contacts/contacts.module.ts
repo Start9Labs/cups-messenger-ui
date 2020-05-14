@@ -7,11 +7,8 @@ import { IonicModule } from '@ionic/angular'
 import { ContactsPageRoutingModule } from './contacts-routing.module'
 
 import { ContactsPage } from './contacts.page'
-import { TruncateEllipsesPipe } from '../../pipes/truncate-ellipses.pipe'
-import { IsAttendingPipe } from '../../pipes/is-attending.pipe'
-import { IsFailedPipe } from '../../pipes/is-failed.pipe'
-import { IsServerPipe } from '../../pipes/is-server.pipe'
 import { SharingModule } from '../../modules/sharing.module'
+import { TextAvatarModule } from 'src/app/text-avatar'
 
 @NgModule({
   imports: [
@@ -19,7 +16,8 @@ import { SharingModule } from '../../modules/sharing.module'
     FormsModule,
     IonicModule,
     ContactsPageRoutingModule,
-    SharingModule
+    SharingModule,
+    TextAvatarModule
   ],
   declarations: [ContactsPage],
   exports: [],

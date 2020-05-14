@@ -15,7 +15,7 @@ import { concatMap } from 'rxjs/operators'
   styleUrls: ['./contacts.page.scss'],
 })
 export class ContactsPage implements OnInit {
-   public contacts$: Observable<ContactWithMessageCount[]>
+    public contacts$: Observable<ContactWithMessageCount[]>
     public makeNewContactForm = false
     public $submittingNewContact$ = new BehaviorSubject(false)
     public newContactTorAddress: string

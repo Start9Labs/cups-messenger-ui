@@ -1,41 +1,18 @@
 <ion-header>
-  <ion-toolbar>
-    <ion-title>Home</ion-title>
-  </ion-toolbar>
+    <ion-toolbar>   
+        <ion-title>Home</ion-title>               
+        <ion-buttons collapse="true" slot="end">
+            <ion-button style="color: #000000" fill="clear" (click)="logout()">
+                Logout
+              </ion-button>
+        </ion-buttons> 
+      </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <!-- button to enable to contact form -->
-  <ion-button style="margin: 12px 0; color: #3542e5; text-align: left" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
-      <ion-icon name="add-circle" slot="start"></ion-icon><span>New contact</span>
-  </ion-button>
-
-  <!-- new contact form -->
-  <div *ngIf="makeNewContactForm">
-      <ion-button style="color: #3542e5" expand="full" fill="clear" (click)="toggleNewContact()">
-          <ion-icon name="arrow-up-circle-outline"></ion-icon>
-      </ion-button>
-      
-      <ion-item>
-          <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Tor Address" [(ngModel)]="newContactTorAddress" name="message"></ion-input>
-      </ion-item>
-      <ion-item>
-          <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Name" [(ngModel)]="newContactName" name="message"></ion-input>
-      </ion-item>
-      
-      <ion-button style="margin-top:1em; margin-bottom:1em; color: #3542e5" fill="clear" expand="full" [disabled]="submittingNewContact$ | async" (click)="submitNewContact()">
-          <ion-text>submit</ion-text>
-      </ion-button>
-
-      <ion-item text-center style="text-align: center" *ngIf="error$ | async">
-          <ion-label class="error-bar" style="color: #d00909">{{ error$ | async }}</ion-label>
-      </ion-item>
-      <ion-spinner *ngIf="submittingNewContact$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>
-  </div>
-
-  <!-- chat list -->
+  <!-- contacts list -->
   <ion-item-group>
-      <div *ngFor="let contact of (app.emitContacts$ | async)" >
+      <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
           <div *ngIf="(app.emitCurrentContact$ | async) || {}; let cc" >
               <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(app.emitCurrentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
                   <ion-avatar slot="start">
@@ -47,10 +24,36 @@
           </div>
       </div>
   </ion-item-group>  
+
+<!-- new contact form -->
+<div *ngIf="makeNewContactForm">
+    <ion-button style="color: #3542e5" expand="full" fill="clear" (click)="toggleNewContact()">
+        <ion-icon name="arrow-up-circle-outline"></ion-icon>
+    </ion-button>
+    
+    <ion-item>
+        <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Tor Address" [(ngModel)]="newContactTorAddress" name="message"></ion-input>
+    </ion-item>
+    <ion-item>
+        <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Name" [(ngModel)]="newContactName" name="message"></ion-input>
+    </ion-item>
+    
+    <ion-button style="margin-top:1em; margin-bottom:1em; color: #3542e5" fill="clear" expand="full" [disabled]="submittingNewContact$ | async" (click)="submitNewContact()">
+        <ion-text>submit</ion-text>
+    </ion-button>
+
+    <ion-item text-center style="text-align: center" *ngIf="error$ | async">
+        <ion-label class="error-bar" style="color: #d00909">{{ error$ | async }}</ion-label>
+    </ion-item>
+    <ion-spinner *ngIf="submittingNewContact$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>
+</div>
+    <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button size="medium" color="white" fill="clear" (click)="jumpToBottom()">
+            <ion-icon name="add-outline"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
+
 </ion-content>
 
-<ion-footer *ngIf="false">
-  <ion-button style="margin: 12px 0; color: #d00909" expand="full" fill="clear" (click)="logout()">
-      Logout
-  </ion-button>
+<ion-footer>
 </ion-footer>
