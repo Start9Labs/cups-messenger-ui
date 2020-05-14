@@ -1,24 +1,39 @@
 import { Plugins } from '@capacitor/core'
-import { Subject, BehaviorSubject } from 'rxjs'
+import { BehaviorSubject, Observable } from 'rxjs'
 import { filter } from 'rxjs/operators'
-import { exists } from '../rxjs/util'
+import { exists } from '../../../rxjs/util'
 const { Storage } = Plugins
 
+export enum AuthStatus {
+    UNVERIFED, VERIFIED
+}
+
 export class AuthState {
-    $password$: BehaviorSubject<string | undefined> = new BehaviorSubject(undefined)
-    password: string | undefined = undefined
+    private static readonly passwordKey = { key: 'password' }
+    password: string = undefined
+    private readonly $status$: BehaviorSubject<AuthStatus> = new BehaviorSubject(AuthStatus.UNVERIFED)
 
     constructor(){
-        this.$password$.subscribe(p => {this.password = p})
     }
 
     async init(): Promise<void> {
-        const p = await Storage.get(passwordKey)
-        this.$password$.next(p.value)
+        const p = await Storage.get(AuthState.passwordKey)
+
+        if(p && p.value){
+            this.password = p.value
+            this.$status$.next(AuthStatus.VERIFIED)
+        } else {
+            this.password = undefined
+            this.$status$.next(AuthStatus.UNVERIFED)
+        }
+    }
+
+    emitStatus$(): Observable<AuthStatus>{
+        return this.$status$.asObservable()
     }
 
     async setPassword(p: string): Promise<void> {
-        if(!p) return
+        if(!p) return // empty password not permitted
         await Storage.set({
             key: 'password',
             value: p
@@ -27,15 +42,10 @@ export class AuthState {
     }
 
     async clearPassword(): Promise<void> {
-        await Storage.remove(passwordKey)
-        this.$password$.next(undefined)
-    }
-
-    emitPassword$(){
-        return this.$password$.asObservable().pipe(filter(exists))
+        await Storage.remove(AuthState.passwordKey)
+        this.password = undefined
+        this.$status$.next(AuthStatus.UNVERIFED)
     }
 }
 
 export const Auth = new AuthState()
-
-const passwordKey = { key: 'password' }

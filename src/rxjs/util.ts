@@ -26,18 +26,27 @@ export function logMiddlewearable<T>(level: LogLevel, o: Observable<T>): Observa
 }
 
 export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
-    constructor(private readonly level: LogLevel, t: T){
+    level: LogLevel = LogLevel.INFO
+    desc = 'subject'
+
+    constructor(t: T, opt?: { level?: LogLevel, desc?: string }){
         super(t)
+        if(opt && opt.level) {
+            this.level = opt.level
+        }
+        if(opt && opt.desc){
+            this.desc = opt.desc
+        }
     }
 
     getValue(): T {
         const t = super.getValue()
-        Log.safeLog( {level: this.level, msg: 'subject queried', object: t} )
+        Log.safeLog( {level: this.level, msg: `${this.desc} queried`, object: t} )
         return t
     }
 
     next(t: T){
-        Log.safeLog( {level: this.level, msg: 'subject inbound', object: t} )
+        Log.safeLog( {level: this.level, msg: `${this.desc} inbound`, object: t} )
         super.next(t)
     }
 }

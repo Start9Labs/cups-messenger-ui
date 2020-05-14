@@ -1,20 +1,20 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../services/cups/types'
+import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
 import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
-import { CupsMessenger } from '../services/cups/cups-messenger'
-import { config } from '../config'
-import { App } from '../services/state/app-state'
-import { Auth } from '../services/state/auth-state'
-import { StateIngestionService } from '../services/state-ingestion/state-ingestion.service'
-import { Log } from '../log'
+import { CupsMessenger } from '../../services/cups/cups-messenger'
+import { config } from '../../config'
+import { App } from '../../services/state/app-state'
+import { Auth } from '../../services/state/auth-state'
+import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
+import { Log } from '../../log'
 
 @Component({
-  selector: 'app-contact-chat',
-  templateUrl: './contact-chat.page.html',
-  styleUrls: ['./contact-chat.page.scss'],
+  selector: 'app-messages',
+  templateUrl: './messages.page.html',
+  styleUrls: ['./messages.page.scss'],
 })
 export class ContactChatPage implements OnInit {
     @ViewChild('content') private content: any
@@ -81,9 +81,6 @@ export class ContactChatPage implements OnInit {
     }
 
     ngOnInit() {
-        if (!Auth.password) {
-            this.navCtrl.navigateRoot('signin')
-        }
         this.stateIngestion.refreshContacts()
         this.canGetOlderMessages = this.isAtTop()
     }

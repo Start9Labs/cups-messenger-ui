@@ -1,9 +1,9 @@
 import { of, Observable } from 'rxjs'
-import { CupsMessenger } from '../cups/cups-messenger'
-import { ContactWithMessageCount } from '../cups/types'
+import { CupsMessenger } from '../../cups/cups-messenger'
+import { ContactWithMessageCount } from '../../cups/types'
 import { catchError, filter, map, concatMap } from 'rxjs/operators'
-import { Contact, ServerMessage } from '../cups/types'
-import { ShowMessagesOptions } from '../cups/live-messenger'
+import { Contact, ServerMessage } from '../../cups/types'
+import { ShowMessagesOptions } from '../../cups/live-messenger'
 
 function contacts(cups: CupsMessenger): Observable<ContactWithMessageCount[]> {
     return cups.contactsShow().pipe(

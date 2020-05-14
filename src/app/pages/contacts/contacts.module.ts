@@ -7,11 +7,11 @@ import { IonicModule } from '@ionic/angular'
 import { ContactsPageRoutingModule } from './contacts-routing.module'
 
 import { ContactsPage } from './contacts.page'
-import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe'
-import { IsAttendingPipe } from '../pipes/is-attending.pipe'
-import { IsFailedPipe } from '../pipes/is-failed.pipe'
-import { IsServerPipe } from '../pipes/is-server.pipe'
-import { SharingModule } from '../share-module/sharing.module'
+import { TruncateEllipsesPipe } from '../../pipes/truncate-ellipses.pipe'
+import { IsAttendingPipe } from '../../pipes/is-attending.pipe'
+import { IsFailedPipe } from '../../pipes/is-failed.pipe'
+import { IsServerPipe } from '../../pipes/is-server.pipe'
+import { SharingModule } from '../../modules/sharing.module'
 
 @NgModule({
   imports: [

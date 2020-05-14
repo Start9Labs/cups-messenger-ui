@@ -4,13 +4,13 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content *ngIf="true">
+<ion-content>
   <!-- button to enable to contact form -->
   <ion-button style="margin: 12px 0; color: #3542e5; text-align: left" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
       <ion-icon name="add-circle" slot="start"></ion-icon><span>New contact</span>
   </ion-button>
 
-  <!-- new contact form
+  <!-- new contact form -->
   <div *ngIf="makeNewContactForm">
       <ion-button style="color: #3542e5" expand="full" fill="clear" (click)="toggleNewContact()">
           <ion-icon name="arrow-up-circle-outline"></ion-icon>
@@ -31,7 +31,7 @@
           <ion-label class="error-bar" style="color: #d00909">{{ error$ | async }}</ion-label>
       </ion-item>
       <ion-spinner *ngIf="submittingNewContact$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>
-  </div> -->
+  </div>
 
   <!-- chat list -->
   <ion-item-group>

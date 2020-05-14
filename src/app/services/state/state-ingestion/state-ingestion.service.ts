@@ -1,11 +1,11 @@
 import { config } from 'src/app/config'
-import { CupsMessenger } from '../cups/cups-messenger'
+import { CupsMessenger } from '../../cups/cups-messenger'
 import { Subscription, Observable, interval } from 'rxjs'
 import { concatMap, tap } from 'rxjs/operators'
-import { App } from '../state/app-state'
-import { cooldown } from '../rxjs/util'
+import { App } from '../app-state'
+import { cooldown } from '../../../../rxjs/util'
 import { Injectable } from '@angular/core'
-import { Contact, ContactWithMessageCount, ServerMessage } from '../cups/types'
+import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
 import { Refresh } from './acquire-state'
 
@@ -81,7 +81,10 @@ export class StateIngestionService {
                 cooldown(config.messagesDaemon.frequency, Refresh.messages(this.cups, contact))
             ),
             tap(ms => Log.trace('messages daemon running', ms))
-        ).subscribe(App.$ingestMessages)
+        ).subscribe(ms =>{
+            Log.trace(`In subscribe`, ms)
+            App.$ingestMessages.next(ms as any)
+        } )
     }
 }
 

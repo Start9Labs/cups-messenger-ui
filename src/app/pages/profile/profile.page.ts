@@ -1,10 +1,10 @@
 import { Component, NgZone } from '@angular/core'
-import { Contact } from '../services/cups/types'
+import { Contact } from '../../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
 import { Observable, from } from 'rxjs'
 import { take, switchMap, map } from 'rxjs/operators'
-import { CupsMessenger } from '../services/cups/cups-messenger'
-import { App } from '../services/state/app-state'
+import { CupsMessenger } from '../../services/cups/cups-messenger'
+import { App } from '../../services/state/app-state'
 
 @Component({
   selector: 'profile',
@@ -51,7 +51,7 @@ export class ProfilePage {
                 App.$ingestCurrentContact.next(updatedContact)
                 await loader.dismiss()
                 this.ngZone.run(() => {
-                    this.navCtrl.navigateBack(['contact-chat'])
+                    this.navCtrl.navigateBack('messages')
                 })
             },
             error: e => {

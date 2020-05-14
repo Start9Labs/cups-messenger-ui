@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
-import { ContactChatPage } from './contact-chat.page';
+import { ContactChatPage } from './messages.page';
 
 const routes: Routes = [
   {

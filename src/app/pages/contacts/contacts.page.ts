@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core'
 import { Observable, BehaviorSubject } from 'rxjs'
-import { ContactWithMessageCount, Contact } from '../services/cups/types'
-import { Auth } from '../services/state/auth-state'
-import { App } from '../services/state/app-state'
-import { MenuController } from '@ionic/angular'
-import { CupsMessenger } from '../services/cups/cups-messenger'
-import { StateIngestionService } from '../services/state-ingestion/state-ingestion.service'
-import { onionToPubkeyString } from '../services/cups/cups-res-parser'
+import { ContactWithMessageCount, Contact } from '../../services/cups/types'
+import { Auth } from '../../services/state/auth-state'
+import { App } from '../../services/state/app-state'
+import { MenuController, NavController } from '@ionic/angular'
+import { CupsMessenger } from '../../services/cups/cups-messenger'
+import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
+import { onionToPubkeyString } from '../../services/cups/cups-res-parser'
 import { concatMap } from 'rxjs/operators'
 
 @Component({
@@ -29,15 +29,17 @@ export class ContactsPage implements OnInit {
 
     constructor(
         private readonly cups: CupsMessenger,
-        private readonly stateIngestion: StateIngestionService
+        private readonly stateIngestion: StateIngestionService,
+        private readonly navController: NavController
     ) {
     }
 
-    ngOnInit(){}
+    ngOnInit(){
+    }
 
     jumpToChat(c: Contact) {
         App.$ingestCurrentContact.next(c)
-        // this.menu.close('main-menu')
+        this.navController.navigateForward('messages')
     }
 
     toggleNewContact() {
@@ -47,7 +49,6 @@ export class ContactsPage implements OnInit {
 
     logout(){
         Auth.clearPassword()
-        // this.menu.close('main-menu')
     }
 
     async submitNewContact() {

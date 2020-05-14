@@ -7,12 +7,12 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular'
 import { AppComponent } from './app.component'
 import { AppRoutingModule } from './app-routing.module'
 import { FormsModule } from '@angular/forms'
-import { ContactChatPageModule } from './contact-chat/contact-chat.module'
+import { ContactChatPageModule } from './messages/messages.module'
 import { HttpClientModule } from '@angular/common/http'
-import { TextAvatarModule } from './text-avatar'
+import { TextAvatarModule } from '../text-avatar'
 import { ServiceWorkerModule } from '@angular/service-worker'
-import { environment } from '../environments/environment'
-import { TruncateEllipsesPipe } from './pipes/truncate-ellipses.pipe'
+import { environment } from '../../environments/environment'
+import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe'
 
 @NgModule({
   declarations: [AppComponent],

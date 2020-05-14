@@ -1,7 +1,8 @@
 export enum LogLevel {
     TRACE = 0,
     DEBUG = 1,
-    INFO = 2
+    INFO = 2,
+    ERROR = 3
 }
 
 export interface Config {
@@ -27,13 +28,13 @@ export const config: Config = {
         url: '/api'
     },
     contactsDaemon: {
-        frequency: 1000
+        frequency: 5000
     },
     messagesDaemon: {
-        frequency: 2500
+        frequency: 1000
     },
     loadMesageBatchSize: 15,
     defaultServerTimeout: 180000,
-    loglevel: LogLevel.DEBUG,
+    loglevel: LogLevel.TRACE,
     myTorAddress: window.origin.split('//')[1] || window.origin
 }

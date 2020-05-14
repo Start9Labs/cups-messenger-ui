@@ -8,7 +8,7 @@ export const Log = {
 }
 
 function safeLog({ level, msg, object }: { level: LogLevel; msg: string; object?: any; }) {
-    if (config.loglevel >= level) {
+    if (config.loglevel <= level) {
         if(object){
             try {
                 console.log(`${LogLevel[level]}: ${msg}, ${JSON.stringify(object)}`)

@@ -1,26 +1,32 @@
 import { NgModule } from '@angular/core'
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router'
+import { UnauthGuard } from '../modules/unauth.guard'
+import { AuthGuard } from '../modules/auth.guard'
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'contacts',
+    redirectTo: 'signin',
     pathMatch: 'full'
   },
   {
     path: 'signin',
+    canActivate: [UnauthGuard],
     loadChildren: () => import('./signin/signin.module').then( m => m.SigninPageModule)
   },
   {
-    path: 'contact-chat',
-    loadChildren: () => import('./contact-chat/contact-chat.module').then( m => m.ContactChatPageModule)
+    path: 'messages',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./messages/messages.module').then( m => m.ContactChatPageModule)
   },
   {
     path: 'profile',
+    canActivate: [AuthGuard],
     loadChildren: () => import('./profile/profile.module').then( m => m.ProfilePageModule)
   },
   {
     path: 'contacts',
+    canActivate: [AuthGuard],
     loadChildren: () => import('./contacts/contacts.module').then( m => m.ContactsPageModule)
   },
 ]

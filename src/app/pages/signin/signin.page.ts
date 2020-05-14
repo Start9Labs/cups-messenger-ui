@@ -1,10 +1,10 @@
 import { Component, OnInit, NgZone } from '@angular/core'
 
 import { NavController, LoadingController } from '@ionic/angular'
-import { CupsMessenger } from '../services/cups/cups-messenger'
+import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { BehaviorSubject } from 'rxjs'
-import { pauseFor } from '../services/cups/types'
-import { Auth } from '../services/state/auth-state'
+import { pauseFor } from '../../services/cups/types'
+import { Auth } from '../../services/state/auth-state'
 
 @Component({
   selector: 'app-signin',
@@ -23,7 +23,6 @@ export class SigninPage implements OnInit {
   ) { }
 
   ngOnInit() {
-      window['Auth'] = Auth
       Auth.init().then(() => this.signin())
   }
 

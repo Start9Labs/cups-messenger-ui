@@ -37,18 +37,17 @@ export class MockCupsMessenger {
     }
 
     messagesShow (contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
-        return of([])
-        // const { limit, offset } = fillDefaultOptions(options)
-        // const messages = this.getMessageMocks(contact)
-        // if(offset){
-        //     const i = messages.findIndex(m => m.id && m.id === offset.id)
-        //     switch(offset.direction){
-        //         case 'after'  : return of(messages.slice(i + 1, i + 1 + limit))
-        //         case 'before' : return of(messages.slice(i - limit, i))
-        //     }
-        // } else {
-        //     return of(messages.slice(messages.length - limit + 1, messages.length))
-        // }
+        const { limit, offset } = fillDefaultOptions(options)
+        const messages = this.getMessageMocks(contact)
+        if(offset){
+            const i = messages.findIndex(m => m.id && m.id === offset.id)
+            switch(offset.direction){
+                case 'after'  : return of(messages.slice(i + 1, i + 1 + limit))
+                case 'before' : return of(messages.slice(i - limit, i))
+            }
+        } else {
+            return of(messages.slice(messages.length - limit + 1, messages.length))
+        }
     }
 
     newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {

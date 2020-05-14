@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms'
 
 import { IonicModule } from '@ionic/angular'
 
-import { ContactChatPageRoutingModule } from './contact-chat-routing.module'
+import { ContactChatPageRoutingModule } from './messages-routing.module'
 
-import { ContactChatPage } from './contact-chat.page'
-import { IsAttendingPipe } from '../pipes/is-attending.pipe'
-import { IsFailedPipe } from '../pipes/is-failed.pipe'
-import { IsServerPipe } from '../pipes/is-server.pipe'
-import { SharingModule } from '../share-module/sharing.module'
+import { ContactChatPage } from './messages.page'
+import { IsAttendingPipe } from '../../pipes/is-attending.pipe'
+import { IsFailedPipe } from '../../pipes/is-failed.pipe'
+import { IsServerPipe } from '../../pipes/is-server.pipe'
+import { SharingModule } from '../../modules/sharing.module'
 
 @NgModule({
   imports: [

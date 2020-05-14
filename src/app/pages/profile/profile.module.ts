@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms'
 import { IonicModule } from '@ionic/angular'
 import { RouterModule, Routes } from '@angular/router'
 import { ProfilePage } from './profile.page'
-import { TextAvatarModule } from '../text-avatar'
+import { TextAvatarModule } from '../../text-avatar'
 
 const routes: Routes = [
   {
