@@ -35,7 +35,8 @@ export class ContactChatPage implements OnInit {
     updatingContact$ = new BehaviorSubject(false)
 
     error$: BehaviorSubject<string> = new BehaviorSubject(undefined)
-    globe = {...App, ...Auth}
+    app = App
+    auth = Auth
 
     shouldJump = false
     jumpSub: Subscription

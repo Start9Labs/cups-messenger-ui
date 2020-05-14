@@ -3,17 +3,17 @@
         <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
         </ion-buttons>
-		<ion-title color="charcoal" *ngIf="(globe.currentContact$ | async)">
-			{{ (globe.currentContact$ | async | truncateEllipses:50:"shortDisplay")?.shortDisplay }}
+		<ion-title color="charcoal" *ngIf="(app.emitCurrentContact$ | async)">
+			{{ (app.emitCurrentContact$ | async | truncateEllipses:50:"shortDisplay")?.shortDisplay }}
         </ion-title>
-        <ion-button fill="clear" style="color: #3542e5" slot="end" *ngIf="(globe.currentContact$ | async)" [routerLink]="['/profile']">
+        <ion-button fill="clear" style="color: #3542e5" slot="end" *ngIf="(app.emitCurrentContact$ | async)" [routerLink]="['/profile']">
             PROFILE
         </ion-button>
     </ion-toolbar>
 </ion-header>
 
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
-    <div *ngIf="(globe.currentContact$ | async) as contact">
+    <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
         <ion-infinite-scroll *ngIf="!hasAllHistoricalMessages[contact.torAddress]" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
           <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
@@ -59,7 +59,7 @@
 
 <ion-footer>
     <ion-toolbar>
-        <ion-grid *ngIf="(globe.currentContact$ | async) as current">
+        <ion-grid *ngIf="(app.emitCurrentContact$ | async) as current">
             <ion-row>
                 <ion-col size="9">
                     <form (keydown.meta.Enter)="checkSubmit($event, current)" (keydown.shift.Enter)="checkSubmit($event, current)">

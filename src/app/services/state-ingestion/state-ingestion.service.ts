@@ -24,6 +24,9 @@ export class StateIngestionService {
                         next: cs => {
                             App.$ingestContacts.next(cs)
                             subscriber.next(cs)
+                        },
+                        complete: () => {
+                            subscriber.complete()
                         }
                     }
                 )
@@ -40,7 +43,11 @@ export class StateIngestionService {
                         next: ms => {
                             App.$ingestMessages.next(ms)
                             subscriber.next(ms)
+                        },
+                        complete: () => {
+                            subscriber.complete()
                         }
+
                     }
                 )
             }
@@ -61,9 +68,9 @@ export class StateIngestionService {
 
     private startContactsCooldownSub(){
         if(subIsActive(this.contactsCooldown)) return
-        cooldown(config.contactsDaemon.frequency, Refresh.contacts(this.cups))
-        .pipe(tap(cs => Log.debug('contacts daemon running', cs)))
-        .subscribe(App.$ingestContacts)
+        this.contactsCooldown = cooldown(config.contactsDaemon.frequency, Refresh.contacts(this.cups))
+            .pipe(tap(cs => Log.trace('contacts daemon running', cs)))
+            .subscribe(App.$ingestContacts)
     }
 
     private startMessagesCooldownSub(){
@@ -73,7 +80,7 @@ export class StateIngestionService {
             concatMap(contact =>
                 cooldown(config.messagesDaemon.frequency, Refresh.messages(this.cups, contact))
             ),
-            tap(ms => Log.debug('messages daemon running', ms))
+            tap(ms => Log.trace('messages daemon running', ms))
         ).subscribe(App.$ingestMessages)
     }
 }

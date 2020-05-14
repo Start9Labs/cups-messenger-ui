@@ -1,9 +1,11 @@
 import { Plugins } from '@capacitor/core'
-import { Subject } from 'rxjs'
+import { Subject, BehaviorSubject } from 'rxjs'
+import { filter } from 'rxjs/operators'
+import { exists } from '../rxjs/util'
 const { Storage } = Plugins
 
 export class AuthState {
-    $password$: Subject<string | undefined> = new Subject()
+    $password$: BehaviorSubject<string | undefined> = new BehaviorSubject(undefined)
     password: string | undefined = undefined
 
     constructor(){
@@ -30,7 +32,7 @@ export class AuthState {
     }
 
     emitPassword$() {
-        return this.$password$.asObservable()
+        return this.$password$.asObservable().pipe(filter(exists))
     }
 }
 

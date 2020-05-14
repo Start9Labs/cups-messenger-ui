@@ -6,7 +6,7 @@
                     <ion-title>Cups Messenger V0</ion-title>
                 </ion-toolbar>
             </ion-header>
-            <ion-content *ngIf="(globe.password$ | async)">
+            <ion-content *ngIf="(auth.emitPassword()$ | async)">
 				        <!-- button to enable to contact form -->
                 <ion-button style="margin: 12px 0; color: #3542e5; text-align: left" *ngIf="!makeNewContactForm" expand="full" fill="clear" (click)="toggleNewContact()">
                     <ion-icon name="add-circle" slot="start"></ion-icon><span>New contact</span>
@@ -37,14 +37,14 @@
 
                 <!-- chat list -->
                 <ion-item-group>
-                    <div *ngFor="let contact of (globe.$contacts$ | async)" >
-                        <div *ngIf="(globe.currentContact$ | async) || {}; let cc" >
-                            <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(globe.currentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
+                    <div *ngFor="let contact of (app.emitContacts$ | async)" >
+                        <div *ngIf="(app.emitCurrentContact$ | async) || {}; let cc" >
+                            <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(app.emitCurrentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
                                 <ion-avatar slot="start">
                                     <text-avatar [text]='(contact | truncateEllipses:18:"shortDisplay")?.shortDisplay'></text-avatar>
                                 </ion-avatar>
                                 <ion-label>{{ (contact | truncateEllipses:18:"shortDisplay")?.shortDisplay }}</ion-label>
-                                <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((globe.currentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
+                                <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((app.emitCurrentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
                             </ion-item>
                         </div>
                     </div>
@@ -52,7 +52,7 @@
 
                 
             </ion-content>
-            <ion-footer *ngIf="(globe.password$ | async)">
+            <ion-footer *ngIf="false">
                 <ion-button style="margin: 12px 0; color: #d00909" expand="full" fill="clear" (click)="logout()">
                     Logout
                 </ion-button>

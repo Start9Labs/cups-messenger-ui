@@ -24,7 +24,8 @@ export class AppComponent {
 
     public loading$ = new BehaviorSubject(false)
     public $error$ = new BehaviorSubject(undefined)
-    public globe = {...App, ...Auth}
+    public app = App
+    public auth = Auth
 
     constructor(
         private readonly navCtrl: NavController,
