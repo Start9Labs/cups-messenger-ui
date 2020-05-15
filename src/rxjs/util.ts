@@ -1,7 +1,7 @@
 import { Observable, NextObserver, BehaviorSubject, of } from 'rxjs'
 import { concatMap, tap } from 'rxjs/operators'
 import { Log } from 'src/app/log'
-import { LogLevel } from 'src/app/config'
+import { LogLevel, LogTopic } from 'src/app/config'
 
 export function logMiddlewearer<T>(level: LogLevel, o: NextObserver<T>): NextObserver<T> {
     return {
@@ -26,8 +26,9 @@ export function alterState<T>(bs: BehaviorSubject<T>, t: T): Observable<T> {
 export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
     level: LogLevel = LogLevel.INFO
     desc = 'subject'
+    topic: LogTopic = LogTopic.NO_TOPIC
 
-    constructor(t: T, opt?: { level?: LogLevel, desc?: string }){
+    constructor(t: T, opt?: { level?: LogLevel, topic?: LogTopic, desc?: string }){
         super(t)
         if(opt && opt.level) {
             this.level = opt.level
@@ -35,16 +36,19 @@ export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
         if(opt && opt.desc){
             this.desc = opt.desc
         }
+        if(opt && opt.topic){
+            this.topic = opt.topic
+        }
     }
 
     getValue(): T {
         const t = super.getValue()
-        Log.safeLog( {level: this.level, msg: `${this.desc} queried`, object: t} )
+        Log.safeLog( {level: this.level, topic: this.topic, msg: `${this.desc} queried`, object: t} )
         return t
     }
 
     next(t: T){
-        Log.safeLog( {level: this.level, msg: `${this.desc} inbound`, object: t} )
+        Log.safeLog( {level: this.level, topic: this.topic, msg: `${this.desc} inbound`, object: t} )
         super.next(t)
     }
 }

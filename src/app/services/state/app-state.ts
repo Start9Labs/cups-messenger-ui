@@ -4,7 +4,7 @@ import { filter, map, take, tap, concatMap } from 'rxjs/operators'
 import { uniqueBy, sortByTimestamp } from 'src/app/util'
 import * as uuid from 'uuid'
 import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
-import { LogLevel as L } from 'src/app/config'
+import { LogLevel as L, LogTopic as T } from 'src/app/config'
 import { Log } from 'src/app/log'
 
 const nillTrackingId = '00000000-0000-0000-0000-000000000000'
@@ -15,13 +15,13 @@ function trackingId<T extends { trackingId: string }>(t: T): string {
 
 // Raw app state. Shouldn't be accessed directly except by the below.
 const Private = {
-    $currentContact$: new LogBehaviorSubject<Contact>(undefined, { level: L.INFO, desc: 'currentContact' }),
-    $contacts$: new LogBehaviorSubject<ContactWithMessageCount[]>([], { level: L.DEBUG, desc: 'contacts' }),
+    $currentContact$: new LogBehaviorSubject<Contact | undefined>(undefined, { topic: T.CURRENT_CONTACT, level: L.INFO, desc: 'currentContact' }),
+    $contacts$: new LogBehaviorSubject<ContactWithMessageCount[]>([], { topic: T.CONTACTS, level: L.DEBUG, desc: 'contacts' }),
     messagesStore: {} as { [torAddress: string]: LogBehaviorSubject<MessageBase[]> },
 
     $messagesFor$: tor => {
         if(!Private.messagesStore[tor]) {
-            Private.messagesStore[tor] = new LogBehaviorSubject([], {level: L.DEBUG, desc: `${tor} messages`})
+            Private.messagesStore[tor] = new LogBehaviorSubject([], {level: L.DEBUG, topic: T.MESSAGES, desc: `${tor} messages`})
         }
         return Private.messagesStore[tor]
     }
@@ -64,7 +64,7 @@ export class AppState{
 }
 
 
-const ingestMessagesObserver: Observer<{contact: Contact, messages: MessageBase[] }> = 
+const ingestMessagesObserver: Observer<{contact: Contact, messages: MessageBase[] }> =
     {
         next: ({contact, messages}) => {
             Log.trace(`messages into logic`, messages)
@@ -72,13 +72,13 @@ const ingestMessagesObserver: Observer<{contact: Contact, messages: MessageBase[
             $messagesForContact$.pipe(take(1)).subscribe(existingMessages => {
                 Log.trace(`existing messages`, messages)
                 const inbounds  = uniqueBy(t => t.id, messages.concat(existingMessages).filter(inbound))
-        
+
                 const outbounds = uniqueBy(
                     trackingId,
                     messages.concat(existingMessages).filter(outbound),
                     serverMessagesOverwriteAttending
                 )
-        
+
                 const newMessageState = inbounds
                     .concat(outbounds)
                     .sort(sortByTimestamp)

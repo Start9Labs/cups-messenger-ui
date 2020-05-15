@@ -1,6 +1,6 @@
-import { config } from 'src/app/config'
+import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, interval, of } from 'rxjs'
+import { Subscription, Observable, interval, of, timer } from 'rxjs'
 import { concatMap, tap, delay, take, repeat, first, switchMap } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
@@ -67,8 +67,8 @@ export class StateIngestionService {
     private startContactsCooldownSub(){
         if(subIsActive(this.contactsCooldown)) return
         this.contactsCooldown = 
-                interval(config.contactsDaemon.frequency).pipe(
-                    concatMap(() => Refresh.contacts(this.cups)),
+                timer(0, config.contactsDaemon.frequency).pipe(
+                    concatMap(() => Refresh.contacts(this.cups))
                 )
             .subscribe(App.$ingestContacts)
     }
@@ -77,14 +77,13 @@ export class StateIngestionService {
         if(subIsActive(this.messagesCooldown)) return
 
         this.messagesCooldown = App.emitCurrentContact$.pipe(
-            switchMap(contact =>
-                interval(config.messagesDaemon.frequency).pipe(
+            switchMap(contact => {
+                Log.trace(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
+                return timer(0, config.messagesDaemon.frequency).pipe(
                     concatMap(() => Refresh.messages(this.cups, contact)),
                 )
-            ),
-            tap(ms => Log.trace('messages daemon running', ms))
+            }),
         ).subscribe(ms =>{
-            Log.trace(`In subscribe`, ms)
             App.$ingestMessages.next(ms as any)
         } )
     }

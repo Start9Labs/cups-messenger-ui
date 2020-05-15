@@ -5,6 +5,14 @@ export enum LogLevel {
     ERROR = 3
 }
 
+export enum LogTopic {
+    NAV = 'NAV',
+    CONTACTS = 'CONTACTS',
+    CURRENT_CONTACT = 'CURRENT_CONTACT',
+    MESSAGES = 'MESSAGE',
+    NO_TOPIC = 'NO_TOPIC'
+}
+
 export interface Config {
     cupsMessenger: {
         mock: boolean
@@ -18,7 +26,10 @@ export interface Config {
     }
     loadMesageBatchSize: number
     defaultServerTimeout: number
-    loglevel: LogLevel
+    logs: {
+        level: LogLevel,
+        topics: LogTopic[] // Leave this empty for all log topics to be displayed
+    }
     myTorAddress: string
 }
 
@@ -35,6 +46,9 @@ export const config: Config = {
     },
     loadMesageBatchSize: 15,
     defaultServerTimeout: 180000,
-    loglevel: LogLevel.TRACE,
+    logs: {
+        level: LogLevel.TRACE,
+        topics: [LogTopic.NAV, LogTopic.CURRENT_CONTACT]
+    },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
