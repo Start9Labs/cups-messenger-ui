@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core'
+import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
 import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
@@ -16,7 +16,7 @@ import { Log } from '../../log'
   templateUrl: './messages.page.html',
   styleUrls: ['./messages.page.scss'],
 })
-export class ContactChatPage implements OnInit {
+export class MessagesPage implements OnInit {
     @ViewChild('content') private content: any
 
     currentContactTorAddress: string
@@ -48,7 +48,8 @@ export class ContactChatPage implements OnInit {
     myTorAddress = config.myTorAddress
 
     constructor(
-        private readonly navCtrl: NavController,
+        private readonly nav: NavController,
+        private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService
     ){
@@ -89,6 +90,22 @@ export class ContactChatPage implements OnInit {
       if (e.keyCode === 13) {
         await this.sendMessage(contact)
       }
+    }
+
+    toProfile(){
+        this.zone.run(() => {
+            this.nav.navigateForward('profile')
+        })
+    }
+
+    toContacts(){
+        this.zone.run(() => {
+            this.nav.navigateBack('contacts')
+        })
+    }
+
+    wipeCurrentContact(){
+        App.alterCurrentContact$(undefined)
     }
 
     sendMessage(contact: Contact) {

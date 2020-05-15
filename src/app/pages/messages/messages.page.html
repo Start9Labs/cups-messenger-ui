@@ -1,14 +1,13 @@
 <ion-header>
     <ion-toolbar>
         <ion-buttons slot="start">
-            <ion-back-button >
-            </ion-back-button>
+            <ion-back-button (click)="toContacts()"></ion-back-button>
             <ion-menu-button></ion-menu-button>
         </ion-buttons>
 		<ion-title color="charcoal" *ngIf="(app.emitCurrentContact$ | async)">
 			{{ (app.emitCurrentContact$ | async | truncateEllipses:50:"shortDisplay")?.shortDisplay }}
         </ion-title>
-        <ion-button fill="clear" style="color: #3542e5" slot="end" *ngIf="(app.emitCurrentContact$ | async)" [routerLink]="['/profile']">
+        <ion-button fill="clear" style="color: #3542e5" slot="end" *ngIf="(app.emitCurrentContact$ | async)" (click)="toProfile()">
             PROFILE
         </ion-button>
     </ion-toolbar>

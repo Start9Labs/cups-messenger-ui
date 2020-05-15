@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone } from '@angular/core'
-import { Observable, BehaviorSubject } from 'rxjs'
+import { Observable, BehaviorSubject, Subscription } from 'rxjs'
 import { ContactWithMessageCount, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
@@ -34,12 +34,8 @@ export class ContactsPage implements OnInit {
     ngOnInit(){
     }
 
-    ionViewWillEnter(){
-        Log.trace('will enter contacts', {}, LogTopic.NAV)
-        App.$ingestCurrentContact.next(undefined)
-    }
-
     jumpToChat(c: Contact) {
+        Log.trace('jumping to contact', {}, LogTopic.NAV)
         App.$ingestCurrentContact.next(c)
         this.navController.navigateForward('messages')
     }
@@ -48,7 +44,7 @@ export class ContactsPage implements OnInit {
         Auth.clearPassword()
     }
 
-    async toNewContactPage(){
+    toNewContactPage(){
         this.zone.run(() => {
             this.navController.navigateForward('new-contact')
         })

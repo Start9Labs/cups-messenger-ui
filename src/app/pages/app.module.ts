@@ -7,7 +7,7 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular'
 import { AppComponent } from './app.component'
 import { AppRoutingModule } from './app-routing.module'
 import { FormsModule } from '@angular/forms'
-import { ContactChatPageModule } from './messages/messages.module'
+import { MessagesPageModule } from './messages/messages.module'
 import { HttpClientModule } from '@angular/common/http'
 import { TextAvatarModule } from '../text-avatar'
 import { ServiceWorkerModule } from '@angular/service-worker'
@@ -22,7 +22,7 @@ import { environment } from '../../environments/environment'
     IonicModule.forRoot(),
     AppRoutingModule,
     FormsModule,
-    ContactChatPageModule,
+    MessagesPageModule,
     HttpClientModule,
     TextAvatarModule,
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),

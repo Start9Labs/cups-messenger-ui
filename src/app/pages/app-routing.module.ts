@@ -17,7 +17,7 @@ const routes: Routes = [
   {
     path: 'messages',
     canActivate: [AuthGuard],
-    loadChildren: () => import('./messages/messages.module').then( m => m.ContactChatPageModule)
+    loadChildren: () => import('./messages/messages.module').then( m => m.MessagesPageModule)
   },
   {
     path: 'profile',
@@ -31,6 +31,7 @@ const routes: Routes = [
   },
   {
     path: 'new-contact',
+    canActivate: [AuthGuard],
     loadChildren: () => import('./new-contact/new-contact.module').then( m => m.NewContactPageModule)
   },
 ]

@@ -1,10 +1,12 @@
 import { Component, NgZone } from '@angular/core'
 import { Contact } from '../../services/cups/types'
 import { LoadingController, NavController } from '@ionic/angular'
-import { Observable, from } from 'rxjs'
-import { take, switchMap, map } from 'rxjs/operators'
+import { of, BehaviorSubject } from 'rxjs'
+import { map, concatMap } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { App } from '../../services/state/app-state'
+import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
+import { sanitizeName } from 'src/app/update-contact-util'
 
 @Component({
   selector: 'profile',
@@ -12,21 +14,20 @@ import { App } from '../../services/state/app-state'
   styleUrls: ['profile.page.scss'],
 })
 export class ProfilePage {
-    error = ''
-    contactName = ''
     app = App
+    contactName = ''
+    $error$ = new BehaviorSubject<string>(undefined)
 
     constructor (
         private readonly loadingCtrl: LoadingController,
-        private readonly navCtrl: NavController,
-        private readonly ngZone: NgZone,
-        private readonly cups: CupsMessenger
+        private readonly nav: NavController,
+        private readonly zone: NgZone,
+        private readonly cups: CupsMessenger,
+        private readonly stateIngestion: StateIngestionService
     ) { }
 
     ngOnInit () {
-        App.emitCurrentContact$.pipe(take(1)).subscribe(c => {
-            this.contactName = c.name
-        })
+        this.contactName = App.currentContact.name
     }
 
     async save(c: Contact) {
@@ -36,26 +37,26 @@ export class ProfilePage {
         })
         await loader.present()
 
-        const updatedContact = { ...c, name: this.contactName }
-
-        from(this.cups.contactsAdd(updatedContact)).pipe(
-            switchMap(() => this.cups.contactsShow().pipe(map(cs => {
-                if(cs.findIndex(co => co.torAddress === updatedContact.torAddress) <= -1) {
-                    cs.push({...updatedContact, unreadMessages: 0} )
+        of({}).pipe(
+            map(() => {
+                const sanitizedName = sanitizeName(this.contactName)
+                return {
+                    ...c,
+                    name: sanitizedName
                 }
-                App.$ingestContacts.next(cs)
-            })))
+              }),
+              concatMap(c => this.cups.contactsAdd(c)),
+              concatMap(c => App.alterCurrentContact$(c)),
+              concatMap(() => this.stateIngestion.refreshContacts()),
         ).subscribe({
-            next: async () => {
-                App.$ingestCurrentContact.next(updatedContact)
-                await loader.dismiss()
-                this.ngZone.run(() => {
-                    this.navCtrl.navigateBack('messages')
-                })
+            next: () => {
+              loader.dismiss()
+              this.zone.run(() => this.nav.navigateBack('messages'))
             },
             error: e => {
-                console.error(e)
-            }
+              loader.dismiss()
+              this.$error$.next(e.message)
+            },
         })
     }
 }
