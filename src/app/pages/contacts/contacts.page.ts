@@ -3,12 +3,9 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageCount, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
-import { MenuController, NavController } from '@ionic/angular'
-import { CupsMessenger } from '../../services/cups/cups-messenger'
-import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
-import { onionToPubkeyString } from '../../services/cups/cups-res-parser'
-import { concatMap } from 'rxjs/operators'
+import { NavController } from '@ionic/angular'
 import { Log } from 'src/app/log'
+import { LogTopic } from 'src/app/config'
 
 @Component({
   selector: 'app-contacts',
@@ -29,14 +26,17 @@ export class ContactsPage implements OnInit {
     public auth = Auth
 
     constructor(
-        private readonly cups: CupsMessenger,
-        private readonly stateIngestion: StateIngestionService,
         private readonly navController: NavController,
         private readonly zone: NgZone
     ) {
     }
 
     ngOnInit(){
+    }
+
+    ionViewWillEnter(){
+        Log.trace('will enter contacts', {}, LogTopic.NAV)
+        App.$ingestCurrentContact.next(undefined)
     }
 
     jumpToChat(c: Contact) {
@@ -48,7 +48,7 @@ export class ContactsPage implements OnInit {
         Auth.clearPassword()
     }
 
-    async toNewContactPage(c: Contact){
+    async toNewContactPage(){
         this.zone.run(() => {
             this.navController.navigateForward('new-contact')
         })

@@ -1,10 +1,11 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { onionToPubkeyString } from 'src/app/services/cups/cups-res-parser';
 import { Subject, BehaviorSubject } from 'rxjs';
-import { concatMap } from 'rxjs/operators';
+import { concatMap, take, tap } from 'rxjs/operators';
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service';
 import { NavController } from '@ionic/angular';
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger';
+import { App } from 'src/app/services/state/app-state';
 
 @Component({
   selector: 'app-new-contact',
@@ -50,6 +51,10 @@ export class NewContactPage implements OnInit {
         return
     }
 
+    App.emitContacts$.pipe(take(1)).subscribe(cs => {
+      cs.map(c => c.torAddress).includes(sanitizedTorOnion)
+    })
+
     this.$submittingNewContact$.next(true)
 
     const contact = {
@@ -57,7 +62,14 @@ export class NewContactPage implements OnInit {
         name: sanitizedName
     }
 
-    this.cups.contactsAdd(contact).pipe(
+    App.emitContacts$.pipe(take(1)).pipe(
+        tap(cs => {
+          const preexisting = cs.find(c => c.torAddress === sanitizedTorOnion)
+          if(preexisting){
+            throw new Error(`Contact ${preexisting.name} already has that tor address.`)
+          }
+        }),
+        concatMap(() => this.cups.contactsAdd(contact)),
         concatMap(() => this.stateIngestion.refreshContacts()),
     ).subscribe({
         next: () =>  this.zone.run(() => this.nav.back()),
