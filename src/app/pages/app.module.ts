@@ -12,7 +12,6 @@ import { HttpClientModule } from '@angular/common/http'
 import { TextAvatarModule } from '../text-avatar'
 import { ServiceWorkerModule } from '@angular/service-worker'
 import { environment } from '../../environments/environment'
-import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe'
 
 @NgModule({
   declarations: [AppComponent],

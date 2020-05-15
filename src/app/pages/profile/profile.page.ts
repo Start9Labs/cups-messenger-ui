@@ -14,7 +14,7 @@ import { App } from '../../services/state/app-state'
 export class ProfilePage {
     error = ''
     contactName = ''
-    contact$: Observable<Contact>
+    app = App
 
     constructor (
         private readonly loadingCtrl: LoadingController,
@@ -24,8 +24,7 @@ export class ProfilePage {
     ) { }
 
     ngOnInit () {
-        this.contact$ = App.emitCurrentContact$
-        this.contact$.pipe(take(1)).subscribe(c => {
+        App.emitCurrentContact$.pipe(take(1)).subscribe(c => {
             this.contactName = c.name
         })
     }
