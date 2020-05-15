@@ -1,9 +1,9 @@
-import { Observable, NextObserver, Observer } from 'rxjs'
+import { Observable, NextObserver, Observer, of } from 'rxjs'
 import { ContactWithMessageCount, MessageBase, Contact, serverMessagesOverwriteAttending, inbound, outbound, ServerMessage, isServer } from '../cups/types'
-import { filter, map, take } from 'rxjs/operators'
+import { filter, map, take, tap, concatMap } from 'rxjs/operators'
 import { uniqueBy, sortByTimestamp } from 'src/app/util'
 import * as uuid from 'uuid'
-import { exists, LogBehaviorSubject } from '../../../rxjs/util'
+import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
 import { LogLevel as L } from 'src/app/config'
 import { Log } from 'src/app/log'
 
@@ -38,6 +38,11 @@ export class AppState{
     emitCurrentContact$: Observable<Contact>
     emitContacts$: Observable<ContactWithMessageCount[]>
     emitMessages$: (tor: string) => Observable<MessageBase[]>
+
+    // Subscribing to this will trigger the current contact to change, then emit the new contact c
+    alterCurrentContact$(c: Contact): Observable<Contact> {
+        return alterState(Private.$currentContact$, c)
+    }
 
     constructor(){
         this.$ingestCurrentContact = Private.$currentContact$

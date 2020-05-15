@@ -1,16 +1,7 @@
-import { Observable, concat, interval, NextObserver, BehaviorSubject, Subscriber, PartialObserver, Subscription, Observer } from 'rxjs'
-import { delay, concatMap, tap, first } from 'rxjs/operators'
+import { Observable, NextObserver, BehaviorSubject, of } from 'rxjs'
+import { concatMap, tap } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 import { LogLevel } from 'src/app/config'
-
-export function cooldown<T>(cd: number, o: Observable<T>): Observable<{}> {
-    const runImmediately = o.pipe(first())
-    const runThereafterOnCooldown = interval(0).pipe(
-        concatMap(_ => o.pipe(delay(cd))),
-        tap(_ => Log.trace('cooldown running'))
-    )
-    return concat(runImmediately, runThereafterOnCooldown)
-}
 
 export function logMiddlewearer<T>(level: LogLevel, o: NextObserver<T>): NextObserver<T> {
     return {
@@ -23,6 +14,13 @@ export function logMiddlewearer<T>(level: LogLevel, o: NextObserver<T>): NextObs
 
 export function logMiddlewearable<T>(level: LogLevel, o: Observable<T>): Observable<T> {
     return o.pipe(tap(t => Log.safeLog({ level, msg: 'observable middlewear', object: t })))
+}
+
+export function alterState<T>(bs: BehaviorSubject<T>, t: T): Observable<T> {
+    return of(t).pipe(concatMap(() => {
+        bs.next(t)
+        return bs.asObservable()
+    }))
 }
 
 export class LogBehaviorSubject<T> extends BehaviorSubject<T> {

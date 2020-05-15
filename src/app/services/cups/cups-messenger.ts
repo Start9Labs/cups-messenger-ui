@@ -5,6 +5,7 @@ import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from 
 import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
 import { Auth } from '../state/auth-state'
+import { Log } from 'src/app/log'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -14,6 +15,7 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
+        Log.trace(`higher-order cups messenger contacts show...`)
         return this.impl.contactsShow(loginTestPassword || Auth.password)
     }
 

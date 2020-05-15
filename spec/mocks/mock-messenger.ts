@@ -3,37 +3,30 @@ import * as uuid from 'uuid'
 import { interval, of, timer } from 'rxjs'
 import { tap, delay, map } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
+import { Log } from 'src/app/log'
+
+let contacts = mockL(mockContact, 5)
 
 export class MockCupsMessenger {
     mocks: {[tor: string]: ServerMessage[]} = {}
-    contacts = mockL(mockContact, 5)
     counter = 0
     constructor() {
-        this.contacts.forEach( c => {
+        contacts.forEach( c => {
             this.mocks[c.torAddress] = mockL(mockMessage, 30)
         })
-
-        // interval(5000).pipe(tap(() => {
-        //     this.contacts.forEach( c => {
-        //         const mockMessages = this.mocks[c.torAddress]
-        //         mockMessages.push(mockMessage(mockMessages.length))
-        //     })
-        // })).subscribe()
     }
 
     contactsShow (): ObservableOnce<ContactWithMessageCount[]> {
-        return of(this.contacts)
+        Log.trace('showing contacts', contacts)
+        return of(contacts)
     }
 
     contactsAdd (contact: Contact): ObservableOnce<void> {
-        return of()
-        // return timer(2000).pipe(map(() => {
-        //     const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
-        //     this.mocks[contact.torAddress] = []
-        //     this.contacts = []
-        //     this.contacts.push(...nonMatchingTors)
-        //     this.contacts.push(Object.assign({ unreadMessages: 0 }, contact))
-        // }))
+        return timer(2000).pipe(map(() => {
+            const nonMatchingTors = contacts.filter(c => c.torAddress !== contact.torAddress)
+            this.mocks[contact.torAddress] = []
+            contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0 }, contact))
+        }))
     }
 
     messagesShow (contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {

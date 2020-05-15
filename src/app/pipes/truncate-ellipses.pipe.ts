@@ -10,7 +10,7 @@ export class TruncateEllipsesPipe implements PipeTransform {
         let displayName = contact.name || contact.torAddress
         if(!displayName) { return }
         displayName = truncateEllipses(displayName, allowable)
-        return Object.assign(contact, { [key]: displayName })
+        return {...contact, ...{ [key]: displayName }}
     }
 }
 

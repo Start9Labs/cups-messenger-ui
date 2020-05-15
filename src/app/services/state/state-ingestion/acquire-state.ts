@@ -1,9 +1,10 @@
 import { of, Observable } from 'rxjs'
 import { CupsMessenger } from '../../cups/cups-messenger'
 import { ContactWithMessageCount } from '../../cups/types'
-import { catchError, filter, map, concatMap } from 'rxjs/operators'
+import { catchError, filter, map, concatMap, tap } from 'rxjs/operators'
 import { Contact, ServerMessage } from '../../cups/types'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
+import { Log } from 'src/app/log'
 
 function contacts(cups: CupsMessenger): Observable<ContactWithMessageCount[]> {
     return cups.contactsShow().pipe(
@@ -11,6 +12,7 @@ function contacts(cups: CupsMessenger): Observable<ContactWithMessageCount[]> {
             console.error(`Error in contacts ingestion ${e.message}`)
             return of(null)
         }),
+        tap(cs => Log.trace("contacts acquisition", cs)),
         filter(cs => !!cs),
         map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
     )

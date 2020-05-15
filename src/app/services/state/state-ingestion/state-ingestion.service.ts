@@ -1,9 +1,8 @@
 import { config } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, interval } from 'rxjs'
-import { concatMap, tap } from 'rxjs/operators'
+import { Subscription, Observable, interval, of } from 'rxjs'
+import { concatMap, tap, delay, take, repeat, first, switchMap } from 'rxjs/operators'
 import { App } from '../app-state'
-import { cooldown } from '../../../../rxjs/util'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
@@ -47,7 +46,6 @@ export class StateIngestionService {
                         complete: () => {
                             subscriber.complete()
                         }
-
                     }
                 )
             }
@@ -68,8 +66,10 @@ export class StateIngestionService {
 
     private startContactsCooldownSub(){
         if(subIsActive(this.contactsCooldown)) return
-        this.contactsCooldown = cooldown(config.contactsDaemon.frequency, Refresh.contacts(this.cups))
-            .pipe(tap(cs => Log.trace('contacts daemon running', cs)))
+        this.contactsCooldown = 
+                interval(config.contactsDaemon.frequency).pipe(
+                    concatMap(() => Refresh.contacts(this.cups)),
+                )
             .subscribe(App.$ingestContacts)
     }
 
@@ -77,8 +77,10 @@ export class StateIngestionService {
         if(subIsActive(this.messagesCooldown)) return
 
         this.messagesCooldown = App.emitCurrentContact$.pipe(
-            concatMap(contact =>
-                cooldown(config.messagesDaemon.frequency, Refresh.messages(this.cups, contact))
+            switchMap(contact =>
+                interval(config.messagesDaemon.frequency).pipe(
+                    concatMap(() => Refresh.messages(this.cups, contact)),
+                )
             ),
             tap(ms => Log.trace('messages daemon running', ms))
         ).subscribe(ms =>{
