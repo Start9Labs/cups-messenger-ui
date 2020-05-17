@@ -1,6 +1,6 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, interval, of, timer } from 'rxjs'
+import { Subscription, Observable, interval, of, timer, combineLatest } from 'rxjs'
 import { concatMap, tap, delay, take, repeat, first, switchMap } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
@@ -32,7 +32,7 @@ export class StateIngestionService {
             }
         )
     }
- 
+
     // can sub to this to get new messages, update state, and react to completion at callsite.
     refreshMessages(contact: Contact): Observable<{ contact: Contact, messages: ServerMessage[] }>{
         return new Observable(

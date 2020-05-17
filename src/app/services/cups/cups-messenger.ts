@@ -6,6 +6,7 @@ import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
 import { Auth } from '../state/auth-state'
 import { Log } from 'src/app/log'
+import { map } from 'rxjs/operators'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -19,8 +20,8 @@ export class CupsMessenger {
         return this.impl.contactsShow(loginTestPassword || Auth.password)
     }
 
-    contactsAdd(contact: Contact): ObservableOnce<void> {
-        return this.impl.contactsAdd(contact)
+    contactsAdd(contact: Contact): ObservableOnce<Contact> {
+        return this.impl.contactsAdd(contact).pipe(map(() => contact))
     }
 
     messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {

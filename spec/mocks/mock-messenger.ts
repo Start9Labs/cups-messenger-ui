@@ -48,20 +48,19 @@ export class MockCupsMessenger {
     }
 
     messagesSend (contact: Contact, trackingId, message: string): ObservableOnce<void> {
-        return of()
-        // return timer(2000).pipe(map(
-        //     () => {
-        //         this.getMessageMocks(contact).push({
-        //             timestamp: new Date(),
-        //             sentToServer: new Date(),
-        //             direction: 'Outbound',
-        //             otherParty: contact,
-        //             text: message,
-        //             id: uuid.v4(),
-        //             trackingId
-        //         })
-        //     }
-        // ))
+        return timer(2000).pipe(map(
+            () => {
+                this.getMessageMocks(contact).push({
+                    timestamp: new Date(),
+                    sentToServer: new Date(),
+                    direction: 'Outbound',
+                    otherParty: contact,
+                    text: message,
+                    id: uuid.v4(),
+                    trackingId
+                })
+            }
+        ))
     }
     private getMessageMocks (c: Contact): ServerMessage[] {
         return JSON.parse(
