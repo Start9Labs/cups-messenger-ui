@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
-import { Contact, MessageBase, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../../services/cups/types'
+import { Contact, Message, pauseFor, AttendingMessage, FailedMessage, ServerMessage } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
 import { Observable, Subscription, BehaviorSubject, of, from } from 'rxjs'
@@ -21,8 +21,8 @@ export class MessagesPage implements OnInit {
 
     currentContactTorAddress: string
     currentContact$: BehaviorSubject<Contact> = new BehaviorSubject(undefined)
-    contactMessages$: Observable<MessageBase[]> = new Observable()
-    contactMessages: MessageBase[] = []
+    messages: Observable<Message[]> = new Observable()
+    contactMessages: Message[] = []
     // Detecting a new message
     unreads = false
 
@@ -41,7 +41,7 @@ export class MessagesPage implements OnInit {
     shouldJump = false
     jumpSub: Subscription
     mostRecentMessageTime: Date = new Date(0)
-    oldestMessage: MessageBase
+    oldestMessage: Message
     canGetOlderMessages = false
 
     hasAllHistoricalMessages: { [tor: string]: true } = {}
@@ -55,7 +55,7 @@ export class MessagesPage implements OnInit {
     ){
         App.emitCurrentContact$.subscribe(c => {
             if(!c) return
-            this.contactMessages$ = App.emitMessages$(c.torAddress).pipe(map(ms => {
+            this.messages = App.emitMessages$(c.torAddress).pipe(map(ms => {
                 this.shouldJump = this.isAtBottom()
                 if(this.shouldJump) { this.unreads = false }
                 this.oldestMessage = ms[ms.length - 1]
@@ -64,7 +64,7 @@ export class MessagesPage implements OnInit {
 
             if(this.jumpSub) { this.jumpSub.unsubscribe() }
 
-            this.jumpSub = this.contactMessages$.pipe(delay(150)).subscribe(ms => {
+            this.jumpSub = this.messages.pipe(delay(150)).subscribe(ms => {
                 const mostRecent = ms[0]
                 if(this.shouldJump){
                     this.unreads = false
