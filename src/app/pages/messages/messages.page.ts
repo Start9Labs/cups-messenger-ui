@@ -1,13 +1,12 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
-import { Contact, Message, pauseFor, AttendingMessage, FailedMessage, ServerMessage, inbound, InboundMessage, server } from '../../services/cups/types'
+import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController } from '@ionic/angular'
-import { Observable, Subscription, BehaviorSubject, of, from, combineLatest } from 'rxjs'
-import { map, delay, switchMap, tap, filter, take, catchError } from 'rxjs/operators'
+import { Observable, of, combineLatest, Subscription } from 'rxjs'
+import { map, switchMap, tap, filter, take, catchError, concatMap } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config } from '../../config'
 import { App } from '../../services/state/app-state'
-import { Auth } from '../../services/state/auth-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
 import { exists } from 'src/rxjs/util'
@@ -25,20 +24,23 @@ export class MessagesPage implements OnInit {
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    // Detecting a new message
+    // Used to determine whether we should present jump button
     unreads = false
 
-    // Sending messages
+    // Synced to text entry field in UI
     messageToSend: string
 
     // Save particular data about what to view. Timestamps can be moved to DB hypothetically.
-    viewingMetadata: { [ tor: string ]: {
+    metadata: { [ tor: string ]: {
         hasAllHistoricalMessages: boolean
-        newestViewed: ServerMessage | undefined
-        oldestViewed: ServerMessage | undefined
+        newestRendered: ServerMessage | undefined
+        oldestRendered: ServerMessage | undefined
     }}
 
     myTorAddress = config.myTorAddress
+
+    // These will be unsubbed on ngOnDestroy
+    private ngOnInitSubs: Subscription[]
 
     constructor(
         private readonly nav: NavController,
@@ -51,51 +53,31 @@ export class MessagesPage implements OnInit {
         ))
     }
 
-
-    /* jumping behavior:
-    - if you are on the page but cannot see the bottom, and a new inbound message arrives you should get the option to jump
-    - if you view a new contact, you should be presented with messages beginning at the last one you saw
-    */
-
     ngOnInit() {
+        // If we view a new contact, we should begin where we last left off
+        // (See MDNs IntersectionObserver for tracking read messages for a potential option)
+        this.ngOnInitSubs.push(App.emitCurrentContact$.subscribe(c => {
+            this.jumpToLastViewed()
+        }))
+
+        // Every time new messages or current contact changes, we update the oldest and newest message that's been loaded.
         // if we receive a new inbound messages, and we're not at the bottom of the screen, then we have unreads
-        this.messagesForDisplay$.pipe(filter(newInboundMessage)).subscribe(() => {
-            this.unreads = !this.isAtBottom()
-        })
-
-        // if we view a new contact, we should begin where we last left off
-        // See MDNs IntersectionObserver for tracking read messages
-        App.emitCurrentContact$.subscribe(c => {
-            this.jumpToLastViewed(c.torAddress)
-        })
-
-        combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).subscribe(
+        this.ngOnInitSubs.push(combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).subscribe(
             ([c, messages]) => {
-                const oldestMessage = messages[messages.length - 1]
-                const currentOldestViewed = this.viewingMetadata[c.torAddress].oldestViewed
-
-                if(oldestMessage && server(oldestMessage)){
-                    if(!currentOldestViewed || oldestMessage.timestamp < currentOldestViewed.timestamp){
-                        this.viewingMetadata[c.torAddress].oldestViewed = oldestMessage
-                    }
-                }
-
-                const newestMessage = messages.filter(server)[0]
-                const currentNewestViewed = this.viewingMetadata[c.torAddress].newestViewed
-                if(newestMessage){
-                    if(!currentNewestViewed || newestMessage.timestamp > currentNewestViewed.timestamp){
-                        this.viewingMetadata[c.torAddress].newestViewed = newestMessage
-                    }
+                const { updatedNewest } = this.updateViewedMessageEndpoints(c, messages.filter(server))
+                if(updatedNewest) {
+                    this.unreads = !isAtBottom()
                 }
             }
-        )
+        ))
     }
 
-    async checkSubmit (e: any, contact: Contact) {
-      if (e.keyCode === 13) {
-        await this.sendMessage(contact)
-      }
+    ngOnDestroy(): void {
+        return this.ngOnInitSubs.forEach(s => s.unsubscribe())
     }
+
+    /* Navigation Buttons */
+
 
     toProfile(){
         this.zone.run(() => {
@@ -109,10 +91,15 @@ export class MessagesPage implements OnInit {
         })
     }
 
-    wipeCurrentContact(){
-        App.alterCurrentContact$(undefined)
-    }
+    /* Sending + Retrying Message */
 
+    // Can send with return on desktop
+    checkSubmit (e: any, contact: Contact) {
+        if (e.keyCode === 13) {
+          this.sendMessage(contact)
+        }
+      }
+  
     sendMessage(contact: Contact) {
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
@@ -138,79 +125,99 @@ export class MessagesPage implements OnInit {
     send(contact: Contact, message: AttendingMessage) {
         App.$ingestMessages.next({contact, messages: [message]})
 
-        this.cups.messagesSend(contact, message.trackingId, message.text).pipe(catchError(e => {
-            console.error(`send message failure`, e.message)
-            App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
-            return of(undefined)
-        })).subscribe({
+        this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
+            catchError(e => {
+                console.error(`send message failure`, e.message)
+                App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                return of(null)
+            }),
+            filter(exists),
+            tap(() => Log.info(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)),
+            concatMap(() => this.stateIngestion.refreshMessages(contact))
+        ).subscribe({
             next: () => {
-                Log.info(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)
-                this.stateIngestion.refreshMessages(contact)
+                this.unreads = false; this.jumpToBottom()
             },
         })
-
-        pauseFor(125).then(() => {
-            this.unreads = false; this.jumpToBottom()
-        })
     }
+
+    /* Jumping logic */
 
     async jumpToBottom() {
         if(this.content) { this.content.scrollToBottom(200) }
     }
 
-    onScrollEnd(){
-        if(this.isAtBottom()){ this.unreads = false }
+    // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is meh.
+    async jumpToLastViewed() {
+        this.jumpToBottom()
     }
+
+    onScrollEnd(){
+        if(isAtBottom()){ this.unreads = false }
+    }
+
+    /* older message logic */
 
     fetchOlderMessages(event: any, contact: Contact) {
         const messagesToRetrieve = 15
-        // event.target.complete()
-        const oldestViewed = this.viewingMetadata[contact.torAddress].oldestViewed
-        if(oldestViewed){
-            this.cups.messagesShow(contact, { limit: messagesToRetrieve, offset: { direction: 'before', id: m.id }} )
-        }
-        
-
-        App.emitOldestServerMessage$(contact).pipe(
-            filter(_ => !!this.viewingMetadata[contact.torAddress].hasAllHistoricalMessages),
-            tap(m => message = m),
-            take(1),
-            switchMap(m => ),
-            map(ms => ({ contact, messages: ms }))
-        ).subscribe( {
-            next: res => {
-                if(res.messages.length === 0) {
-                    Log.debug(`fetched all historical messages`)
-                    this.viewingMetadata[contact.torAddress].hasAllHistoricalMessages = true
+        const oldestRendered = this.metadata[contact.torAddress].oldestRendered
+        if(oldestRendered){
+            this.stateIngestion.refreshMessages(
+                contact, { limit: messagesToRetrieve, offset: { direction: 'before', id: oldestRendered.id }}
+            ).subscribe({
+                next: ({ messages }) => {
+                    if(messages.length < messagesToRetrieve){
+                        Log.debug(`fetched all historical messages`)
+                        this.metadata[contact.torAddress].hasAllHistoricalMessages = true
+                    }
+                    event.target.complete()
+                },
+                error: e => {
+                    console.error(e.message)
+                    event.target.complete()
                 }
-                App.$ingestMessages.next(res)
-                event.target.complete()
-            },
-            error: (e : Error) => {
-                console.error(e.message)
-                App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
-                event.target.complete()
-            }
-        })
+            })
+        }
     }
 
-    isAtBottom(): boolean {
-        const el = document.getElementById('end-of-scroll')
-        return el ? isElementInViewport(el) : true
-    }
+    private  updateViewedMessageEndpoints(
+        c: Contact, serverMessages: ServerMessage[]
+    ): { updatedOldest: boolean, updatedNewest: boolean }{
+        const toReturn = { updatedOldest: false, updatedNewest: false }
 
-    isAtTop(): boolean {
-        const el = document.getElementById('top-of-scroll')
-        return el ? isElementInViewport(el) : true
-    }
+        const oldestMessage = serverMessages[serverMessages.length - 1]
+        const oldestRendered = this.metadata[c.torAddress].oldestRendered
+        if(oldestMessage && isOlder(oldestMessage, oldestRendered)){
+            this.metadata[c.torAddress].oldestRendered = oldestMessage
+            toReturn.updatedOldest = true
+        }
 
-    ngOnDestroy(): void {
-        return this.jumpSub && this.jumpSub.unsubscribe()
+        const newestMessage = serverMessages.filter(server)[0]
+        const newestRendered = this.metadata[c.torAddress].newestRendered
+        if(newestMessage && isNewer(newestMessage, newestRendered)){
+            this.metadata[c.torAddress].newestRendered = newestMessage
+            toReturn.updatedNewest = true
+        }
+
+        return toReturn
     }
+}
+
+function isAtBottom(): boolean {
+    const el = document.getElementById('end-of-scroll')
+    return el ? isElementInViewport(el) : true
 }
 
 // returns true if the TOP of the element is in the view port.
 function isElementInViewport(el) {
     const rect = el.getBoundingClientRect()
     return rect.top < window.innerHeight && rect.bottom >= 0
+}
+
+function isOlder(a: { timestamp: Date }, b?: { timestamp: Date }) {
+    return !b || a.timestamp < b.timestamp
+}
+
+function isNewer(a: { timestamp: Date }, b?: { timestamp: Date }) {
+    return !b || a.timestamp > b.timestamp
 }

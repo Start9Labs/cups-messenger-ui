@@ -45,8 +45,8 @@ export class ProfilePage {
                     name: sanitizedName
                 }
               }),
-              concatMap(c => this.cups.contactsAdd(c)),
-              concatMap(c => App.alterCurrentContact$(c)),
+              concatMap(c2 => this.cups.contactsAdd(c2)),
+              concatMap(c2 => App.alterCurrentContact$(c2)),
               concatMap(() => this.stateIngestion.refreshContacts()),
         ).subscribe({
             next: () => {
