@@ -115,6 +115,9 @@ export class MessagesPage implements OnInit {
             otherParty: contact,
             text: this.messageToSend,
             trackingId: uuid.v4(),
+            id: undefined,
+            timestamp: undefined,
+            failure: undefined
         }
         Log.info(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
         this.send(contact, attendingMessage)
@@ -128,18 +131,18 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        of({contact, messages: [message]}).subscribe(App.$ingestMessages)
+        of({contact, messages: [message]}).subscribe(App.$ingestServerMessages)
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(catchError(e => {
             console.error(`send message failure`, e.message)
-            App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+            App.$ingestServerMessages.next( { contact, messages: [{...message, failure: e.message}] } )
             return of(undefined)
         })).subscribe({
             next: () => {
                 Log.info(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)
                 this.stateIngestion.refreshMessages(contact)
                 of(message).pipe(delay(config.defaultServerTimeout)).subscribe(() => {
-                    App.$ingestMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
+                    App.$ingestServerMessages.next( { contact, messages: [{...message, failure: 'timeout'}] } )
                 })
             },
         })
@@ -172,12 +175,12 @@ export class MessagesPage implements OnInit {
                     Log.debug(`fetched all historical messages`)
                     this.hasAllHistoricalMessages[contact.torAddress] = true
                 }
-                App.$ingestMessages.next(res)
+                App.$ingestServerMessages.next(res)
                 event.target.complete()
             },
             error: (e : Error) => {
                 console.error(e.message)
-                App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                App.$ingestServerMessages.next( { contact, messages: [{...message, failure: e.message}] } )
                 event.target.complete()
             }
         })
