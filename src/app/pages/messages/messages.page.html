@@ -16,30 +16,30 @@
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
     <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
-        <ion-infinite-scroll *ngIf="!hasAllHistoricalMessages[contact.torAddress]" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
-          <ion-infinite-scroll-content style="margin-top: 5%" loadingSpinner="lines"></ion-infinite-scroll-content>
+        <ion-infinite-scroll *ngIf="!viewingMetadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+          <ion-infinite-scroll-content style="margin-top: 10%" loadingSpinner="lines"></ion-infinite-scroll-content>
         </ion-infinite-scroll>
 
         <ion-list #chat class="chat">
             <div id="start-of-scroll"></div>
-            <div *ngFor="let message of (contactMessages$ | async)" style="white-space: pre-line">
-                <div class="left-bubble chat-message-bubble" *ngIf="message.direction === 'Inbound'" lines="none">
+            <div *ngFor="let message of (messagesForDisplay$ | async)" style="white-space: pre-line">
+                <div class="left-bubble chat-message-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
                     <span class="msg-date" style="color: #3542e5">{{(contact | truncateEllipses:15:"a")?.a}}</span>
                     <span class="msg-date">{{message.timestamp | date:'short'}}</span>
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 </div>
-                <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isServer)" lines="none">
+                <div class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'SENT'" lines="none">
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                     <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
                     <div class="msg-date">{{message.timestamp | date:'short'}}</div>
                 </div>
-                <div class="right-bubble chat-message-bubble" *ngIf="message.direction === 'Outbound' && (message | isAttending)" lines="none">
+                <div class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                     <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
                     <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
                     <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
                 </div>
-                <div class="right-bubble chat-message-bubble failed" *ngIf="message.direction === 'Outbound' && (message | isFailed)" lines="none">
+                <div class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                     <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15:"a")?.a)}}</span>
                     <div class="msg-date">{{message.sentToServer | date:'short'}}</div>

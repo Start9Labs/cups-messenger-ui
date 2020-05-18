@@ -9,7 +9,7 @@ import { MessagesPageRoutingModule } from './messages-routing.module'
 import { MessagesPage } from './messages.page'
 import { IsAttendingPipe } from '../../pipes/is-attending.pipe'
 import { IsFailedPipe } from '../../pipes/is-failed.pipe'
-import { IsServerPipe } from '../../pipes/is-server.pipe'
+import { MessageClassificationPipe } from '../../pipes/is-server.pipe'
 import { SharingModule } from '../../modules/sharing.module'
 
 @NgModule({
@@ -20,8 +20,8 @@ import { SharingModule } from '../../modules/sharing.module'
     MessagesPageRoutingModule,
     SharingModule
   ],
-  exports: [IsAttendingPipe, IsFailedPipe, IsServerPipe],
-  declarations: [MessagesPage, IsAttendingPipe, IsFailedPipe, IsServerPipe],
+  exports: [IsAttendingPipe, IsFailedPipe, MessageClassificationPipe],
+  declarations: [MessagesPage, IsAttendingPipe, IsFailedPipe, MessageClassificationPipe],
   providers: []
 })
 export class MessagesPageModule {}
