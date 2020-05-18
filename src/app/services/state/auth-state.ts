@@ -1,7 +1,5 @@
 import { Plugins } from '@capacitor/core'
 import { BehaviorSubject, Observable } from 'rxjs'
-import { filter } from 'rxjs/operators'
-import { exists } from '../../../rxjs/util'
 const { Storage } = Plugins
 
 export enum AuthStatus {

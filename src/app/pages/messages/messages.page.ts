@@ -1,15 +1,22 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription } from 'rxjs'
+import { NavController, LoadingController } from '@ionic/angular'
+import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
 import { map, switchMap, tap, filter, take, catchError, concatMap } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
-import { config } from '../../config'
+import { config, LogLevel, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
 import { exists } from 'src/rxjs/util'
+
+
+/*
+1.) Entering message page needs loader for initial messages
+2.) Messages load we should jump to the bottom
+3.) If we're at the bottom and new messages come in, we should jump to bottom
+*/
 
 @Component({
   selector: 'app-messages',
@@ -25,7 +32,7 @@ export class MessagesPage implements OnInit {
     messagesForDisplay$: Observable<Message[]>
 
     // Used to determine whether we should present jump button
-    unreads = false
+    $unreads$ = new BehaviorSubject(false)
 
     // Synced to text entry field in UI
     messageToSend: string
@@ -35,30 +42,49 @@ export class MessagesPage implements OnInit {
         hasAllHistoricalMessages: boolean
         newestRendered: ServerMessage | undefined
         oldestRendered: ServerMessage | undefined
-    }}
+    }} = {}
 
     myTorAddress = config.myTorAddress
 
     // These will be unsubbed on ngOnDestroy
-    private ngOnInitSubs: Subscription[]
+    private ngOnInitSubs: Subscription[] = []
 
     constructor(
         private readonly nav: NavController,
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
-        private readonly stateIngestion: StateIngestionService
+        private readonly stateIngestion: StateIngestionService,
+        private readonly loadingCtrl: LoadingController
     ){
+        // html will subscribe to this to get message additions/updates
         this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c =>
-            App.emitMessages$(c.torAddress)
+            App.emitMessages$(c.torAddress).pipe(tap(() => {
+                // before new messages will appear we check if we're at the bottom of the page,
+                // if so we stay at the bottom
+                if(isAtBottom()){ this.jumpToBottom() }
+            }))
         ))
     }
 
     ngOnInit() {
         // If we view a new contact, we should begin where we last left off
         // (See MDNs IntersectionObserver for tracking read messages for a potential option)
-        this.ngOnInitSubs.push(App.emitCurrentContact$.subscribe(c => {
+
+        App.emitCurrentContact$.pipe(
+            concatMap(c => this.overlayMessagesLoader(() => this.stateIngestion.refreshMessages(c))),
+            take(1)
+        ).subscribe(() => {
+            this.jumpToBottom()
+        })
+
+        App.emitCurrentContact$.pipe(take(1)).subscribe(c => {
             this.jumpToLastViewed()
-        }))
+            this.metadata[c.torAddress] = this.metadata[c.torAddress] || {
+                hasAllHistoricalMessages: false,
+                newestRendered: undefined,
+                oldestRendered: undefined
+            }
+        })
 
         // Every time new messages or current contact changes, we update the oldest and newest message that's been loaded.
         // if we receive a new inbound messages, and we're not at the bottom of the screen, then we have unreads
@@ -66,7 +92,7 @@ export class MessagesPage implements OnInit {
             ([c, messages]) => {
                 const { updatedNewest } = this.updateViewedMessageEndpoints(c, messages.filter(server))
                 if(updatedNewest) {
-                    this.unreads = !isAtBottom()
+                    this.$unreads$.next(!isAtBottom())
                 }
             }
         ))
@@ -93,13 +119,11 @@ export class MessagesPage implements OnInit {
 
     /* Sending + Retrying Message */
 
-    // Can send with return on desktop
+    // Can send with shift+return key on desktop
     checkSubmit (e: any, contact: Contact) {
-        if (e.keyCode === 13) {
-          this.sendMessage(contact)
-        }
+        if (e.keyCode === 13) this.sendMessage(contact)
       }
-  
+
     sendMessage(contact: Contact) {
         const attendingMessage: AttendingMessage = {
             sentToServer: new Date(),
@@ -123,7 +147,9 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.$ingestMessages.next({contact, messages: [message]})
+        App.alterContactMessages$({contact, messages: [message]}).subscribe( () => {
+            this.jumpToBottom()
+        })
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
@@ -132,11 +158,11 @@ export class MessagesPage implements OnInit {
                 return of(null)
             }),
             filter(exists),
-            tap(() => Log.info(`Message sent ${JSON.stringify(message.trackingId, null, '\t')}`)),
+            tap(() => Log.info(`Message sent`, message.trackingId)),
             concatMap(() => this.stateIngestion.refreshMessages(contact))
         ).subscribe({
             next: () => {
-                this.unreads = false; this.jumpToBottom()
+                this.$unreads$.next(false); this.jumpToBottom()
             },
         })
     }
@@ -145,6 +171,7 @@ export class MessagesPage implements OnInit {
 
     async jumpToBottom() {
         if(this.content) { this.content.scrollToBottom(200) }
+        this.$unreads$.next(false)
     }
 
     // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is meh.
@@ -153,13 +180,13 @@ export class MessagesPage implements OnInit {
     }
 
     onScrollEnd(){
-        if(isAtBottom()){ this.unreads = false }
+        if(isAtBottom()){ this.$unreads$.next(false) }
     }
 
     /* older message logic */
 
     fetchOlderMessages(event: any, contact: Contact) {
-        const messagesToRetrieve = 15
+        const messagesToRetrieve = config.loadMesageBatchSize
         const oldestRendered = this.metadata[contact.torAddress].oldestRendered
         if(oldestRendered){
             this.stateIngestion.refreshMessages(
@@ -180,7 +207,7 @@ export class MessagesPage implements OnInit {
         }
     }
 
-    private  updateViewedMessageEndpoints(
+    private updateViewedMessageEndpoints(
         c: Contact, serverMessages: ServerMessage[]
     ): { updatedOldest: boolean, updatedNewest: boolean }{
         const toReturn = { updatedOldest: false, updatedNewest: false }
@@ -200,6 +227,19 @@ export class MessagesPage implements OnInit {
         }
 
         return toReturn
+    }
+
+    private overlayMessagesLoader<T>(loadingProcess: () => Observable<T>): Observable<T> {
+        return combineLatest([
+            this.loadingCtrl.create({
+                message: 'Fetching messages...',
+                spinner: 'lines',
+            }).then(l => { l.present(); return l }),
+            loadingProcess()
+        ]).pipe(
+            tap(([l]) => { l.dismiss() }),
+            map(([_, p]) => p)
+        )
     }
 }
 

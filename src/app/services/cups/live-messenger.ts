@@ -116,7 +116,7 @@ export class LiveCupsMessenger {
             )
     }
 
-    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<void> {
+    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         const headers = this.authHeaders()
         // headers = headers.set('Content-Type', 'application/octet-stream')
@@ -129,7 +129,7 @@ export class LiveCupsMessenger {
             xhr.onload = () => {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        subscriber.next()
+                        subscriber.next({})
                     } else {
                         subscriber.error(new Error(xhr.statusText))
                     }

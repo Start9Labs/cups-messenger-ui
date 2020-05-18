@@ -17,19 +17,19 @@ export interface Message {
     direction: MessageDirection
     otherParty: Contact
     text: string
-    trackingId: string
+    trackingId?: string // Set for all outbound guys
     sentToServer?: Date // Set for all outbound guys
     id?: string // Set only for all server guys (Inbounds and Sents)
     timestamp?: Date // Set only for all server guys (Inbounds and Sents)
     failure?: string // Set for failures only.
-} 
+}
 
 export interface OutboundMessage extends Message {
     direction: 'Outbound'
     sentToServer: Date
 }
 export function outbound(t: Message): t is OutboundMessage {
-    return t.sentToServer && t.direction === 'Outbound'
+    return !!t.sentToServer && t.direction === 'Outbound'
 }
 
 export interface ServerMessage extends Message {
@@ -38,11 +38,11 @@ export interface ServerMessage extends Message {
     failure: undefined
 }
 export function server(t: Message) : t is ServerMessage {
-    return t.id && t.timestamp && !t.failure
+    return !!t.id && !!t.timestamp && !t.failure
 }
 
 export interface InboundMessage extends ServerMessage {
-    direction: 'Inbound'
+    direction: 'Inbound' // trackingId is usually undefined
 }
 export function inbound(t: Message): t is InboundMessage {
     return t.direction === 'Inbound' && server(t)
@@ -63,7 +63,7 @@ export interface FailedMessage extends OutboundMessage {
     timestamp: undefined
 }
 export function failed(t: Message) : t is FailedMessage {
-    return t.failure && !t.id && !t.timestamp && outbound(t)
+    return !!t.failure && !t.id && !t.timestamp && outbound(t)
 }
 
 
@@ -76,14 +76,6 @@ export interface SentMessage extends OutboundMessage , ServerMessage {
 }
 export function sent(t: Message) : t is SentMessage {
     return outbound(t) && server(t)
-}
-
-
-
-
-export function serverMessagesOverwriteAttending(m1 : Message, m2: Message): boolean {
-    if(server(m1)) return true
-    return m1.sentToServer > m2.sentToServer
 }
 
 export type ObservableOnce<T> = Observable<T>

@@ -4,6 +4,7 @@ import { NavController } from '@ionic/angular'
 import { StateIngestionService } from '../services/state/state-ingestion/state-ingestion.service'
 import { Auth, AuthStatus } from '../services/state/auth-state'
 import { App } from '../services/state/app-state'
+import { sent, inbound, failed, attending } from '../services/cups/types'
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,12 @@ export class AppComponent {
     ngOnInit(){
         window['Auth'] = Auth
         window['App'] = App
+        window['classification'] = {
+            inbound,
+            sent,
+            failed,
+            attending
+        }
 
         this.stateIngestion.init()
         Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))

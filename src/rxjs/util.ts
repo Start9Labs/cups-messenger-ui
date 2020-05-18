@@ -1,28 +1,38 @@
-import { Observable, NextObserver, BehaviorSubject, of } from 'rxjs'
-import { concatMap, tap } from 'rxjs/operators'
+import { Observable, BehaviorSubject, of, OperatorFunction } from 'rxjs'
+import { concatMap, tap, catchError, filter, take } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 import { LogLevel, LogTopic } from 'src/app/config'
+import * as uuid from 'uuid'
 
-export function logMiddlewearer<T>(level: LogLevel, o: NextObserver<T>): NextObserver<T> {
-    return {
-        next: t => {
-            Log.safeLog({ level, msg: 'observer middlewear', object: t })
-            o.next(t)
-        }
+// Updates the state of bs with t on subscription. Subscription call back triggered when that update has completed.
+export function alterState<T>(bs: BehaviorSubject<T>, t: T): Observable<T> {
+    return of({}).pipe(
+        concatMap(() => {
+            bs.next(t)
+            return bs.asObservable()
+        }),
+        take(1)
+    )
+}
+
+// Suppressing errors is essential for observables with subscriptions which cannot die, e.g. daemon subscriptions.
+// Note that due to the filter, the subscription will never receive 'null' values,
+// however, catchError will still run emitting a log record of the exception.
+export function suppressErrorOperator<T>(processDesc: string): OperatorFunction<T, T> {
+    return o => {
+        return o.pipe(
+            catchError(e => {
+                Log.error(`Error in ${processDesc}`, e)
+                return of(null)
+            }),
+            tap(t => Log.trace(processDesc, t)),
+            filter(exists)
+        )
     }
 }
 
-export function logMiddlewearable<T>(level: LogLevel, o: Observable<T>): Observable<T> {
-    return o.pipe(tap(t => Log.safeLog({ level, msg: 'observable middlewear', object: t })))
-}
-
-export function alterState<T>(bs: BehaviorSubject<T>, t: T): Observable<T> {
-    return of(t).pipe(concatMap(() => {
-        bs.next(t)
-        return bs.asObservable()
-    }))
-}
-
+// LogBehaviorSubjects simply decorate BehaviorSubjects with logging on ingestion. Any time their state is
+// updated (or queried with getValue()) a log will be emitted of that state.
 export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
     level: LogLevel = LogLevel.INFO
     desc = 'subject'
@@ -35,6 +45,8 @@ export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
         }
         if(opt && opt.desc){
             this.desc = opt.desc
+        } else {
+            this.desc = `subject-${uuid.v4()}`
         }
         if(opt && opt.topic){
             this.topic = opt.topic

@@ -1,11 +1,21 @@
-import { Pipe, PipeTransform } from '@angular/core';
-import { Message, server } from '../services/cups/types';
+import { Pipe, PipeTransform } from '@angular/core'
+import { Message, server, sent, inbound, attending, failed } from '../services/cups/types'
 
 @Pipe({
-  name: 'isServer'
+  name: 'classify'
 })
-export class IsServerPipe implements PipeTransform {
-  transform(m: Message): boolean {
-    return server(m)
+export class MessageClassificationPipe implements PipeTransform {
+  transform(m: Message): MessageClassification {
+    if(sent(m)) return MessageClassification.SENT
+    if(inbound(m)) return MessageClassification.INBOUND
+    if(attending(m)) return MessageClassification.ATTENDING
+    return MessageClassification.FAILED
   }
+}
+
+export enum MessageClassification {
+  SENT = 'SENT',
+  INBOUND = 'INBOUND',
+  ATTENDING = 'ATTENDING',
+  FAILED = 'FAILED'
 }

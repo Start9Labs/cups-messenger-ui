@@ -21,11 +21,11 @@ function safeLog(
 
     if(object){
         try {
-            logger(`${LogTopic[lTopic]}: ${msg}, ${JSON.stringify(object)}`)
+            logger(`${lTopic}: ${msg}, ${JSON.stringify(object)}`)
         } catch {
-            logger(`${LogTopic[lTopic]}: ${msg}, ${JSON.stringify(object)}`)
+            logger(`${lTopic}: ${msg}, ${JSON.stringify(object)}`)
         }
     } else {
-        logger(`${LogTopic[lTopic]}: ${msg}`)
+        logger(`${lTopic}: ${msg}`)
     }
 }

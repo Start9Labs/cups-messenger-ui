@@ -1,12 +1,13 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, interval, of, timer, combineLatest } from 'rxjs'
-import { concatMap, tap, delay, take, repeat, first, switchMap } from 'rxjs/operators'
+import { Subscription, Observable, timer } from 'rxjs'
+import { concatMap, switchMap, map } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
-import { Refresh } from './acquire-state'
+import { ShowMessagesOptions } from '../../cups/live-messenger'
+import { suppressErrorOperator } from 'src/rxjs/util'
 
 @Injectable({providedIn: 'root'})
 export class StateIngestionService {
@@ -14,11 +15,12 @@ export class StateIngestionService {
     private messagesCooldown: Subscription
     constructor(private readonly cups: CupsMessenger){}
 
-    // can sub to this to get new contacts, update state, and react to completion at callsite.
+    // subscribe to this to get new contacts + automatically update state. Subscription callback
+    // triggered on completion of both tasks.
     refreshContacts(): Observable<ContactWithMessageCount[]>{
         return new Observable(
             subscriber => {
-                Refresh.contacts(this.cups).subscribe(
+                acquireContacts(this.cups).subscribe(
                     {
                         next: cs => {
                             App.$ingestContacts.next(cs)
@@ -26,26 +28,30 @@ export class StateIngestionService {
                         },
                         complete: () => {
                             subscriber.complete()
-                        }
+                        },
+                        error: console.error
                     }
                 )
             }
         )
     }
 
-    // can sub to this to get new messages, update state, and react to completion at callsite.
-    refreshMessages(contact: Contact): Observable<{ contact: Contact, messages: ServerMessage[] }>{
+    // subscribe to this to get new messages for contact + automatically update state. Subscription callback
+    // triggered on completion of both tasks.
+    refreshMessages(contact: Contact, options?: ShowMessagesOptions): Observable<{ contact: Contact, messages: ServerMessage[] }>{
         return new Observable(
             subscriber => {
-                Refresh.messages(this.cups, contact).subscribe(
+                acquireMessages(this.cups, contact, options).subscribe(
                     {
                         next: ms => {
+                            console.log(`acquireMessages ${JSON.stringify(ms)}`)
                             App.$ingestMessages.next(ms)
                             subscriber.next(ms)
                         },
                         complete: () => {
                             subscriber.complete()
-                        }
+                        },
+                        error: console.error
                     }
                 )
             }
@@ -66,9 +72,11 @@ export class StateIngestionService {
 
     private startContactsCooldownSub(){
         if(subIsActive(this.contactsCooldown)) return
-        this.contactsCooldown = 
+        this.contactsCooldown =
                 timer(0, config.contactsDaemon.frequency).pipe(
-                    concatMap(() => Refresh.contacts(this.cups))
+                    concatMap(
+                        () => acquireContacts(this.cups).pipe(suppressErrorOperator('acquire contacts'))
+                    )
                 )
             .subscribe(App.$ingestContacts)
     }
@@ -80,13 +88,33 @@ export class StateIngestionService {
             switchMap(contact => {
                 Log.trace(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
                 return timer(0, config.messagesDaemon.frequency).pipe(
-                    concatMap(() => Refresh.messages(this.cups, contact)),
+                    concatMap(
+                        () => acquireMessages(this.cups, contact).pipe(suppressErrorOperator('acquire messages'))
+                    ),
                 )
             }),
         ).subscribe(ms =>{
-            App.$ingestMessages.next(ms as any)
-        } )
+            App.$ingestMessages.next(ms)
+        })
     }
+}
+
+function acquireMessages(
+    cups: CupsMessenger,
+    contact: Contact,
+    options: ShowMessagesOptions = {}
+): Observable<{ contact: Contact, messages: ServerMessage[] }> {
+    return cups.messagesShow(contact, options).pipe(
+        map(ms => ({ contact, messages: ms }))
+    )
+}
+
+function acquireContacts(
+    cups: CupsMessenger
+) : Observable<ContactWithMessageCount[]> {
+    return cups.contactsShow().pipe(
+        map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
+    )
 }
 
 function subIsActive(sub: Subscription | undefined): boolean {

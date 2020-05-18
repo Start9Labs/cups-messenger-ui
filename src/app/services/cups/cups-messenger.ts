@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core'
-import { config } from '../../config'
+import { config, MockType } from '../../config'
 import { HttpClient } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
 import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
@@ -12,6 +12,12 @@ import { map } from 'rxjs/operators'
 export class CupsMessenger {
     private readonly impl
     constructor(http: HttpClient) {
+        switch(config.cupsMessenger.mock){
+            case MockType.LIVE: this.impl = new LiveCupsMessenger(http); break
+            case MockType.STANDARD_MOCK: this.impl = new MockCupsMessenger(); break
+            // case MockType.STANDARD_MOCK: this.impl = new MockCupsMessenger(); break
+        }
+
         this.impl = config.cupsMessenger.mock ? new MockCupsMessenger() : new LiveCupsMessenger(http)
     }
 
@@ -28,7 +34,7 @@ export class CupsMessenger {
         return this.impl.messagesShow(contact, options)
     }
 
-    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<void> {
+    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         return this.impl.messagesSend(contact, trackingId, message)
     }
 
