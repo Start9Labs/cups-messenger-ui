@@ -1,8 +1,8 @@
 import { LogBehaviorSubject } from 'src/rxjs/util'
-import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound } from '../cups/types'
-import { Observable, combineLatest } from 'rxjs'
-import { map, tap, take, distinctUntilChanged } from 'rxjs/operators'
-import { sortByTimestamp, diffByProjection, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
+import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, sent } from '../cups/types'
+import { Observable } from 'rxjs'
+import { map, take, distinctUntilChanged } from 'rxjs/operators'
+import { sortByTimestamp, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
 import * as uuid from 'uuid'
 import { LogLevel, LogTopic } from 'src/app/config'
 
@@ -23,37 +23,6 @@ export class MessageStore {
         })
     }
 
-    // // returns all messages excluding attendings
-    // emitFinalMessages$(): Observable<Message[]> {
-    //     return combineLatest([ this.$inbounds$, this.$sents$, this.$faileds$ ])
-    //         .pipe(
-    //             map(([, ]) => ),
-    //             map(messages => messages.sort(sortByTimestamp))
-    //         )
-    // }
-
-    // retryMessage$(f: FailedMessage): Observable<AttendingMessage> {
-    //     const newAttendingMessage = {...f, failure: undefined}
-    //     return this.$faileds$
-    //         .pipe(
-    //             tap(() => this.$ingestAppendTriggeredMessage(newAttendingMessage)),
-    //             map(faileds => diffByProjection(trackingId, faileds, [f])),
-    //             tap(([ failedWithOneRemoved, _ ]) => this.$faileds$.next(failedWithOneRemoved)),
-    //             map(() => newAttendingMessage)
-    //         )
-    // }
-
-    // sendMessage$(): Observable<AttendingMessage> {
-    //     const newAttendingMessage = {...f, failure: undefined}
-    //     return this.$faileds$
-    //         .pipe(
-    //             tap(() => this.$ingestAppendTriggeredMessage(newAttendingMessage)),
-    //             map(faileds => diffByProjection(trackingId, faileds, [f])),
-    //             tap(([ failedWithOneRemoved, _ ]) => this.$faileds$.next(failedWithOneRemoved)),
-    //             map(() => newAttendingMessage)
-    //         )
-    // }
-
     toObservable() : Observable<Message[]>{
         return this.$messages$.pipe(
             map(ms => {
@@ -62,7 +31,7 @@ export class MessageStore {
                 const sortedAs = attendings.sort(sortByTimestamp)
                 const sortedFs = finalizedMessages.sort(sortByTimestamp)
 
-                // attending messages presented after all finalized messages
+                // attending messages presented after all finalized messages.
                 return sortedAs.concat(sortedFs)
             }),
             distinctUntilChanged(eqByJSON)
@@ -93,24 +62,27 @@ export function trackingId<Q extends Message>(t: Q): string {
         // inbound messages are classified by their server id, as trackingId does not exist.
         return t.id
     } else {
-        // The nillTrackingId comes back on old server messages preceeding certain backend changes.
+        // The nillTrackingId comes back on old sent messages preceeding certain backend changes.
         // We can assign this tracking id at random as only server messages can have nillTrackingId, and
         // the server guarantees it won't send back duplicates of the same message.
         return t.trackingId === nillTrackingId ? uuid.v4() : t.trackingId
     }
 }
 
-
-function uniqueById<Q extends Message>(ms: Q[]): Q[]{
-    return uniqueBy(trackingId, ms, (m1, m2) => {
-        if(attending(m2)) return true // everything beats attending
-        if(attending(m1)) return false
-
-        if(failed(m2)) return true // now that neither are attending, everything beats failed (i.e, sent > failed)
-        if(failed(m1)) return false
-
-        return true // otherwise the records should be identical, so either one works.
-    })
+// In the case two messages have the same trackingId, true means we take m1, false means we take m2.
+export function uniqueById<Q extends Message>(ms: Q[]): Q[]{
+    return uniqueBy(trackingId, ms, messageStatusHeirarchy)
 }
 
+export function messageStatusHeirarchy<Q extends Message>(m1: Q, m2: Q) {
+    // server messages beat all
+    if(sent(m1) || inbound(m1)) return true
+    if(sent(m2) || inbound(m2)) return false
 
+    // failed beats attending if same sentToServer timestamp
+    if(failed(m1) && m1.sentToServer === m2.sentToServer) return true
+    if(failed(m2) && m2.sentToServer === m1.sentToServer) return false
+
+    if(m1.sentToServer > m2.sentToServer)  return true
+    if(m1.sentToServer <= m2.sentToServer) return false
+}

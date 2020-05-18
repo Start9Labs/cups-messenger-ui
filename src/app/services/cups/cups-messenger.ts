@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core'
 import { config, MockType } from '../../config'
 import { HttpClient } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
-import { MockCupsMessenger } from 'spec/mocks/mock-messenger'
+import { StandardMockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
 import { Auth } from '../state/auth-state'
 import { Log } from 'src/app/log'
 import { map } from 'rxjs/operators'
+import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -14,11 +15,9 @@ export class CupsMessenger {
     constructor(http: HttpClient) {
         switch(config.cupsMessenger.mock){
             case MockType.LIVE: this.impl = new LiveCupsMessenger(http); break
-            case MockType.STANDARD_MOCK: this.impl = new MockCupsMessenger(); break
-            // case MockType.STANDARD_MOCK: this.impl = new MockCupsMessenger(); break
+            case MockType.STANDARD_MOCK: this.impl = new StandardMockCupsMessenger(); break
+            case MockType.ERROR_MOCK: this.impl = new ErrorMockCupsMessenger(); break
         }
-
-        this.impl = config.cupsMessenger.mock ? new MockCupsMessenger() : new LiveCupsMessenger(http)
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageCount[]> {

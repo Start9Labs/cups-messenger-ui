@@ -141,8 +141,7 @@ export class MessagesPage implements OnInit {
     }
 
     retry(contact: Contact, failedMessage: FailedMessage) {
-        const retryMessage = {...failedMessage, sentToServer: new Date() }
-        delete retryMessage.failure
+        const retryMessage: AttendingMessage = {...failedMessage, sentToServer: new Date(), failure: undefined }
         this.send(contact, retryMessage as AttendingMessage)
     }
 
@@ -150,7 +149,6 @@ export class MessagesPage implements OnInit {
         App.alterContactMessages$({contact, messages: [message]}).subscribe( () => {
             this.jumpToBottom()
         })
-
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
                 console.error(`send message failure`, e.message)
@@ -184,7 +182,6 @@ export class MessagesPage implements OnInit {
     }
 
     /* older message logic */
-
     fetchOlderMessages(event: any, contact: Contact) {
         const messagesToRetrieve = config.loadMesageBatchSize
         const oldestRendered = this.metadata[contact.torAddress].oldestRendered

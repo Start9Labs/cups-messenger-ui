@@ -7,7 +7,7 @@ import { Log } from 'src/app/log'
 
 let contacts = mockL(mockContact, 5)
 
-export class MockCupsMessenger {
+export class StandardMockCupsMessenger {
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {
