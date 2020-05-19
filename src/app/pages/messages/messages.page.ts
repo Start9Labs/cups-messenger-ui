@@ -3,7 +3,7 @@ import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, serve
 import * as uuid from 'uuid'
 import { NavController, LoadingController } from '@ionic/angular'
 import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
-import { map, switchMap, tap, filter, take, catchError, concatMap } from 'rxjs/operators'
+import { map, switchMap, tap, filter, take, catchError, concatMap, delay } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogLevel, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
@@ -71,8 +71,8 @@ export class MessagesPage implements OnInit {
         // (See MDNs IntersectionObserver for tracking read messages for a potential option)
 
         App.emitCurrentContact$.pipe(
-            concatMap(c => overlayMessagesLoader(this.loadingCtrl, this.stateIngestion.refreshMessages(c), 'Fetching messages...')),
-            take(1)
+            concatMap(c => overlayMessagesLoader(this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...')),
+            delay(100) // this allows the page to render, then we jump
         ).subscribe(({ contact, messages }) => {
             if(messages.length < config.loadMesageBatchSize) this.metadata[contact.torAddress].hasAllHistoricalMessages = true
             this.jumpToBottom()
@@ -222,19 +222,6 @@ export class MessagesPage implements OnInit {
         }
 
         return toReturn
-    }
-
-    private overlayMessagesLoader<T>(loadingProcess: () => Observable<T>): Observable<T> {
-        return combineLatest([
-            this.loadingCtrl.create({
-                message: 'Fetching messages...',
-                spinner: 'lines',
-            }).then(l => { l.present(); return l }),
-            loadingProcess()
-        ]).pipe(
-            tap(([l]) => { l.dismiss() }),
-            map(([_, p]) => p)
-        )
     }
 }
 

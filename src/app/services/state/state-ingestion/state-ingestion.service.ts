@@ -17,10 +17,10 @@ export class StateIngestionService {
 
     // subscribe to this to get new contacts + automatically update state. Subscription callback
     // triggered on completion of both tasks.
-    refreshContacts(): Observable<ContactWithMessageCount[]>{
+    refreshContacts(testPassword?: string): Observable<ContactWithMessageCount[]>{
         return new Observable(
             subscriber => {
-                acquireContacts(this.cups).subscribe(
+                acquireContacts(this.cups, testPassword).subscribe(
                     {
                         next: cs => {
                             App.$ingestContacts.next(cs)
@@ -29,7 +29,7 @@ export class StateIngestionService {
                         complete: () => {
                             subscriber.complete()
                         },
-                        error: console.error
+                        error: e => subscriber.error(e)
                     }
                 )
             }
@@ -51,7 +51,7 @@ export class StateIngestionService {
                         complete: () => {
                             subscriber.complete()
                         },
-                        error: console.error
+                        error: e => subscriber.error(e)
                     }
                 )
             }
@@ -111,9 +111,9 @@ function acquireMessages(
 }
 
 function acquireContacts(
-    cups: CupsMessenger
+    cups: CupsMessenger, testPassword?: string
 ) : Observable<ContactWithMessageCount[]> {
-    return cups.contactsShow().pipe(
+    return cups.contactsShow(testPassword).pipe(
         tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS)),
         map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
     )

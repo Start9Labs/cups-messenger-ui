@@ -1,5 +1,5 @@
 import { Observable, BehaviorSubject, of, OperatorFunction, combineLatest } from 'rxjs'
-import { concatMap, tap, catchError, filter, take, map } from 'rxjs/operators'
+import { concatMap, tap, catchError, filter, take, map, finalize } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 import { LogLevel, LogTopic } from 'src/app/config'
 import * as uuid from 'uuid'
@@ -33,18 +33,23 @@ export function suppressErrorOperator<T>(processDesc: string): OperatorFunction<
 }
 
 export function overlayMessagesLoader<T>(
-    loading: LoadingController,
     loadingProcess: Observable<T>,
+    loading: LoadingController,
     loadingDesc: string = 'loading...'
 ): Observable<T> {
+    let loader: HTMLIonLoadingElement
     return combineLatest([
         loading.create({
             message: loadingDesc,
             spinner: 'lines',
-        }).then(l => { l.present(); return l }),
+        }).then(l => {
+            loader = l
+            loader.present()
+        }),
         loadingProcess
     ]).pipe(
-        tap(([l]) => { l.dismiss() }),
+        take(1),
+        finalize(() => loader.dismiss()),
         map(([_, p]) => p)
     )
 }

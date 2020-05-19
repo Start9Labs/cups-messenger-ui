@@ -17,7 +17,8 @@ export enum MockType {
     LIVE,
     STANDARD_MOCK,
     ERROR_MOCK,
-    NO_MESSAGES_MOCK
+    NO_MESSAGES_MOCK,
+    AUTH_MOCK
 }
 
 export interface Config {
@@ -42,7 +43,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: MockType.LIVE,
+        mock: MockType.AUTH_MOCK,
         url: '/api'
     },
     contactsDaemon: {

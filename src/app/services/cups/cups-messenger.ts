@@ -9,6 +9,7 @@ import { Log } from 'src/app/log'
 import { map } from 'rxjs/operators'
 import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 import { NoMessagesMockCupsMessenger } from 'spec/mocks/empty-messages-mock-messenger'
+import { AuthMockCupsMessenger } from 'spec/mocks/auth-mock-messenger'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -19,6 +20,7 @@ export class CupsMessenger {
             case MockType.STANDARD_MOCK: this.impl = new StandardMockCupsMessenger()      ; break
             case MockType.ERROR_MOCK: this.impl = new ErrorMockCupsMessenger()            ; break
             case MockType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
+            case MockType.AUTH_MOCK: this.impl = new AuthMockCupsMessenger()              ; break
         }
     }
 

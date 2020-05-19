@@ -2,9 +2,12 @@ import { Component, OnInit, NgZone } from '@angular/core'
 
 import { NavController, LoadingController } from '@ionic/angular'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
-import { BehaviorSubject } from 'rxjs'
+import { BehaviorSubject, of } from 'rxjs'
 import { pauseFor } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
+import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
+import { overlayMessagesLoader } from 'src/rxjs/util'
+import { catchError } from 'rxjs/operators'
 
 @Component({
   selector: 'app-signin',
@@ -20,6 +23,7 @@ export class SigninPage implements OnInit {
     private readonly navCtrl: NavController,
     private readonly ngZone: NgZone,
     private readonly loadingCtrl: LoadingController,
+    private readonly stateIngestion: StateIngestionService
   ) { }
 
   ngOnInit() {
@@ -30,23 +34,18 @@ export class SigninPage implements OnInit {
     this.error$.next(undefined)
     const pass = this.password.trim()
 
-    const loader = await this.loadingCtrl.create({
-      spinner: 'lines',
-      message: 'Authenticating password...'
+    overlayMessagesLoader(
+      this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
+    ).subscribe({
+      next: async () => {
+        await Auth.setPassword(pass)
+        this.signin()
+      },
+      error: () => {
+        console.log('We made it to the error')
+        this.error$.next(`Invalid Password`)
+      }
     })
-    await loader.present()
-
-    // TODO: make this rxjs pls
-    try {
-      await this.cups.contactsShow(pass)
-      await pauseFor(2000)
-      await Auth.setPassword(pass)
-      this.signin()
-    } catch (e) {
-      this.error$.next(`Invalid Password`)
-    } finally {
-      loader.dismiss()
-    }
   }
 
   private signin() {

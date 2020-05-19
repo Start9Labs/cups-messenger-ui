@@ -7,7 +7,6 @@ import { NavController, LoadingController } from '@ionic/angular'
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
 import { getContext } from 'ambassador-sdk'
-import { overlayMessagesLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 @Component({
   selector: 'app-contacts',
@@ -36,9 +35,6 @@ export class ContactsPage implements OnInit {
     }
 
     ngOnInit(){
-        overlayMessagesLoader(this.loadingCtrl, this.stateIngestion.refreshContacts(), 'Fetching contacts...').subscribe(() => {
-            console.log(`initted`)
-        })
     }
 
     jumpToChat(c: Contact) {

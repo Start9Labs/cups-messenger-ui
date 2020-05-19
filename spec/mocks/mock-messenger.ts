@@ -22,7 +22,7 @@ export class StandardMockCupsMessenger {
         })
     }
 
-    contactsShow (): ObservableOnce<ContactWithMessageCount[]> {
+    contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
         Log.trace('showing this.contacts', this.contacts)
         return timer(1000).pipe(map(() => this.contacts))
     }
