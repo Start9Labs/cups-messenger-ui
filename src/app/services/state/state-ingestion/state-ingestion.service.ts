@@ -1,7 +1,7 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
 import { Subscription, Observable, timer } from 'rxjs'
-import { concatMap, switchMap, map } from 'rxjs/operators'
+import { concatMap, switchMap, map, tap } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
@@ -105,6 +105,7 @@ function acquireMessages(
     options: ShowMessagesOptions = {}
 ): Observable<{ contact: Contact, messages: ServerMessage[] }> {
     return cups.messagesShow(contact, options).pipe(
+        tap(ms => Log.trace(`messages daemon returning`, ms, LogTopic.MESSAGES)),
         map(ms => ({ contact, messages: ms }))
     )
 }
@@ -113,6 +114,7 @@ function acquireContacts(
     cups: CupsMessenger
 ) : Observable<ContactWithMessageCount[]> {
     return cups.contactsShow().pipe(
+        tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS)),
         map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
     )
 }

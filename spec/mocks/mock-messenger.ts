@@ -4,33 +4,34 @@ import { of, timer, interval } from 'rxjs'
 import { map, concatMap } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { Log } from 'src/app/log'
+import { mockL, mockContact, mockMessage } from './util'
 
-let contacts = mockL(mockContact, 5)
 
 export class StandardMockCupsMessenger {
+    contacts = mockL(mockContact, 5)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {
-        contacts.forEach( c => {
+        this.contacts.forEach( c => {
             this.mocks[c.torAddress] = mockL(mockMessage, 30)
         })
         interval(5000).subscribe(i => {
-            contacts.forEach( c => {
+            this.contacts.forEach( c => {
                 this.mocks[c.torAddress].push(mockMessage(i, new Date()))
             })
         })
     }
 
     contactsShow (): ObservableOnce<ContactWithMessageCount[]> {
-        Log.trace('showing contacts', contacts)
-        return of(contacts)
+        Log.trace('showing this.contacts', this.contacts)
+        return timer(1000).pipe(map(() => this.contacts))
     }
 
     contactsAdd (contact: Contact): ObservableOnce<void> {
         return timer(2000).pipe(map(() => {
-            const nonMatchingTors = contacts.filter(c => c.torAddress !== contact.torAddress)
+            const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
             this.mocks[contact.torAddress] = []
-            contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0 }, contact))
+            this.contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0 }, contact))
         }))
     }
 
@@ -60,13 +61,12 @@ export class StandardMockCupsMessenger {
                 () => {
                     const m = {
                         timestamp: new Date(),
-                        sentToServer: new Date(),
                         direction: 'Outbound' as 'Outbound',
                         otherParty: contact,
                         text: message,
                         id: uuid.v4(),
                         trackingId,
-                        failure: undefined
+                        classification: 'Sent' as 'Sent'
                     }
                     this.mocks[contact.torAddress].push(m)
                     return {}
@@ -80,34 +80,4 @@ export class StandardMockCupsMessenger {
             )
         ).map(x => { x.timestamp = new Date(x.timestamp); return x })
     }
-}
-
-export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
-    const toReturn = []
-    for (let j = 0; j < i; j++) {
-        toReturn.push(mockF(j))
-    }
-    return toReturn
-}
-export function mockContact(i: number): ContactWithMessageCount {
-    return {
-        torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
-        name: 'contact-' + i + 'dfoifd',
-        unreadMessages: 3
-    }
-}
-export function mockMessage(i: number, dateOverride: Date = new Date(i * 1000 * 60 * 60 * 24 * 365)): ServerMessage {
-    return {
-        direction: 'Inbound',
-        otherParty: mockContact(i),
-        text: i + '--' + mockL(mockWord, 3).join(' '),
-        sentToServer: dateOverride,
-        trackingId: uuid.v4(),
-        id: uuid.v4(),
-        timestamp: dateOverride,
-        failure: undefined
-    }
-}
-function mockWord(i: number): string {
-    return uuid.v4() + i
 }

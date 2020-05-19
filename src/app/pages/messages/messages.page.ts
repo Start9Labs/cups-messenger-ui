@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
-import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server } from '../../services/cups/types'
+import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, LoadingController } from '@ionic/angular'
 import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
@@ -9,7 +9,7 @@ import { config, LogLevel, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists } from 'src/rxjs/util'
+import { exists, overlayMessagesLoader } from 'src/rxjs/util'
 
 
 /*
@@ -71,14 +71,14 @@ export class MessagesPage implements OnInit {
         // (See MDNs IntersectionObserver for tracking read messages for a potential option)
 
         App.emitCurrentContact$.pipe(
-            concatMap(c => this.overlayMessagesLoader(() => this.stateIngestion.refreshMessages(c))),
+            concatMap(c => overlayMessagesLoader(this.loadingCtrl, this.stateIngestion.refreshMessages(c), 'Fetching messages...')),
             take(1)
-        ).subscribe(() => {
+        ).subscribe(({ contact, messages }) => {
+            if(messages.length < config.loadMesageBatchSize) this.metadata[contact.torAddress].hasAllHistoricalMessages = true
             this.jumpToBottom()
         })
 
         App.emitCurrentContact$.pipe(take(1)).subscribe(c => {
-            this.jumpToLastViewed()
             this.metadata[c.torAddress] = this.metadata[c.torAddress] || {
                 hasAllHistoricalMessages: false,
                 newestRendered: undefined,
@@ -125,24 +125,21 @@ export class MessagesPage implements OnInit {
       }
 
     sendMessage(contact: Contact) {
-        const attendingMessage: AttendingMessage = {
-            sentToServer: new Date(),
+        const attendingMessage = mkAttending({
             direction: 'Outbound',
             otherParty: contact,
             text: this.messageToSend,
+            sentToServer: new Date(),
             trackingId: uuid.v4(),
-            id: undefined,
-            timestamp: undefined,
-            failure: undefined
-        }
+        })
         Log.info(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
         this.send(contact, attendingMessage)
         this.messageToSend = ''
     }
 
     retry(contact: Contact, failedMessage: FailedMessage) {
-        const retryMessage: AttendingMessage = {...failedMessage, sentToServer: new Date(), failure: undefined }
-        this.send(contact, retryMessage as AttendingMessage)
+        const retryMessage = mkAttending({...failedMessage, sentToServer: new Date(), failure: undefined} as FailedMessage)
+        this.send(contact, retryMessage)
     }
 
     send(contact: Contact, message: AttendingMessage) {
@@ -152,7 +149,8 @@ export class MessagesPage implements OnInit {
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
                 console.error(`send message failure`, e.message)
-                App.$ingestMessages.next( { contact, messages: [{...message, failure: e.message}] } )
+                const failedMessage = mkFailed({...message, failure: e.message})
+                App.$ingestMessages.next( { contact, messages: [failedMessage] } )
                 return of(null)
             }),
             filter(exists),

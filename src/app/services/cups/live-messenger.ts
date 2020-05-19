@@ -1,7 +1,7 @@
 import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
-import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
+import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, MessageClassification, InboundMessage, SentMessage, inbound, Message, sent, mkSent, mkInbound } from './types'
+import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
 import { Observable, from, interval, race } from 'rxjs'
 import { map, take, catchError } from 'rxjs/operators'
 import { Auth } from '../state/auth-state'
@@ -35,8 +35,8 @@ export class LiveCupsMessenger {
                 responseType: 'arraybuffer'
             })).pipe(
                     map(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer)),
-                    catchError( e => { 
-                        console.error('Contacts show', e); throw e 
+                    catchError( e => {
+                        console.error('Contacts show', e); throw e
                     })
                 )
         }
@@ -88,7 +88,7 @@ export class LiveCupsMessenger {
             responseType: 'arraybuffer'
         })).pipe(
                 map( arrayBuffer =>  this.parser.deserializeMessagesShow(arrayBuffer)
-                                                .map(m => ({ ...m, otherParty: contact }))
+                                                .map(m => hydrateCupsMessageResponse(contact, m))
                 ),
                 catchError(e => {
                     console.error('New messages show', JSON.stringify(e)); throw e
@@ -108,9 +108,9 @@ export class LiveCupsMessenger {
             responseType: 'arraybuffer'
         })).pipe(
                 map( arrayBuffer => this.parser.deserializeMessagesShow(arrayBuffer)
-                                               .map(m => ({ ...m, otherParty: contact }))
+                                               .map(m => hydrateCupsMessageResponse(contact, m))
                 ),
-                catchError(e => { 
+                catchError(e => {
                     console.error('New messages show', JSON.stringify(e)); throw e
                 })
             )
@@ -164,4 +164,14 @@ export type ShowNewMessagesOptions = { atLeast?: number }
 export function fillNewDefaultOptions(options: ShowNewMessagesOptions): ShowNewMessagesOptions {
     const atLeast = options.atLeast || config.loadMesageBatchSize
     return { ...options, atLeast }
+}
+
+export function hydrateCupsMessageResponse(c: Contact, m : CupsMessageShow): ServerMessage {
+    if(m.direction === 'Inbound'){
+        return mkInbound({ ...m, direction: 'Inbound', otherParty: c})
+    } else if (m.direction === 'Outbound') {
+        return mkSent({ ...m, direction: 'Outbound', otherParty: c})
+    }
+
+    throw new Error(`Unexpected direction from server ${JSON.stringify(m)}`)
 }

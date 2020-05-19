@@ -1,5 +1,5 @@
 import { LogBehaviorSubject } from 'src/rxjs/util'
-import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, sent } from '../cups/types'
+import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, outbound, local, server } from '../cups/types'
 import { Observable } from 'rxjs'
 import { map, take, distinctUntilChanged } from 'rxjs/operators'
 import { sortByTimestamp, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
@@ -61,11 +61,13 @@ export function trackingId<Q extends Message>(t: Q): string {
     if(inbound(t)){
         // inbound messages are classified by their server id, as trackingId does not exist.
         return t.id
-    } else {
+    } else if (outbound(t)) {
         // The nillTrackingId comes back on old sent messages preceeding certain backend changes.
         // We can assign this tracking id at random as only server messages can have nillTrackingId, and
         // the server guarantees it won't send back duplicates of the same message.
         return t.trackingId === nillTrackingId ? uuid.v4() : t.trackingId
+    } else {
+        throw new Error('unreachable: ' + JSON.stringify(t))
     }
 }
 
@@ -76,13 +78,20 @@ export function uniqueById<Q extends Message>(ms: Q[]): Q[]{
 
 export function messageStatusHeirarchy<Q extends Message>(m1: Q, m2: Q) {
     // server messages beat all
-    if(sent(m1) || inbound(m1)) return true
-    if(sent(m2) || inbound(m2)) return false
+    if(server(m1)) return true
+    if(server(m2)) return false
 
-    // failed beats attending if same sentToServer timestamp
-    if(failed(m1) && m1.sentToServer === m2.sentToServer) return true
-    if(failed(m2) && m2.sentToServer === m1.sentToServer) return false
+    // we can assert both m1 and m2 are now local.
 
-    if(m1.sentToServer > m2.sentToServer)  return true
-    if(m1.sentToServer <= m2.sentToServer) return false
+    if(local(m1) && local(m2)) {
+        // failed beats attending if same sentToServer timestam
+        if(failed(m1) && m1.sentToServer === m2.sentToServer) return true
+        if(failed(m2) && m2.sentToServer === m1.sentToServer) return false
+
+        // otherwise most recent attempt wins
+        if(m1.sentToServer > m2.sentToServer)  return true
+        if(m1.sentToServer <= m2.sentToServer) return false
+    } else {
+        throw new Error('unreachable')
+    }
 }

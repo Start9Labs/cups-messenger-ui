@@ -16,7 +16,8 @@ export enum LogTopic {
 export enum MockType {
     LIVE,
     STANDARD_MOCK,
-    ERROR_MOCK
+    ERROR_MOCK,
+    NO_MESSAGES_MOCK
 }
 
 export interface Config {
@@ -41,20 +42,20 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: MockType.ERROR_MOCK,
+        mock: MockType.STANDARD_MOCK,
         url: '/api'
     },
     contactsDaemon: {
         frequency: 5000
     },
     messagesDaemon: {
-        frequency: 1000
+        frequency: 3000
     },
     loadMesageBatchSize: 15,
     defaultServerTimeout: 180000,
     logs: {
         level: LogLevel.TRACE,
-        topics: [LogTopic.NAV, LogTopic.MESSAGES]
+        topics: [LogTopic.MESSAGES]
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }

@@ -1,11 +1,17 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
-import { ContactWithMessageCount, MessageDirection } from './types'
+import { ContactWithMessageCount, MessageDirection, MessageClassification } from './types'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
 
-interface CupsMessageShow { text: string, timestamp: Date, direction: MessageDirection, id: string, trackingId: string, failure: undefined }
+export interface CupsMessageShow {
+    text: string,
+    timestamp: Date,
+    direction: MessageDirection,
+    id: string,
+    trackingId: string
+ }
 export class CupsResParser {
     constructor() {}
 
@@ -93,7 +99,14 @@ function pullMessage(p: ArrayBufferParser): CupsMessageShow {
     const epochTime      = p.chopNParse(8,  bigEndian)
     const messageLength  = p.chopNParse(8,  bigEndian)
     const text           = p.chopNParse(messageLength, a => utf8Decoder.decode(a))
-    return { direction, timestamp: new Date(epochTime * 1000), text, id: String(id), trackingId, failure: undefined }
+
+    return {
+        direction,
+        timestamp: new Date(epochTime * 1000),
+        text,
+        id: String(id),
+        trackingId,
+     }
 }
 
 function pubkeyToOnion(pubkey: ArrayBuffer) {

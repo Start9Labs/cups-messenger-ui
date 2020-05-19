@@ -10,9 +10,4 @@ import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe';
   ]
 })
 export class SharingModule {
-//   static forRoot(): ModuleWithProviders {
-//     return {
-//       ngModule: SharingModule,
-//     };
-//   }
 }

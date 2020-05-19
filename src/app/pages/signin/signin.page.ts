@@ -32,6 +32,7 @@ export class SigninPage implements OnInit {
 
     const loader = await this.loadingCtrl.create({
       spinner: 'lines',
+      message: 'Authenticating password...'
     })
     await loader.present()
 

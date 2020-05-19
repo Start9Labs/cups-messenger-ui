@@ -1,8 +1,9 @@
-import { Observable, BehaviorSubject, of, OperatorFunction } from 'rxjs'
-import { concatMap, tap, catchError, filter, take } from 'rxjs/operators'
+import { Observable, BehaviorSubject, of, OperatorFunction, combineLatest } from 'rxjs'
+import { concatMap, tap, catchError, filter, take, map } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 import { LogLevel, LogTopic } from 'src/app/config'
 import * as uuid from 'uuid'
+import { LoadingController } from '@ionic/angular'
 
 // Updates the state of bs with t on subscription. Subscription call back triggered when that update has completed.
 export function alterState<T>(bs: BehaviorSubject<T>, t: T): Observable<T> {
@@ -29,6 +30,23 @@ export function suppressErrorOperator<T>(processDesc: string): OperatorFunction<
             filter(exists)
         )
     }
+}
+
+export function overlayMessagesLoader<T>(
+    loading: LoadingController,
+    loadingProcess: Observable<T>,
+    loadingDesc: string = 'loading...'
+): Observable<T> {
+    return combineLatest([
+        loading.create({
+            message: loadingDesc,
+            spinner: 'lines',
+        }).then(l => { l.present(); return l }),
+        loadingProcess
+    ]).pipe(
+        tap(([l]) => { l.dismiss() }),
+        map(([_, p]) => p)
+    )
 }
 
 // LogBehaviorSubjects simply decorate BehaviorSubjects with logging on ingestion. Any time their state is

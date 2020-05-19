@@ -7,9 +7,7 @@ import { IonicModule } from '@ionic/angular'
 import { MessagesPageRoutingModule } from './messages-routing.module'
 
 import { MessagesPage } from './messages.page'
-import { IsAttendingPipe } from '../../pipes/is-attending.pipe'
-import { IsFailedPipe } from '../../pipes/is-failed.pipe'
-import { MessageClassificationPipe } from '../../pipes/is-server.pipe'
+import { MessageClassificationPipe } from '../../pipes/classify-message.pipe'
 import { SharingModule } from '../../modules/sharing.module'
 
 @NgModule({
@@ -20,8 +18,8 @@ import { SharingModule } from '../../modules/sharing.module'
     MessagesPageRoutingModule,
     SharingModule
   ],
-  exports: [IsAttendingPipe, IsFailedPipe, MessageClassificationPipe],
-  declarations: [MessagesPage, IsAttendingPipe, IsFailedPipe, MessageClassificationPipe],
+  exports: [MessageClassificationPipe],
+  declarations: [MessagesPage, MessageClassificationPipe],
   providers: []
 })
 export class MessagesPageModule {}
