@@ -6,7 +6,7 @@ import { App } from '../../services/state/app-state'
 import { NavController } from '@ionic/angular'
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
-
+import { getContext } from 'ambassador-sdk'
 @Component({
   selector: 'app-contacts',
   templateUrl: './contacts.page.html',
@@ -31,8 +31,7 @@ export class ContactsPage implements OnInit {
     ) {
     }
 
-    ngOnInit(){
-    }
+    ngOnInit(){}
 
     jumpToChat(c: Contact) {
         Log.trace('jumping to contact', {}, LogTopic.NAV)
@@ -42,6 +41,9 @@ export class ContactsPage implements OnInit {
 
     logout(){
         Auth.clearPassword()
+        if((window as any).platform){
+            getContext().close()
+        }
     }
 
     toNewContactPage(){

@@ -1,5 +1,7 @@
 import { Plugins } from '@capacitor/core'
 import { BehaviorSubject, Observable } from 'rxjs'
+import { getContext } from 'ambassador-sdk'
+
 const { Storage } = Plugins
 
 export enum AuthStatus {
@@ -20,10 +22,21 @@ export class AuthState {
         if(p && p.value){
             this.password = p.value
             this.$status$.next(AuthStatus.VERIFIED)
-        } else {
-            this.password = undefined
-            this.$status$.next(AuthStatus.UNVERIFED)
+            return
         }
+
+        if((window as any).platform) {
+            const shellPassword = await getContext().getConfigValue(['password'], 5000)
+            if(shellPassword){
+                await Storage.set({... AuthState.passwordKey, value: shellPassword})
+                this.password = shellPassword
+                this.$status$.next(AuthStatus.VERIFIED)
+                return
+            }
+        }
+
+        this.password = undefined
+        this.$status$.next(AuthStatus.UNVERIFED)
     }
 
     emitStatus$(): Observable<AuthStatus>{
@@ -32,10 +45,7 @@ export class AuthState {
 
     async setPassword(p: string): Promise<void> {
         if(!p) return // empty password not permitted
-        await Storage.set({
-            key: 'password',
-            value: p
-        })
+        await Storage.set({... AuthState.passwordKey, value: p})
         this.init()
     }
 
