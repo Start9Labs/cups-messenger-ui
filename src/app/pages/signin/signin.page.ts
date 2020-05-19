@@ -36,6 +36,7 @@ export class SigninPage implements OnInit {
     })
     await loader.present()
 
+    // TODO: make this rxjs pls
     try {
       await this.cups.contactsShow(pass)
       await pauseFor(2000)

@@ -1,4 +1,4 @@
-import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from 'src/app/services/cups/types'
+import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 import { of, timer, interval } from 'rxjs'
 import { map, concatMap } from 'rxjs/operators'
@@ -59,15 +59,14 @@ export class StandardMockCupsMessenger {
         return timer(2000).pipe(
             map(
                 () => {
-                    const m = {
+                    const m = mkSent({
                         timestamp: new Date(),
                         direction: 'Outbound' as 'Outbound',
                         otherParty: contact,
                         text: message,
                         id: uuid.v4(),
                         trackingId,
-                        classification: 'Sent' as 'Sent'
-                    }
+                    })
                     this.mocks[contact.torAddress].push(m)
                     return {}
                 })
