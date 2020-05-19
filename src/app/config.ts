@@ -13,7 +13,7 @@ export enum LogTopic {
     NO_TOPIC = 'NO_TOPIC'
 }
 
-export enum MockType {
+export enum CupsMessengerType {
     LIVE,
     STANDARD_MOCK,
     ERROR_MOCK,
@@ -23,7 +23,7 @@ export enum MockType {
 
 export interface Config {
     cupsMessenger: {
-        mock: MockType
+        type: CupsMessengerType
         url: string
     }
     contactsDaemon: {
@@ -43,7 +43,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: MockType.AUTH_MOCK,
+        type: CupsMessengerType.LIVE,
         url: '/api'
     },
     contactsDaemon: {

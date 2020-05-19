@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core'
-import { config, MockType } from '../../config'
+import { config, CupsMessengerType } from '../../config'
 import { HttpClient } from '@angular/common/http'
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
 import { StandardMockCupsMessenger } from 'spec/mocks/mock-messenger'
@@ -15,12 +15,12 @@ import { AuthMockCupsMessenger } from 'spec/mocks/auth-mock-messenger'
 export class CupsMessenger {
     private readonly impl
     constructor(http: HttpClient) {
-        switch(config.cupsMessenger.mock){
-            case MockType.LIVE: this.impl = new LiveCupsMessenger(http)                   ; break
-            case MockType.STANDARD_MOCK: this.impl = new StandardMockCupsMessenger()      ; break
-            case MockType.ERROR_MOCK: this.impl = new ErrorMockCupsMessenger()            ; break
-            case MockType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
-            case MockType.AUTH_MOCK: this.impl = new AuthMockCupsMessenger()              ; break
+        switch(config.cupsMessenger.type){
+            case CupsMessengerType.LIVE: this.impl = new LiveCupsMessenger(http)                   ; break
+            case CupsMessengerType.STANDARD_MOCK: this.impl = new StandardMockCupsMessenger()      ; break
+            case CupsMessengerType.ERROR_MOCK: this.impl = new ErrorMockCupsMessenger()            ; break
+            case CupsMessengerType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
+            case CupsMessengerType.AUTH_MOCK: this.impl = new AuthMockCupsMessenger()              ; break
         }
     }
 
