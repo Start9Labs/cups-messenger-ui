@@ -42,7 +42,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        mock: MockType.STANDARD_MOCK,
+        mock: MockType.LIVE,
         url: '/api'
     },
     contactsDaemon: {
