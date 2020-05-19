@@ -23,35 +23,12 @@
               </ion-item>
           </div>
       </div>
-  </ion-item-group>  
-
-<!-- new contact form -->
-<div *ngIf="makeNewContactForm">
-    <ion-button style="color: #3542e5" expand="full" fill="clear" (click)="toggleNewContact()">
-        <ion-icon name="arrow-up-circle-outline"></ion-icon>
-    </ion-button>
-    
-    <ion-item>
-        <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Tor Address" [(ngModel)]="newContactTorAddress" name="message"></ion-input>
-    </ion-item>
-    <ion-item>
-        <ion-input type="text" [disabled]="submittingNewContact$ | async" placeholder="Contact Name" [(ngModel)]="newContactName" name="message"></ion-input>
-    </ion-item>
-    
-    <ion-button style="margin-top:1em; margin-bottom:1em; color: #3542e5" fill="clear" expand="full" [disabled]="submittingNewContact$ | async" (click)="submitNewContact()">
-        <ion-text>submit</ion-text>
-    </ion-button>
-
-    <ion-item text-center style="text-align: center" *ngIf="error$ | async">
-        <ion-label class="error-bar" style="color: #d00909">{{ error$ | async }}</ion-label>
-    </ion-item>
-    <ion-spinner *ngIf="submittingNewContact$ | async" name="lines" class="center-spinner" color="warning"></ion-spinner>
-</div>
-    <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button size="medium" color="white" fill="clear" (click)="toNewContactPage()">
-            <ion-icon name="add-outline"></ion-icon>
-        </ion-fab-button>
-    </ion-fab>
+</ion-item-group>  
+<ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button size="medium" color="white" fill="clear" (click)="toNewContactPage()">
+        <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+</ion-fab>
 
 </ion-content>
 

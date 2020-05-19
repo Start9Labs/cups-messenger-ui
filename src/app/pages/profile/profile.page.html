@@ -1,7 +1,7 @@
 <ion-header>
 	<ion-toolbar *ngIf="(app.emitCurrentContact$ | async) as contact">
 		<ion-buttons slot="start">
-		  	<ion-back-button [defaultHref]="['/contact-chat']"></ion-back-button>
+		  	<ion-back-button></ion-back-button>
 		</ion-buttons>
 		<ion-title>Profile</ion-title>
 		<ion-buttons slot="end">
@@ -23,6 +23,6 @@
 			</ion-text>
 		</ion-item>
 	</ion-item-group>
-	<ion-text class="ion-text-wrap" color="danger">{{ error }}</ion-text>
+	<ion-text class="ion-text-wrap" color="danger">{{ $error$ | async }}</ion-text>
 
 </ion-content>

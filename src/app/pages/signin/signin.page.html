@@ -16,7 +16,7 @@
             </ion-button>
         </ion-list>
     </form>
-    <ion-item text-center *ngIf="error$ | async" lines="none">
-        <ion-label class="error-bar" color="danger">{{ error$ | async }}</ion-label>
+    <ion-item text-center *ngIf="$error$ | async" lines="none">
+        <ion-label class="error-bar" color="danger">{{ $error$ | async }}</ion-label>
     </ion-item>
 </ion-content>

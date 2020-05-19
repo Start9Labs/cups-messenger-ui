@@ -3,7 +3,7 @@ import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, serve
 import * as uuid from 'uuid'
 import { NavController, LoadingController } from '@ionic/angular'
 import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
-import { map, switchMap, tap, filter, take, catchError, concatMap, delay } from 'rxjs/operators'
+import { map, switchMap, tap, filter, take, catchError, concatMap, delay, distinctUntilChanged } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogLevel, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
@@ -37,7 +37,9 @@ export class MessagesPage implements OnInit {
     // Synced to text entry field in UI
     messageToSend: string
 
-    // Save particular data about what to view. Timestamps can be moved to DB hypothetically.
+    // Save particular data about what to view. Timestamps can be moved to DB in future iterations.
+    // newest rendered should be used to jump to last viewed in future iterations
+    // oldest rendered is used for fetching older messages
     metadata: { [ tor: string ]: {
         hasAllHistoricalMessages: boolean
         newestRendered: ServerMessage | undefined
@@ -64,21 +66,26 @@ export class MessagesPage implements OnInit {
                 if(isAtBottom()){ this.jumpToBottom() }
             }))
         ))
+
     }
 
     ngOnInit() {
-        // If we view a new contact, we should begin where we last left off
-        // (See MDNs IntersectionObserver for tracking read messages for a potential option)
-
+        // If we view a new contact, we should jump to the bottom of the page
         App.emitCurrentContact$.pipe(
-            concatMap(c => overlayMessagesLoader(this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...')),
-            delay(100) // this allows the page to render, then we jump
+            distinctUntilChanged((c1, c2) => c1.torAddress === c2.torAddress),
+            concatMap(c =>
+                overlayMessagesLoader(this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...')
+            ),
+            delay(100) // this allows the page to render, then we jump to bottom
         ).subscribe(({ contact, messages }) => {
             if(messages.length < config.loadMesageBatchSize) this.metadata[contact.torAddress].hasAllHistoricalMessages = true
             this.jumpToBottom()
         })
 
-        App.emitCurrentContact$.pipe(take(1)).subscribe(c => {
+        App.emitCurrentContact$.pipe(
+            distinctUntilChanged((c1, c2) => c1.torAddress === c2.torAddress),
+            take(1),
+        ).subscribe(c => {
             this.metadata[c.torAddress] = this.metadata[c.torAddress] || {
                 hasAllHistoricalMessages: false,
                 newestRendered: undefined,
@@ -96,6 +103,10 @@ export class MessagesPage implements OnInit {
                 }
             }
         ))
+    }
+
+    ionViewWillEnter(){
+        this.jumpToBottom(0) // blech, we also need this in case we navigate to the page from the back button on the profile page
     }
 
     ngOnDestroy(): void {
@@ -165,8 +176,8 @@ export class MessagesPage implements OnInit {
 
     /* Jumping logic */
 
-    async jumpToBottom() {
-        if(this.content) { this.content.scrollToBottom(200) }
+    async jumpToBottom(timeToScroll = 200) {
+        if(this.content) { this.content.scrollToBottom(timeToScroll) }
         this.$unreads$.next(false)
     }
 

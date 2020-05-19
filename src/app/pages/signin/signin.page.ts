@@ -8,6 +8,7 @@ import { Auth } from '../../services/state/auth-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { overlayMessagesLoader } from 'src/rxjs/util'
 import { catchError } from 'rxjs/operators'
+import { Log } from 'src/app/log'
 
 @Component({
   selector: 'app-signin',
@@ -16,7 +17,7 @@ import { catchError } from 'rxjs/operators'
 })
 export class SigninPage implements OnInit {
   password = ''
-  error$ = new BehaviorSubject(undefined)
+  $error$ = new BehaviorSubject(undefined)
 
   constructor(
     private readonly cups: CupsMessenger,
@@ -31,7 +32,7 @@ export class SigninPage implements OnInit {
   }
 
   async enterCupsMessengerPassword() {
-    this.error$.next(undefined)
+    this.$error$.next(undefined)
     const pass = this.password.trim()
 
     overlayMessagesLoader(
@@ -41,9 +42,9 @@ export class SigninPage implements OnInit {
         await Auth.setPassword(pass)
         this.signin()
       },
-      error: () => {
-        console.log('We made it to the error')
-        this.error$.next(`Invalid Password`)
+      error: (e) => {
+        Log.error(`Error on login`, e)
+        this.$error$.next(`Invalid Password`)
       }
     })
   }
