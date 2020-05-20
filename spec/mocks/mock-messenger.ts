@@ -1,7 +1,7 @@
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 import { of, timer, interval } from 'rxjs'
-import { map, concatMap } from 'rxjs/operators'
+import { map, concatMap, take } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { Log } from 'src/app/log'
 import { mockL, mockContact, mockMessage } from './util'
@@ -24,7 +24,7 @@ export class StandardMockCupsMessenger {
 
     contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
         Log.trace('showing this.contacts', this.contacts)
-        return timer(1000).pipe(map(() => this.contacts))
+        return timer(1000).pipe(map(() => this.contacts), take(1))
     }
 
     contactsAdd (contact: Contact): ObservableOnce<void> {
@@ -32,7 +32,18 @@ export class StandardMockCupsMessenger {
             const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
             this.mocks[contact.torAddress] = []
             this.contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0 }, contact))
-        }))
+        }), take(1))
+    }
+
+    contactsDelete(contact: Contact): ObservableOnce<void> {
+        return timer(2000).pipe(
+            take(1),
+            map(() => {
+                const index = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
+                if(index < 0) throw new Error('contact not found')
+                this.contacts.splice(index, 1)
+            })
+        )
     }
 
     messagesShow (contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
@@ -48,7 +59,7 @@ export class StandardMockCupsMessenger {
         } else {
             toReturn = of(messages.slice(messages.length - limit + 1, messages.length))
         }
-        return timer(1000).pipe(concatMap(() => toReturn))
+        return timer(1000).pipe(concatMap(() => toReturn), take(1))
     }
 
     newMessagesShow(): ObservableOnce<ServerMessage[]> {
@@ -57,21 +68,22 @@ export class StandardMockCupsMessenger {
 
     messagesSend (contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         return timer(2000).pipe(
-            map(
-                () => {
-                    const m = mkSent({
-                        timestamp: new Date(),
-                        direction: 'Outbound' as 'Outbound',
-                        otherParty: contact,
-                        text: message,
-                        id: uuid.v4(),
-                        trackingId,
-                    })
-                    this.mocks[contact.torAddress].push(m)
-                    return {}
+            map(() => {
+                const m = mkSent({
+                    timestamp: new Date(),
+                    direction: 'Outbound' as 'Outbound',
+                    otherParty: contact,
+                    text: message,
+                    id: uuid.v4(),
+                    trackingId,
                 })
-            )
+                this.mocks[contact.torAddress].push(m)
+                return {}
+            }),
+            take(1)
+        )
     }
+
     private getMessageMocks (c: Contact): ServerMessage[] {
         return JSON.parse(
             JSON.stringify(

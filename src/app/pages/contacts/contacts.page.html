@@ -13,14 +13,22 @@
   <!-- contacts list -->
   <ion-item-group>
       <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
+    
           <div *ngIf="(app.emitCurrentContact$ | async) || {}; let cc" >
-              <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(app.emitCurrentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
-                  <ion-avatar slot="start">
-                      <text-avatar [text]='(contact | truncateEllipses:18)'></text-avatar>
-                  </ion-avatar>
-                  <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
-                  <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((app.emitCurrentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
-              </ion-item>
+            <ion-item-sliding>
+
+                <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(app.emitCurrentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
+                    <ion-avatar slot="start">
+                        <text-avatar [text]='(contact | truncateEllipses:18)'></text-avatar>
+                    </ion-avatar>
+                    <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
+                    <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((app.emitCurrentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
+                </ion-item>
+
+                <ion-item-options side="end">
+                    <ion-item-option (click)="deleteContact(contact)">Delete</ion-item-option>
+                </ion-item-options>
+            </ion-item-sliding>
           </div>
       </div>
 </ion-item-group>  

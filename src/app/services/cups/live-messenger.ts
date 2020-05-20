@@ -86,7 +86,7 @@ export class LiveCupsMessenger {
             params,
             headers: this.authHeaders(),
             responseType: 'arraybuffer'
-        })).pipe(map( () => {} ))
+        })).pipe(map(() => {}))
     }
 
     messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {

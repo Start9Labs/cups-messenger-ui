@@ -9,7 +9,7 @@ import { config, LogLevel, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, overlayMessagesLoader } from 'src/rxjs/util'
+import { exists, overlayLoader } from 'src/rxjs/util'
 
 
 /*
@@ -74,7 +74,7 @@ export class MessagesPage implements OnInit {
         App.emitCurrentContact$.pipe(
             distinctUntilChanged((c1, c2) => c1.torAddress === c2.torAddress),
             concatMap(c =>
-                overlayMessagesLoader(this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...')
+                overlayLoader(this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...')
             ),
             delay(100) // this allows the page to render, then we jump to bottom
         ).subscribe(({ contact, messages }) => {

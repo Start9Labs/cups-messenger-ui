@@ -6,7 +6,7 @@ import { BehaviorSubject, of } from 'rxjs'
 import { pauseFor } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { overlayMessagesLoader } from 'src/rxjs/util'
+import { overlayLoader } from 'src/rxjs/util'
 import { catchError } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 
@@ -35,7 +35,7 @@ export class SigninPage implements OnInit {
     this.$error$.next(undefined)
     const pass = this.password.trim()
 
-    overlayMessagesLoader(
+    overlayLoader(
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
     ).subscribe({
       next: async () => {

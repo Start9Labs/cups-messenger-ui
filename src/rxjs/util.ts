@@ -32,19 +32,22 @@ export function suppressErrorOperator<T>(processDesc: string): OperatorFunction<
     }
 }
 
-export function overlayMessagesLoader<T>(
+export function overlayLoader<T>(
     loadingProcess: Observable<T>,
     loading: LoadingController,
     loadingDesc: string = 'loading...'
 ): Observable<T> {
     let loader: HTMLIonLoadingElement
-    return from(loading.create({
-        message: loadingDesc,
-        spinner: 'lines',
-    }).then(l => {
-        loader = l
-        loader.present()
-    })).pipe(
+
+    return from(
+        loading.create({
+            message: loadingDesc,
+            spinner: 'lines',
+        }).then(l => {
+            loader = l
+            loader.present()
+        })
+    ).pipe(
         concatMap(() => loadingProcess),
         take(1),
         finalize(() => {

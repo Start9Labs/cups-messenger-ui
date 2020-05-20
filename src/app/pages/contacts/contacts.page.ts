@@ -3,10 +3,14 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageCount, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
-import { NavController } from '@ionic/angular'
+import { NavController, LoadingController } from '@ionic/angular'
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
 import { getContext } from 'ambassador-sdk'
+import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
+import { overlayLoader } from 'src/rxjs/util'
+import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
+import { concatMap } from 'rxjs/operators'
 @Component({
   selector: 'app-contacts',
   templateUrl: './contacts.page.html',
@@ -28,10 +32,18 @@ export class ContactsPage implements OnInit {
     constructor(
         private readonly navController: NavController,
         private readonly zone: NgZone,
+        private readonly cups: CupsMessenger,
+        private readonly loadingCtrl: LoadingController,
+        private readonly stateIngestion: StateIngestionService
     ) {
     }
 
     ngOnInit(){
+        if(!this.app.hasLoadedContacts){
+            overlayLoader(
+                this.stateIngestion.refreshContacts(), this.loadingCtrl, 'Fetching contacts...'
+            ).subscribe(() => {})
+        }
     }
 
     jumpToChat(c: Contact) {
@@ -52,5 +64,14 @@ export class ContactsPage implements OnInit {
         this.zone.run(() => {
             this.navController.navigateForward('new-contact')
         })
+    }
+
+    deleteContact(c: Contact){
+        overlayLoader(
+            this.cups.contactsDelete(c).pipe(
+                concatMap(() => this.stateIngestion.refreshContacts())
+            ),
+            this.loadingCtrl, `Deleting ${c.name || 'contact'}...`
+        ).subscribe(() => Log.info(`Contact ${c.torAddress} deleted`))
     }
 }
