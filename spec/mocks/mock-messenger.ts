@@ -8,6 +8,7 @@ import { mockL, mockContact, mockMessage } from './util'
 
 
 export class StandardMockCupsMessenger {
+    readonly serverTimeToLoad: number = 2000
     contacts = mockL(mockContact, 5)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
@@ -24,11 +25,11 @@ export class StandardMockCupsMessenger {
 
     contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
         Log.trace('showing this.contacts', this.contacts)
-        return timer(1000).pipe(map(() => this.contacts), take(1))
+        return timer(this.serverTimeToLoad).pipe(map(() => this.contacts), take(1))
     }
 
     contactsAdd (contact: Contact): ObservableOnce<void> {
-        return timer(2000).pipe(map(() => {
+        return timer(this.serverTimeToLoad).pipe(map(() => {
             const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
             this.mocks[contact.torAddress] = []
             this.contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0 }, contact))
@@ -36,7 +37,7 @@ export class StandardMockCupsMessenger {
     }
 
     contactsDelete(contact: Contact): ObservableOnce<void> {
-        return timer(2000).pipe(
+        return timer(this.serverTimeToLoad).pipe(
             take(1),
             map(() => {
                 const index = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
@@ -59,7 +60,7 @@ export class StandardMockCupsMessenger {
         } else {
             toReturn = of(messages.slice(messages.length - limit + 1, messages.length))
         }
-        return timer(1000).pipe(concatMap(() => toReturn), take(1))
+        return timer(this.serverTimeToLoad).pipe(concatMap(() => toReturn), take(1))
     }
 
     newMessagesShow(): ObservableOnce<ServerMessage[]> {
@@ -67,7 +68,7 @@ export class StandardMockCupsMessenger {
     }
 
     messagesSend (contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
-        return timer(2000).pipe(
+        return timer(this.serverTimeToLoad).pipe(
             map(() => {
                 const m = mkSent({
                     timestamp: new Date(),

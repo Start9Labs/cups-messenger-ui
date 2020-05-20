@@ -18,7 +18,8 @@ export enum CupsMessengerType {
     STANDARD_MOCK,
     ERROR_MOCK,
     NO_MESSAGES_MOCK,
-    AUTH_MOCK
+    AUTH_MOCK,
+    FAST_MOCK
 }
 
 export interface Config {
@@ -43,7 +44,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.STANDARD_MOCK,
+        type: CupsMessengerType.FAST_MOCK,
         url: '/api'
     },
     contactsDaemon: {

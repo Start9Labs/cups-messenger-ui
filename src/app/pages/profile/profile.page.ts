@@ -42,7 +42,7 @@ export class ProfilePage {
             ), this.loadingCtrl, 'Updating name...'
         ).subscribe({
             next: () => {
-              this.zone.run(() => this.nav.navigateBack('messages'))
+              this.zone.run(() => this.nav.back())
             },
             error: e => {
               this.$error$.next(e.message)

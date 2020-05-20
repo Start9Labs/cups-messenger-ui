@@ -16,8 +16,11 @@ export class TextAvatarComponent {
 
   public firstLetter = ''
   public styles = {
-    'background-color': '#fff',
-    color: '#000'
+    'background-color': 'var(--ion-color-medium)',
+    'color': 'var(--ion-text-color)',
+    'border-width': '1.5px',
+    'border-style': 'double',
+    'border-color': 'var(--ion-color-medium-shade)',
   }
 
   constructor (private colorGenerator: ColorGenerator) {}
@@ -29,7 +32,7 @@ export class TextAvatarComponent {
 
     this.firstLetter = this.extractFirstCharacter(text)
 
-    this.styles = { ...this.styles, 'background-color': '#e8e8e8', color: textColor }
+    this.styles = { ...this.styles, color: textColor }
   }
 
   private extractFirstCharacter(text: string): string {

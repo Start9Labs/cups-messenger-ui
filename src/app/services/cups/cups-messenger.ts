@@ -10,6 +10,7 @@ import { map } from 'rxjs/operators'
 import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 import { NoMessagesMockCupsMessenger } from 'spec/mocks/empty-messages-mock-messenger'
 import { AuthMockCupsMessenger } from 'spec/mocks/auth-mock-messenger'
+import { FastMockMessenger } from 'spec/mocks/fast-mock-messenger'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
@@ -21,6 +22,7 @@ export class CupsMessenger {
             case CupsMessengerType.ERROR_MOCK: this.impl = new ErrorMockCupsMessenger()            ; break
             case CupsMessengerType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
             case CupsMessengerType.AUTH_MOCK: this.impl = new AuthMockCupsMessenger()              ; break
+            case CupsMessengerType.FAST_MOCK: this.impl = new FastMockMessenger()                  ; break
         }
     }
 

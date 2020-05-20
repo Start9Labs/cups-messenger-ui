@@ -34,7 +34,8 @@ export class ContactsPage implements OnInit {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly loadingCtrl: LoadingController,
-        private readonly stateIngestion: StateIngestionService
+        private readonly stateIngestion: StateIngestionService,
+        private readonly nav: NavController
     ) {
     }
 
@@ -73,5 +74,13 @@ export class ContactsPage implements OnInit {
             ),
             this.loadingCtrl, `Deleting ${c.name || 'contact'}...`
         ).subscribe(() => Log.info(`Contact ${c.torAddress} deleted`))
+    }
+
+    editContact(c: Contact){
+        this.app.alterCurrentContact$(c).subscribe(() => {
+            this.zone.run(() => {
+                this.nav.navigateForward('profile')
+            })
+        })
     }
 }
