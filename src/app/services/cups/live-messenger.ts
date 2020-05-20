@@ -1,10 +1,11 @@
 import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, MessageClassification, InboundMessage, SentMessage, inbound, Message, sent, mkSent, mkInbound } from './types'
+import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, mkSent, mkInbound } from './types'
 import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
 import { Observable, from, interval, race } from 'rxjs'
 import { map, take, catchError } from 'rxjs/operators'
 import { Auth } from '../state/auth-state'
+import { Log } from 'src/app/log'
 
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
@@ -26,24 +27,25 @@ export class LiveCupsMessenger {
     }
 
     contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageCount[]> {
-        try {
-            return withTimeout(this.http.get(this.hostUrl, {
-                params: {
-                    type: 'users'
-                },
-                headers: this.authHeaders(loginTestPassword),
-                responseType: 'arraybuffer'
-            })).pipe(
-                    map(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer)),
-                    catchError( e => {
-                        console.error('Contacts show', e); throw e
-                    })
-                )
-        }
-        catch (e) {
-            console.error('Contacts show', e)
-            throw e
-        }
+        return withTimeout(this.http.get(this.hostUrl, {
+            params: {
+                type: 'users'
+            },
+            headers: this.authHeaders(loginTestPassword),
+            responseType: 'arraybuffer'
+        }).pipe(
+            catchError(e => {
+                console.error('We have ourselves an error here...', JSON.stringify(e))
+                console.error('We have ourselves an error here...', e.status)
+                if(e.status === 401){ Auth.clearPassword() }
+                throw e
+            })
+        )).pipe(
+                map(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer)),
+                catchError( e => {
+                    Log.error('Contacts show', e); throw e
+                })
+            )
     }
 
     contactsAdd(contact: Contact): ObservableOnce<void> {
@@ -58,7 +60,7 @@ export class LiveCupsMessenger {
                     if (xhr.status === 200) {
                         subscriber.next()
                     } else {
-                        subscriber.error(new Error(xhr.statusText))
+                        subscriber.error(xhr)
                     }
                 }
             }
@@ -72,6 +74,19 @@ export class LiveCupsMessenger {
                 subscriber.error(e)
             }
         })
+    }
+
+    contactsDelete(contact: Contact): ObservableOnce<void> {
+        const params = {
+            type: 'delete',
+            user: onionToPubkeyString(contact.torAddress),
+        }
+
+        return withTimeout(this.http.delete(this.hostUrl, {
+            params,
+            headers: this.authHeaders(),
+            responseType: 'arraybuffer'
+        })).pipe(map( () => {} ))
     }
 
     messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
@@ -131,7 +146,7 @@ export class LiveCupsMessenger {
                     if (xhr.status === 200) {
                         subscriber.next({})
                     } else {
-                        subscriber.error(new Error(xhr.statusText))
+                        subscriber.error(xhr)
                     }
                 }
             }

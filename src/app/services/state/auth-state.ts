@@ -1,6 +1,8 @@
 import { Plugins } from '@capacitor/core'
-import { BehaviorSubject, Observable } from 'rxjs'
+import { BehaviorSubject, Observable, NextObserver } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
+import { LogBehaviorSubject } from 'src/rxjs/util'
+import { LogLevel } from 'src/app/config'
 
 const { Storage } = Plugins
 
@@ -11,7 +13,7 @@ export enum AuthStatus {
 export class AuthState {
     private static readonly passwordKey = { key: 'password' }
     password: string = undefined
-    private readonly $status$: BehaviorSubject<AuthStatus> = new BehaviorSubject(AuthStatus.UNVERIFED)
+    private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })
 
     constructor(){
     }
@@ -37,6 +39,10 @@ export class AuthState {
 
         this.password = undefined
         this.$status$.next(AuthStatus.UNVERIFED)
+    }
+
+    $ingestStatus(): NextObserver<AuthStatus> {
+        return { next: a => this.$status$.next(a) }
     }
 
     emitStatus$(): Observable<AuthStatus>{

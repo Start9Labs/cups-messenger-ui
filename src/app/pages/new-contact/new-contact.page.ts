@@ -7,6 +7,7 @@ import { NavController, LoadingController } from '@ionic/angular'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { App } from 'src/app/services/state/app-state'
 import { sanitizeOnion, ensureNewTor as ensureNewTorAddress, sanitizeName } from 'src/app/update-contact-util'
+import { overlayMessagesLoader } from 'src/rxjs/util'
 
 @Component({
   selector: 'app-new-contact',
@@ -34,18 +35,14 @@ export class NewContactPage implements OnInit {
   }
 
   wipeCurrentContact(){
-    App.alterCurrentContact$(undefined)      
+    App.alterCurrentContact$(undefined)
   }
 
   async save() {
     this.$error$.next(undefined)
-    const loader = await this.loadingCtrl.create({
-      message: 'Creating contact...',
-      spinner: 'lines',
-    })
-    await loader.present()
 
-    App.emitContacts$.pipe(take(1)).pipe(
+    overlayMessagesLoader(
+      App.emitContacts$.pipe(take(1)).pipe(
         map(cs => {
           const sanitizedTorOnion = ensureNewTorAddress(
             cs, sanitizeOnion(this.torAddress)
@@ -58,13 +55,12 @@ export class NewContactPage implements OnInit {
         }),
         concatMap(c => this.cups.contactsAdd(c)),
         concatMap(() => this.stateIngestion.refreshContacts()),
+      ), this.loadingCtrl, 'Creating contact...'
     ).subscribe({
         next: () => {
-          loader.dismiss()
           this.zone.run(() => this.nav.back())
         },
         error: e => {
-          loader.dismiss()
           this.$error$.next(e.message)
         },
     })

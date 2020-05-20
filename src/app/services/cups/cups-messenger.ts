@@ -33,6 +33,10 @@ export class CupsMessenger {
         return this.impl.contactsAdd(contact).pipe(map(() => contact))
     }
 
+    contactsDelete(contact: Contact): ObservableOnce<void> {
+        return this.impl.contactsDelete(contact)
+    }
+
     messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         return this.impl.messagesShow(contact, options)
     }

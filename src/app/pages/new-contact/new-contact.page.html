@@ -22,6 +22,6 @@
     </ion-item>
     </ion-item-group>
     <div *ngIf="($error$ | async) as error">
-      <ion-text class="ion-text-wrap" color="danger">{{ error }}</ion-text>
+      <ion-text class="ion-text-wrap" color="danger">{{ $error$ | async }}</ion-text>
     </div>
 </ion-content>

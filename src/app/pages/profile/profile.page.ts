@@ -7,6 +7,7 @@ import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { sanitizeName } from 'src/app/update-contact-util'
+import { overlayMessagesLoader } from 'src/rxjs/util'
 
 @Component({
   selector: 'profile',
@@ -31,30 +32,24 @@ export class ProfilePage {
     }
 
     async save(c: Contact) {
-        const loader = await this.loadingCtrl.create({
-            message: 'Updating name...',
-            spinner: 'lines',
-        })
-        await loader.present()
-
-        of({}).pipe(
-            map(() => {
-                const sanitizedName = sanitizeName(this.contactName)
-                return {
-                    ...c,
-                    name: sanitizedName
-                }
-              }),
-              concatMap(c2 => this.cups.contactsAdd(c2)),
-              concatMap(c2 => App.alterCurrentContact$(c2)),
-              concatMap(() => this.stateIngestion.refreshContacts()),
+        overlayMessagesLoader(
+            of({}).pipe(
+                map(() => {
+                    const sanitizedName = sanitizeName(this.contactName)
+                    return {
+                        ...c,
+                        name: sanitizedName
+                    }
+                  }),
+                  concatMap(c2 => this.cups.contactsAdd(c2)),
+                  concatMap(c2 => App.alterCurrentContact$(c2)),
+                  concatMap(() => this.stateIngestion.refreshContacts()),
+            ), this.loadingCtrl, 'Updating name...'
         ).subscribe({
             next: () => {
-              loader.dismiss()
               this.zone.run(() => this.nav.navigateBack('messages'))
             },
             error: e => {
-              loader.dismiss()
               this.$error$.next(e.message)
             },
         })

@@ -13,7 +13,7 @@ export class AuthMockCupsMessenger extends StandardMockCupsMessenger {
         if(tp && tp !== this.requiredPassword){
             return of({}).pipe(
                 delay(1000),
-                tap(() => { throw new Error('Invalid password!') }),
+                tap(() => { throw { status:401 }}),
                 map(() => [])
             )
         } else {
