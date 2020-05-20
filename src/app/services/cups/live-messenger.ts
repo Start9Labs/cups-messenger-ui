@@ -78,8 +78,8 @@ export class LiveCupsMessenger {
 
     contactsDelete(contact: Contact): ObservableOnce<void> {
         const params = {
-            type: 'delete',
-            user: onionToPubkeyString(contact.torAddress),
+            type: 'user',
+            pubkey: onionToPubkeyString(contact.torAddress),
         }
 
         return withTimeout(this.http.delete(this.hostUrl, {
