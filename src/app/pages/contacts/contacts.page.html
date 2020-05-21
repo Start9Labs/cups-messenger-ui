@@ -16,10 +16,9 @@
     
           <div *ngIf="(app.emitCurrentContact$ | async) || {}; let cc" >
             <ion-item-sliding>
-
                 <ion-item class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
-                    <ion-badge class="badge-contact" slot="start" *ngIf="contact.unreadMessages > 0">-</ion-badge>    
-                    <ion-avatar class="item-avatar" slot="start">
+                    <!-- <ion-badge class="badge-contact" slot="start" *ngIf="contact.unreadMessages > 0">-</ion-badge>     -->
+                    <ion-avatar [class.item-avatar]="contact.unreadMessages === 0" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
                         <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
                     </ion-avatar>
                     <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
@@ -33,7 +32,7 @@
       </div>
 </ion-item-group>  
 <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button size="small" fill="clear" color="var(--ion-text-color)" (click)="toNewContactPage()">
+    <ion-fab-button class="new-contact-button" size="small" fill="clear" color="primary" (click)="toNewContactPage()">
         <ion-icon name="add-outline"></ion-icon>
     </ion-fab-button>
 </ion-fab>

@@ -19,6 +19,7 @@ export class StandardMockCupsMessenger {
         interval(5000).subscribe(i => {
             this.contacts.forEach( c => {
                 this.mocks[c.torAddress].push(mockMessage(i, new Date()))
+                c.unreadMessages = 1
             })
         })
     }
@@ -47,20 +48,24 @@ export class StandardMockCupsMessenger {
         )
     }
 
-    messagesShow (contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
+    messagesShow (contact: ContactWithMessageCount, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
         const messages = this.getMessageMocks(contact)
-        let toReturn: ObservableOnce<ServerMessage[]>
+        let toReturn: ServerMessage[]
         if(offset){
             const i = messages.findIndex(m => m.id && m.id === offset.id)
             switch(offset.direction){
-                case 'after'  : toReturn = of(messages.slice(i + 1, i + 1 + limit)); break
-                case 'before' : toReturn = of(messages.slice(i - limit, i)); break
+                case 'after'  : toReturn = messages.slice(i + 1, i + 1 + limit); break
+                case 'before' : toReturn = messages.slice(i - limit, i); break
             }
         } else {
-            toReturn = of(messages.slice(messages.length - limit + 1, messages.length))
+            toReturn = messages.slice(messages.length - limit + 1, messages.length)
         }
-        return timer(this.serverTimeToLoad).pipe(concatMap(() => toReturn), take(1))
+        const i = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
+        
+        this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
+
+        return timer(this.serverTimeToLoad).pipe(map(() => toReturn), take(1))
     }
 
     newMessagesShow(): ObservableOnce<ServerMessage[]> {

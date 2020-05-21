@@ -15,12 +15,15 @@ export class TextAvatarComponent {
   @Input() textColor: string
 
   public firstLetter = ''
+
+  
+
   public styles = {
-    'background-color': 'var(--ion-color-medium)',
-    'color': 'var(--ion-text-color)',
-    'border-width': '1.5px',
-    'border-style': 'double',
-    'border-color': 'var(--ion-color-medium-shade)',
+
+//     border-width: 3.5px;
+// border-style: double;
+// border-color: var(--ion-color-medium-shade);
+//     // 'background-color': 'var(--ion-color-medium)',
   }
 
   constructor (private colorGenerator: ColorGenerator) {}
@@ -28,11 +31,10 @@ export class TextAvatarComponent {
   ngOnChanges(changes: SimpleChanges) {
     const text = changes.text ? changes.text.currentValue : null
     const color = changes.color ? changes.color.currentValue : null
-    const textColor = changes.textColor ? changes.textColor.currentValue : this.styles.color
 
     this.firstLetter = this.extractFirstCharacter(text)
 
-    this.styles = { ...this.styles, color: textColor }
+    this.styles = {  }
   }
 
   private extractFirstCharacter(text: string): string {

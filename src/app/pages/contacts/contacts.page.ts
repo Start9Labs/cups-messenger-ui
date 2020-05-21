@@ -47,6 +47,14 @@ export class ContactsPage implements OnInit {
         }
     }
 
+    ionViewWillEnter() {
+        App.$contactInView$.next(false)
+    }
+
+    ionViewWillLeave() {
+        App.$contactInView$.next(true)
+    }
+
     jumpToChat(c: Contact) {
         Log.trace('jumping to contact', c, LogTopic.NAV)
         App.$ingestCurrentContact.next(c)

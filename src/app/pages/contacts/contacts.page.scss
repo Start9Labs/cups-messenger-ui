@@ -12,32 +12,50 @@
     // // padding-right: 10px;
     // padding-bottom: 5px;
     // padding-top: 5px;
-    
+    animation-name: color;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
 }
 
-.ion-item{
-    --background-activated: red;
+
+.item-avatar {
+    background-color: #222;
+    // animation-name: color;
+    border-style: solid;
+    // animation-duration: 2s;
+    border-width: 3.5px;
+    border-color: var(--ion-color-medium-shade);
+
+    // animation-iteration-count: infinite;
 }
 
-.badge-contact{
-    margin-right: 12px;
-    border-radius: 100px; 
-    background-color:#ffc17e; 
-    
-    color: #efefef;
-    width:100% !important;  
-    max-width: 5px !important;  //any size
-    max-height: 10px !important; //any size 
+.item-avatar-unreads {
+    background-color: #222;
+    animation-name: color;
+    border-style: solid;
+    animation-duration: 3s;
+    border-width: 3.5px;
+    border-color: rgb(196, 196, 196); //var(--ion-color-medium-shade);
+    animation-iteration-count: infinite;
 }
 
-.item-contact:hover {
-    // --background: blue;
-}
-
-.item-avatar  {  
-    // border-radius: 100%;   
-    width:100% !important;  
-    // height : 100% !important;  
-    max-width: 30px !important;  //any size
-    max-height: 30px !important; //any size 
+// @keyframes color {
+//     0%   {top: 0px; left: 0px; background: red;}
+//     25%  {top: 0px; left: 100px; background: blue;}
+//     50%  {top: 100px; left: 100px; background: yellow;}
+//     75%  {top: 100px; left: 0px; background: green;}
+//     100% {top: 0px; left: 0px; background: red;}
+//   }
+@keyframes color {
+    0% {
+        background-color: #222;
+    }
+    50% {
+        background-color: #4285f4;
+        color: white;
+        border-color: white;
+    }
+    100% {
+        background-color: #222;
+    }
 }

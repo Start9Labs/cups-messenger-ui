@@ -1,4 +1,4 @@
-import { Observable, NextObserver, Observer, of } from 'rxjs'
+import { Observable, NextObserver, Observer, of, Subject, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageCount, Message, Contact, ServerMessage, server } from '../cups/types'
 import { filter, map, concatMap, take } from 'rxjs/operators'
 import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
@@ -24,6 +24,7 @@ export class AppState{
     $ingestContacts:  NextObserver<ContactWithMessageCount[]>
     $ingestMessages: NextObserver<{ contact: Contact, messages: Message[] }>
 
+    $contactInView$: BehaviorSubject<boolean> = new BehaviorSubject(false)
     emitCurrentContact$: Observable<Contact>
     emitContacts$: Observable<ContactWithMessageCount[]>
     emitMessages$: (tor: string) => Observable<Message[]>

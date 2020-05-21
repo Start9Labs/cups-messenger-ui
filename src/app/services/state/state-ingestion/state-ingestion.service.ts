@@ -1,7 +1,7 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
 import { Subscription, Observable, timer } from 'rxjs'
-import { concatMap, switchMap, map, tap } from 'rxjs/operators'
+import { concatMap, switchMap, map, tap, takeWhile, filter, takeUntil, repeatWhen } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
@@ -84,10 +84,17 @@ export class StateIngestionService {
     private startMessagesCooldownSub(){
         if(subIsActive(this.messagesCooldown)) return
 
+        let contactInView: boolean
+        App.$contactInView$.subscribe(i => {
+            console.log(`contact in view ${i}`)
+            contactInView = i
+        })
+
         this.messagesCooldown = App.emitCurrentContact$.pipe(
             switchMap(contact => {
                 Log.trace(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
                 return timer(0, config.messagesDaemon.frequency).pipe(
+                    filter(() => contactInView),
                     concatMap(
                         () => acquireMessages(this.cups, contact).pipe(suppressErrorOperator('acquire messages'))
                     ),
