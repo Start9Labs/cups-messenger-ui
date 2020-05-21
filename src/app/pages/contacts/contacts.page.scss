@@ -21,7 +21,7 @@
 .item-avatar {
     background-color: #222;
     // animation-name: color;
-    border-style: solid;
+    border-style: ridge;
     // animation-duration: 2s;
     border-width: 3.5px;
     border-color: var(--ion-color-medium-shade);
@@ -32,7 +32,7 @@
 .item-avatar-unreads {
     background-color: #222;
     animation-name: color;
-    border-style: solid;
+    border-style: ridge;
     animation-duration: 3s;
     border-width: 3.5px;
     border-color: rgb(196, 196, 196); //var(--ion-color-medium-shade);
