@@ -172,7 +172,7 @@ export function withTimeout<U>(req: Observable<U>, timeout: number = config.defa
     ).pipe(take(1))
 }
 
-export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' }, markAsRead?: false }
+export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' }, markAsRead: boolean }
 export function fillDefaultOptions(options: ShowMessagesOptions): ShowMessagesOptions {
     const limit = options.limit || config.loadMesageBatchSize
     return { ...options, limit }

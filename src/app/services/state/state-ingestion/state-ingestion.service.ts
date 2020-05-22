@@ -101,12 +101,13 @@ export class StateIngestionService {
             concatMap(([prevCs, currentCs]) =>
                 from(currentCs.filter(cc => {
                     const pc = prevCs.find(c => c.torAddress === cc.torAddress)
-                    return !pc || pc.unreadMessages < cc.unreadMessages || firstTime
+                    return !pc || pc.unreadMessages < cc.unreadMessages || (firstTime && cc.unreadMessages > 0)
                 }))
             ),
             tap(() => { firstTime = false }),
-            // mergeMap will kick off all calls together
-            mergeMap(c => acquireMessages(this.cups, c, { markAsRead: false }).pipe(suppressErrorOperator('message preview')))
+            // mergeMap will kick off all calls in parallel
+            mergeMap(c => acquireMessages(this.cups, c, { markAsRead: false })),
+            suppressErrorOperator('message preview')
         ).subscribe(App.$ingestMessages)
     }
 
@@ -151,7 +152,7 @@ export class StateIngestionService {
 function acquireMessages(
     cups: CupsMessenger,
     contact: Contact,
-    options: ShowMessagesOptions = {}
+    options: ShowMessagesOptions = { markAsRead: true }
 ): Observable<{ contact: Contact, messages: ServerMessage[] }> {
     return cups.messagesShow(contact, options).pipe(
         tap(ms => Log.trace(`messages daemon returning`, ms, LogTopic.MESSAGES)),

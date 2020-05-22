@@ -71,16 +71,17 @@ export class MessagesPage implements OnInit {
 
     ngOnInit() {
         // If we view a new contact, we should jump to the bottom of the page
-        App.emitCurrentContact$.pipe(
+        this.ngOnInitSubs.push(
+            App.emitCurrentContact$.pipe(
             distinctUntilChanged((c1, c2) => c1.torAddress === c2.torAddress),
             concatMap(c =>
-                overlayLoader(this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...')
+                this.stateIngestion.refreshMessages(c)
             ),
             delay(100) // this allows the page to render, then we jump to bottom
         ).subscribe(({ contact, messages }) => {
             if(messages.length < config.loadMesageBatchSize) this.getMetadata(contact.torAddress).hasAllHistoricalMessages = true
             this.jumpToBottom()
-        })
+        }))
 
         // Every time new messages or current contact changes, we update the oldest and newest message that's been loaded.
         // if we receive a new inbound messages, and we're not at the bottom of the screen, then we have unreads
