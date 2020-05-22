@@ -1,7 +1,7 @@
 import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 import { of, timer, interval } from 'rxjs'
-import { map, concatMap, take } from 'rxjs/operators'
+import { map, take } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { Log } from 'src/app/log'
 import { mockL, mockContact, mockMessage } from './util'
@@ -13,20 +13,28 @@ export class StandardMockCupsMessenger {
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {
-        this.contacts.forEach( c => {
-            this.mocks[c.torAddress] = mockL(mockMessage, 30)
+        this.contacts.forEach( (c, index) => {
+            if(index === 0){
+                this.mocks[c.torAddress] = mockL(mockMessage, 0)
+                c.unreadMessages = 0
+            } else {
+                this.mocks[c.torAddress] = mockL(mockMessage, 30)
+                c.unreadMessages = 30
+            }
         })
-        interval(5000).subscribe(i => {
+        interval(10000).subscribe(i => {
             this.contacts.forEach( c => {
                 this.mocks[c.torAddress].push(mockMessage(i, new Date()))
-                c.unreadMessages = 1
+            })
+            this.contacts.forEach(c => {
+                c.unreadMessages += 1
             })
         })
     }
 
     contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
         Log.trace('showing this.contacts', this.contacts)
-        return timer(this.serverTimeToLoad).pipe(map(() => this.contacts), take(1))
+        return timer(this.serverTimeToLoad).pipe(map(() => this.contacts.map(clone)), take(1))
     }
 
     contactsAdd (contact: Contact): ObservableOnce<void> {
@@ -62,8 +70,12 @@ export class StandardMockCupsMessenger {
             toReturn = messages.slice(messages.length - limit + 1, messages.length)
         }
         const i = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
-        
-        this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
+
+        this.contacts.forEach(c => {
+            if(c.torAddress === contact.torAddress && options.markAsRead){
+                this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
+            }
+        })
 
         return timer(this.serverTimeToLoad).pipe(map(() => toReturn), take(1))
     }
@@ -97,4 +109,8 @@ export class StandardMockCupsMessenger {
             )
         ).map(x => { x.timestamp = new Date(x.timestamp); return x })
     }
+}
+
+function clone(a){
+    return JSON.parse(JSON.stringify(a))
 }

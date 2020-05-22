@@ -186,7 +186,7 @@ export class MessagesPage implements OnInit {
         const oldestRendered = this.getMetadata(contact.torAddress).oldestRendered
         if(oldestRendered){
             this.stateIngestion.refreshMessages(
-                contact, { limit: messagesToRetrieve, offset: { direction: 'before', id: oldestRendered.id }}
+                contact, { limit: messagesToRetrieve, offset: { direction: 'before', id: oldestRendered.id }, markAsRead: true}
             ).subscribe({
                 next: ({ messages }) => {
                     if(messages.length < messagesToRetrieve){

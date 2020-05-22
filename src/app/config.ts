@@ -44,11 +44,11 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.STANDARD_MOCK,
+        type: CupsMessengerType.FAST_MOCK,
         url: '/api'
     },
     contactsDaemon: {
-        frequency: 5000
+        frequency: 100000
     },
     messagesDaemon: {
         frequency: 3000

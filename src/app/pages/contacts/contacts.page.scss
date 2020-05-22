@@ -1,26 +1,36 @@
 .item-contact{
-
+    --min-height: 100px;
 }
 
 
 .item-avatar {
     background: #696c71;
-    border-style: solid;
-    border-width: 1px;
-    // border-color: black;
 }
 
 .item-avatar-unreads {
+    // --min-height: 100px;
     background:  radial-gradient(#696c71 25%, rgb(96, 154, 254));
     border-style: solid;
     border-width: 1px;
     border-color: rgb(96, 154, 254);
+    // white-space: normal;
     // animation: border 1s ease 0.5s 3
 }
 
-.item-contact-edit {
-    // border-style: solid;
-    // border-width: 0px 0px 1px 0px;
+.contact-name {
+    font-weight: 900;
+    font-family: 'Montserrat';
+    font-size: larger;
+    text-transform: capitalize;
+}
+
+.message-preview {
+    font-weight: 400;
+    font-size: smaller;
+    max-height: 40px;
+    color: var(--ion-color-medium-shade);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 @keyframes border {

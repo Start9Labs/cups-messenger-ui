@@ -1,6 +1,6 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, timer, from } from 'rxjs'
+import { Subscription, Observable, timer, from, combineLatest, iif } from 'rxjs'
 import { concatMap, switchMap, map, tap, filter, mergeMap, pairwise, startWith, skip } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
@@ -13,8 +13,6 @@ import { Router, NavigationStart } from '@angular/router'
 enum Page {
     CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
 }
-
-
 
 @Injectable({providedIn: 'root'})
 export class StateIngestionService {
@@ -87,27 +85,12 @@ export class StateIngestionService {
         if(this.previewMessagesCooldown) this.previewMessagesCooldown.unsubscribe()
     }
 
-    // if a contact from contacts daemon is a brand new contact, or it has more unread messages than before, we get its new messages
+    // everytime we get contacts, grab their messages without marking as read.
     private startPreviewMessagesCooldownSub(){
         if(subIsActive(this.previewMessagesCooldown)) return
 
-        let firstTime = true
-
         this.previewMessagesCooldown = App.emitContacts$.pipe(
             concatMap(cs => from(cs)),
-            /* The following commented code is mode stingy with its requests. Let's be forced into it by performance  */
-            // skip(1),
-            // startWith([]),
-            // filter(() => this.contactsPage()),
-            // pairwise(),
-            // concatMap(([prevCs, currentCs]) =>
-            //     from(currentCs.filter(cc => {
-            //         const pc = prevCs.find(c => c.torAddress === cc.torAddress)
-            //         return !pc || pc.unreadMessages < cc.unreadMessages || (firstTime && cc.unreadMessages > 0)
-            //     }))
-            // ),
-            // tap(() => { firstTime = false }),
-            // mergeMap will kick off all calls in parallel
             mergeMap(c => acquireMessages(this.cups, c, { markAsRead: false })),
             suppressErrorOperator('message preview')
         ).subscribe(App.$ingestMessages)
@@ -125,6 +108,7 @@ export class StateIngestionService {
             .subscribe(App.$ingestContacts)
     }
 
+    // When we're on the messages page for the current contact, get messages more frequently, and mark as read
     private startMessagesCooldownSub(){
         if(subIsActive(this.messagesCooldown)) return
 
