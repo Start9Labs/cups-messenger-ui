@@ -94,17 +94,19 @@ export class StateIngestionService {
         let firstTime = true
 
         this.previewMessagesCooldown = App.emitContacts$.pipe(
-            skip(1),
-            startWith([]),
-            filter(() => this.contactsPage()),
-            pairwise(),
-            concatMap(([prevCs, currentCs]) =>
-                from(currentCs.filter(cc => {
-                    const pc = prevCs.find(c => c.torAddress === cc.torAddress)
-                    return !pc || pc.unreadMessages < cc.unreadMessages || (firstTime && cc.unreadMessages > 0)
-                }))
-            ),
-            tap(() => { firstTime = false }),
+            concatMap(cs => from(cs)),
+            /* The following commented code is mode stingy with its requests. Let's be forced into it by performance  */
+            // skip(1),
+            // startWith([]),
+            // filter(() => this.contactsPage()),
+            // pairwise(),
+            // concatMap(([prevCs, currentCs]) =>
+            //     from(currentCs.filter(cc => {
+            //         const pc = prevCs.find(c => c.torAddress === cc.torAddress)
+            //         return !pc || pc.unreadMessages < cc.unreadMessages || (firstTime && cc.unreadMessages > 0)
+            //     }))
+            // ),
+            // tap(() => { firstTime = false }),
             // mergeMap will kick off all calls in parallel
             mergeMap(c => acquireMessages(this.cups, c, { markAsRead: false })),
             suppressErrorOperator('message preview')
