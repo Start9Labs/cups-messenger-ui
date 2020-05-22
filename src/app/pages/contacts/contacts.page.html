@@ -1,6 +1,6 @@
-<ion-header>
+<ion-header translucent>
     <ion-toolbar>   
-        <ion-title>Contacts</ion-title>               
+        <ion-title color="primary">Contacts</ion-title>               
         <ion-buttons collapse="true" slot="end">
             <ion-button fill="clear" (click)="logout()">
                 Logout
@@ -10,25 +10,36 @@
 </ion-header>
 
 <ion-content>
-  <!-- contacts list -->
   <ion-item-group>
       <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
-    
-          <div *ngIf="(app.emitCurrentContact$ | async) || {}; let cc" >
             <ion-item-sliding>
-                <ion-item class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
-                    <!-- <ion-badge class="badge-contact" slot="start" *ngIf="contact.unreadMessages > 0">-</ion-badge>     -->
-                    <ion-avatar [class.item-avatar]="contact.unreadMessages === 0" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                    </ion-avatar>
-                    <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
-                </ion-item>
-                <ion-item-options side="end" lines="full">
-                    <ion-item-option class="ion-contact-delete" color="medium" (click)="editContact(contact)">Edit</ion-item-option>
-                    <ion-item-option class="ion-contact-edit" text-color="warning" color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
-                </ion-item-options>
+                
+
+                <div *ngIf="app.emitMostRecentServerMessage$(contact) | async as message; else loading">
+                    <ion-item class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
+                        <ion-avatar [class.item-avatar]="true" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
+                            <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                        </ion-avatar>
+                        <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
+                        <ion-item>{{ message.text.slice(0,12) }}</ion-item>
+                    </ion-item>
+                    <ion-item-options side="end" lines="full">
+                        <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
+                        <ion-item-option  text-color="warning" color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
+                    </ion-item-options>
+    
+                </div>
+                <ng-template #loading>
+                    <ion-item class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button disabled (click)="jumpToChat(contact)">
+                        <ion-avatar [class.item-avatar]="true" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
+                            <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                        </ion-avatar>
+                        <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
+                        <ion-spinner name="crescent"></ion-spinner>
+                    </ion-item>
+                </ng-template>
+                
             </ion-item-sliding>
-          </div>
       </div>
 </ion-item-group>  
 <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">

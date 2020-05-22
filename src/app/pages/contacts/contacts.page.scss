@@ -1,61 +1,37 @@
 .item-contact{
-    // --border-radius: 50px 0px 0px 50px;
-    // --background-hover: blue;
-    // --color-hover: rgb(0,0,0,100);
-    // --background-color-hover: red;
-    // --background: red;
-    // --background-focused: blue;
-    // --background-activated: blue;
-    // padding-left: 5px;
-    // border-radius: 50px 0px 0px 50px;
-    // padding-left: 10px;
-    // // padding-right: 10px;
-    // padding-bottom: 5px;
-    // padding-top: 5px;
-    animation-name: color;
-    animation-duration: 3s;
-    animation-iteration-count: infinite;
+
 }
 
 
 .item-avatar {
-    background-color: #222;
-    // animation-name: color;
-    border-style: ridge;
-    // animation-duration: 2s;
-    border-width: 3.5px;
-    border-color: var(--ion-color-medium-shade);
-
-    // animation-iteration-count: infinite;
+    background: #696c71;
+    border-style: solid;
+    border-width: 1px;
+    // border-color: black;
 }
 
 .item-avatar-unreads {
-    background-color: #222;
-    animation-name: color;
-    border-style: ridge;
-    animation-duration: 3s;
-    border-width: 3.5px;
-    border-color: rgb(196, 196, 196); //var(--ion-color-medium-shade);
-    animation-iteration-count: infinite;
+    background:  radial-gradient(#696c71 25%, rgb(96, 154, 254));
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(96, 154, 254);
+    animation: border 1s ease 0.5s 3
 }
 
-// @keyframes color {
-//     0%   {top: 0px; left: 0px; background: red;}
-//     25%  {top: 0px; left: 100px; background: blue;}
-//     50%  {top: 100px; left: 100px; background: yellow;}
-//     75%  {top: 100px; left: 0px; background: green;}
-//     100% {top: 0px; left: 0px; background: red;}
-//   }
-@keyframes color {
+.item-contact-edit {
+    // border-style: solid;
+    // border-width: 0px 0px 1px 0px;
+}
+
+@keyframes border {
     0% {
-        background-color: #222;
+        border-color: rgb(96, 154, 254);
     }
     50% {
-        background-color: #4285f4;
+        border-color: rgb(192, 215, 255);
         color: white;
-        border-color: white;
     }
     100% {
-        background-color: #222;
+        border-color: rgb(96, 154, 254);
     }
 }

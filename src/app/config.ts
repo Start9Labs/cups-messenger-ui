@@ -44,7 +44,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.FAST_MOCK,
+        type: CupsMessengerType.STANDARD_MOCK,
         url: '/api'
     },
     contactsDaemon: {
@@ -57,7 +57,7 @@ export const config: Config = {
     defaultServerTimeout: 180000,
     logs: {
         level: LogLevel.TRACE,
-        topics: [LogTopic.CONTACTS, LogTopic.MESSAGES, LogTopic.CURRENT_CONTACT, LogTopic.NAV, LogTopic.NO_TOPIC]
+        topics: [LogTopic.MESSAGES, LogTopic.CONTACTS, LogTopic.NAV]
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }

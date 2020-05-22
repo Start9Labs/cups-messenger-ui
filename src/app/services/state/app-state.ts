@@ -13,18 +13,17 @@ const Private = {
     messagesStore: {} as { [torAddress: string]: MessageStore }
 }
 
+
 // Observers will have $prefix
 // Observables will have suffix$
 // Subjects will have both $subject$
 export class AppState{
     hasLoadedContacts: boolean
-
     currentContact: Contact = undefined
     $ingestCurrentContact:  NextObserver<Contact>
     $ingestContacts:  NextObserver<ContactWithMessageCount[]>
     $ingestMessages: NextObserver<{ contact: Contact, messages: Message[] }>
 
-    $contactInView$: BehaviorSubject<boolean> = new BehaviorSubject(false)
     emitCurrentContact$: Observable<Contact>
     emitContacts$: Observable<ContactWithMessageCount[]>
     emitMessages$: (tor: string) => Observable<Message[]>

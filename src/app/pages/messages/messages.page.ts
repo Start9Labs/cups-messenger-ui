@@ -78,19 +78,8 @@ export class MessagesPage implements OnInit {
             ),
             delay(100) // this allows the page to render, then we jump to bottom
         ).subscribe(({ contact, messages }) => {
-            if(messages.length < config.loadMesageBatchSize) this.metadata[contact.torAddress].hasAllHistoricalMessages = true
+            if(messages.length < config.loadMesageBatchSize) this.getMetadata(contact.torAddress).hasAllHistoricalMessages = true
             this.jumpToBottom()
-        })
-
-        App.emitCurrentContact$.pipe(
-            distinctUntilChanged((c1, c2) => c1.torAddress === c2.torAddress),
-            take(1),
-        ).subscribe(c => {
-            this.metadata[c.torAddress] = this.metadata[c.torAddress] || {
-                hasAllHistoricalMessages: false,
-                newestRendered: undefined,
-                oldestRendered: undefined
-            }
         })
 
         // Every time new messages or current contact changes, we update the oldest and newest message that's been loaded.
@@ -193,7 +182,7 @@ export class MessagesPage implements OnInit {
     /* older message logic */
     fetchOlderMessages(event: any, contact: Contact) {
         const messagesToRetrieve = config.loadMesageBatchSize
-        const oldestRendered = this.metadata[contact.torAddress].oldestRendered
+        const oldestRendered = this.getMetadata(contact.torAddress).oldestRendered
         if(oldestRendered){
             this.stateIngestion.refreshMessages(
                 contact, { limit: messagesToRetrieve, offset: { direction: 'before', id: oldestRendered.id }}
@@ -201,7 +190,7 @@ export class MessagesPage implements OnInit {
                 next: ({ messages }) => {
                     if(messages.length < messagesToRetrieve){
                         Log.debug(`fetched all historical messages`)
-                        this.metadata[contact.torAddress].hasAllHistoricalMessages = true
+                        this.getMetadata(contact.torAddress).hasAllHistoricalMessages = true
                     }
                     event.target.complete()
                 },
@@ -219,20 +208,27 @@ export class MessagesPage implements OnInit {
         const toReturn = { updatedOldest: false, updatedNewest: false }
 
         const oldestMessage = serverMessages[serverMessages.length - 1]
-        const oldestRendered = this.metadata[c.torAddress].oldestRendered
+        const oldestRendered = this.getMetadata(c.torAddress).oldestRendered
         if(oldestMessage && isOlder(oldestMessage, oldestRendered)){
-            this.metadata[c.torAddress].oldestRendered = oldestMessage
+            this.getMetadata(c.torAddress).oldestRendered = oldestMessage
             toReturn.updatedOldest = true
         }
 
         const newestMessage = serverMessages.filter(server)[0]
-        const newestRendered = this.metadata[c.torAddress].newestRendered
+        const newestRendered = this.getMetadata(c.torAddress).newestRendered
         if(newestMessage && isNewer(newestMessage, newestRendered)){
-            this.metadata[c.torAddress].newestRendered = newestMessage
+            this.getMetadata(c.torAddress).newestRendered = newestMessage
             toReturn.updatedNewest = true
         }
 
         return toReturn
+    }
+
+    private getMetadata(tor: string){
+        if(!this.metadata[tor]){
+            this.metadata[tor] = { hasAllHistoricalMessages: false, newestRendered: undefined, oldestRendered: undefined }
+        }
+        return this.metadata[tor]
     }
 }
 

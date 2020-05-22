@@ -4,9 +4,9 @@
 /** Ionic CSS Variables **/
 :root {
   /** primary **/
-  --ion-color-primary: #4285f4;
+  --ion-color-primary: #568de6;
   --ion-color-primary-rgb: 56, 128, 255;
-  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast: #bad2f7;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
@@ -52,7 +52,7 @@
   --ion-color-danger-tint: #f25454;
 
   /** dark **/
-  --ion-color-dark: #222428;
+  --ion-color-dark: #1a1c21;
   --ion-color-dark-rgb: 34, 34, 34;
   --ion-color-dark-contrast: #ffffff;
   --ion-color-dark-contrast-rgb: 255, 255, 255;
@@ -68,19 +68,20 @@
   --ion-color-medium-tint: #a2a4ab;
 
   /** light **/
-  --ion-color-light: #a4a5a7;
+  --ion-color-light: #d0d0d0;
   --ion-color-light-rgb: 244, 244, 244;
   --ion-color-light-contrast: #2b2b30;
   --ion-color-light-contrast-rgb: 0, 0, 0;
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
 
-  --ion-color-red: #d33939;
 
   --ion-background-color: var(--ion-color-dark);
 
-  --ion-text-color: var(--ion-color-light-shade);
+  --ion-text-color: var(--ion-color-light);
 
+
+  --ion-font-family: 'OpenSans';
   // --ion-text-color-rgb 	Text color of the entire app, rgb format
   // --ion-backdrop-color 	Color of the Backdrop component
   // --ion-backdrop-opacity 	Opacity of the Backdrop component
@@ -92,7 +93,7 @@
   // --ion-tab-bar-border-color 	Border color of the Tab Bar
   // --ion-tab-bar-color 	Color of the Tab Bar
   // --ion-tab-bar-color-selected 	Color of the selected Tab Button
-  // --ion-toolbar-background 	Background of the Toolbar
+  --ion-toolbar-background: rgba(255,255,255,0); // 	Background of the Toolbar
   // --ion-toolbar-border-color 	Border color of the Toolbar
   // --ion-toolbar-color 	Color of the components in the Toolbar
   // --ion-toolbar-segment-color 	Color of the Segment Buttons in the Toolbar
@@ -107,30 +108,46 @@
   --ion-item-background-activated: var(--ion-color-red);
 }
 
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../assets/fonts/Montserrat-Thin.ttf');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Montserrat';
+    src: url('../assets/fonts/Montserrat-Black.ttf');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Montserrat';
+    src: url('../assets/fonts/Montserrat-Bold.ttf');
+    font-weight: 900;
+    font-style: normal;
+  }
 
-.ion-color-white {
-    --ion-color-base: #ffffff;
-    --ion-color-base-rgb: 255, 255, 255;
-    --ion-color-contrast: #000000;
-    --ion-color-contrast-rgb: 0, 0, 0;
-    --ion-color-shade: #ffffff;
-    --ion-color-tint: #ffffff;
-}
+@font-face {
+    font-family: 'OpenSans';
+    src: url('../assets/fonts/OpenSans-Light.ttf');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'OpenSans';
+    src: url('../assets/fonts/OpenSans-Regular.ttf');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'OpenSans';
+    src: url('../assets/fonts/OpenSans-Bold.ttf');
+    font-weight: 900;
+    font-style: normal;
+  }
 
-.ion-color-slate {
-    --ion-color-base: #dddddd;
-    --ion-color-base-rgb: 255, 255, 255;
-    --ion-color-contrast: #000000;
-    --ion-color-contrast-rgb: 0, 0, 0;
-    --ion-color-shade: #dddddd;
-    --ion-color-tint: #dddddd;
-}
-
-.ion-color-charcoal {
-    --ion-color-base: #424242;
-    --ion-color-base-rgb: 66, 66, 66;
-    --ion-color-contrast: #ffffff;
-    --ion-color-contrast-rgb: 255, 255, 255;
-    --ion-color-shade: #424242;
-    --ion-color-tint: #424242;
-}
+ 

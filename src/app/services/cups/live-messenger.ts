@@ -95,7 +95,9 @@ export class LiveCupsMessenger {
             type: 'messages',
             pubkey: onionToPubkeyString(contact.torAddress),
             limit: String(limit),
-        }, offset ? { [offset.direction]: offset.id } : {})
+        }, offset ? { [offset.direction]: offset.id } : {},
+            (options.markAsRead !== undefined) ? { markAsRead: options.markAsRead } : {}
+        )
 
         return withTimeout(this.http.get(this.hostUrl, {
             params,
@@ -170,7 +172,7 @@ export function withTimeout<U>(req: Observable<U>, timeout: number = config.defa
     ).pipe(take(1))
 }
 
-export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' } }
+export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' }, markAsRead?: false }
 export function fillDefaultOptions(options: ShowMessagesOptions): ShowMessagesOptions {
     const limit = options.limit || config.loadMesageBatchSize
     return { ...options, limit }
