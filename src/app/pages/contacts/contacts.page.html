@@ -2,14 +2,14 @@
     <ion-toolbar>   
         <ion-title color="primary">Contacts</ion-title>               
         <ion-buttons collapse="true" slot="end">
-            <ion-button fill="clear" (click)="logout()">
+            <ion-button color="primary" fill="clear" (click)="logout()">
                 Logout
               </ion-button>
         </ion-buttons> 
       </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content fullscreen>
   <ion-item-group>
       <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
             <ion-item-sliding>
@@ -27,7 +27,7 @@
                     </ion-item>
                     <ion-item-options side="end" lines="full">
                         <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
-                        <ion-item-option  text-color="warning" color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
+                        <ion-item-option color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
                     </ion-item-options>
                 </div>
 
@@ -50,7 +50,7 @@
                         </ion-item>
                         <ion-item-options side="end" lines="full">
                             <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
-                            <ion-item-option  text-color="warning" color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
+                            <ion-item-option  color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
                         </ion-item-options>
                     </div>
                     

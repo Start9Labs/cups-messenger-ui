@@ -5,9 +5,10 @@
 :root {
   /** primary **/
   --ion-color-primary: #568de6;
+  --ion-color-primary-faded: rgba(56, 128, 255, 0.7);
   --ion-color-primary-rgb: 56, 128, 255;
   --ion-color-primary-contrast: #bad2f7;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-contrast-rgb: 186, 210, 247;
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
 
@@ -28,23 +29,23 @@
   --ion-color-tertiary-tint: #7e57ff;
 
   /** success **/
-  --ion-color-success: #10dc60;
-  --ion-color-success-rgb: 16, 220, 96;
+  --ion-color-success: var(--ion-color-primary-contrast);
+  --ion-color-success-rgb: 186, 210, 247;
   --ion-color-success-contrast: #ffffff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
   --ion-color-success-shade: #0ec254;
   --ion-color-success-tint: #28e070;
 
   /** warning **/
-  --ion-color-warning: #ffce00;
-  --ion-color-warning-rgb: 255, 206, 0;
+  --ion-color-warning: #86e6ab; //#feae71;
+  --ion-color-warning-rgb: 254, 164, 96;
   --ion-color-warning-contrast: #ffffff;
   --ion-color-warning-contrast-rgb: 255, 255, 255;
   --ion-color-warning-shade: #e0b500;
   --ion-color-warning-tint: #ffd31a;
 
   /** danger **/
-  --ion-color-danger: #f04141;
+  --ion-color-danger: #f95c5c;
   --ion-color-danger-rgb: 245, 61, 61;
   --ion-color-danger-contrast: #ffffff;
   --ion-color-danger-contrast-rgb: 255, 255, 255;
@@ -64,7 +65,7 @@
   --ion-color-medium-rgb: 152, 154, 162;
   --ion-color-medium-contrast: #ffffff;
   --ion-color-medium-contrast-rgb: 255, 255, 255;
-  --ion-color-medium-shade: #86888f;
+  --ion-color-medium-shade: rgb(134, 136, 143);
   --ion-color-medium-tint: #a2a4ab;
 
   /** light **/
@@ -93,7 +94,7 @@
   // --ion-tab-bar-border-color 	Border color of the Tab Bar
   // --ion-tab-bar-color 	Color of the Tab Bar
   // --ion-tab-bar-color-selected 	Color of the selected Tab Button
-  --ion-toolbar-background: rgba(255,255,255,0); // 	Background of the Toolbar
+  --ion-toolbar-background: rgba(65, 65, 65, 0.7); // 	Background of the Toolbar
   // --ion-toolbar-border-color 	Border color of the Toolbar
   // --ion-toolbar-color 	Color of the components in the Toolbar
   // --ion-toolbar-segment-color 	Color of the Segment Buttons in the Toolbar

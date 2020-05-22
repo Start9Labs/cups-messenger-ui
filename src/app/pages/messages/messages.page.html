@@ -1,19 +1,19 @@
-<ion-header>
+<ion-header translucent>
     <ion-toolbar>
         <ion-buttons slot="start">
             <ion-back-button (click)="toContacts()"></ion-back-button>
             <ion-menu-button></ion-menu-button>
         </ion-buttons>
-		<ion-title color="charcoal" *ngIf="(app.emitCurrentContact$ | async)">
+		<ion-title class="contact-name" color="charcoal" *ngIf="(app.emitCurrentContact$ | async)">
 			{{ (app.emitCurrentContact$ | async | truncateEllipses:50) }}
         </ion-title>
-        <ion-button fill="clear" style="color: #3542e5" slot="end" *ngIf="(app.emitCurrentContact$ | async)" (click)="toProfile()">
-            PROFILE
+        <ion-button fill="clear" color="warning" slot="end" *ngIf="(app.emitCurrentContact$ | async)" (click)="toProfile()">
+            Profile
         </ion-button>
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
+<ion-content #content fullscreen [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
     <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
         <ion-infinite-scroll *ngIf="!metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
@@ -24,25 +24,21 @@
             <div id="start-of-scroll"></div>
             <div *ngFor="let message of (messagesForDisplay$ | async)" style="white-space: pre-line">
                 <div class="left-bubble chat-message-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
-                    <span class="msg-date" style="color: #3542e5">{{(contact | truncateEllipses:15)}}</span>
-                    <span class="msg-date">{{message.timestamp | date:'short'}}</span>
+                    <span class="msg-date contact-coloring">{{message.timestamp | date:'short'}}</span>
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 </div>
                 <div class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'SENT'" lines="none">
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15))}}</span>
-                    <div class="msg-date">{{message.timestamp | date:'short'}}</div>
+                    <div class="msg-date my-coloring">{{message.timestamp | date:'short'}}</div>
                 </div>
-                <div class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
+                <div class="right-bubble chat-message-bubble attending" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15))}}</span>
                     <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
                     <span class="msg-date" style="color:#a8a8a8">...SENDING</span>
                 </div>
                 <div class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
                     <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <span class="msg-date" style="color: #0e7717">{{(({name: myTorAddress} | truncateEllipses:15))}}</span>
-                    <div class="msg-date">{{message.sentToServer | date:'short'}}</div>
+                    <div class="msg-date" color="warning">{{message.sentToServer | date:'short'}}</div>
                     <span class="msg-date retry" (click)="retry(contact, message)"><u>RETRY</u></span>
                 </div>
             </div>    
@@ -52,24 +48,24 @@
     </div>
 
     <ion-fab *ngIf="($unreads$ | async)" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button size="small" color="white" fill="clear" (click)="jumpToBottom()">
+        <ion-fab-button size="small" color="warning" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </ion-fab>
 </ion-content>
 
 <ion-footer>
-    <ion-toolbar>
-        <ion-grid *ngIf="(app.emitCurrentContact$ | async) as current">
+    <ion-toolbar class="submit">
+        <ion-grid  style="padding-right: 8px;" *ngIf="(app.emitCurrentContact$ | async) as current">
             <ion-row>
-                <ion-col size="9">
+                <ion-col size="10">
                     <form (keydown.meta.Enter)="checkSubmit($event, current)" (keydown.shift.Enter)="checkSubmit($event, current)">
-                        <ion-textarea autoGrow rows="3" [(ngModel)]="messageToSend" name="message" placeholder="Type a message"></ion-textarea>
+                        <ion-textarea class="enter-text" autoGrow rows="3" [(ngModel)]="messageToSend" name="message" placeholder="Type a message"></ion-textarea>
                     </form>
                 </ion-col>
-                <ion-col size="3" style="text-align: right;" class="ion-align-self-center">
+                <ion-col size="2" style="text-align: right;" class="ion-align-self-center">
                     <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(current)">
-                        <ion-icon slot="icon-only" name="send-outline" style="color: #0e7717;"></ion-icon>
+                        <ion-icon slot="icon-only" name="chevron-up-outline"></ion-icon>
                     </ion-button>
                 </ion-col>
             </ion-row>
