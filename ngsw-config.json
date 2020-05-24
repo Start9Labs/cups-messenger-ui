@@ -10,7 +10,10 @@
           "/index.html",
           "/assets/**",
           "/*.css",
-          "/*.js"
+          "/*.js",
+          "/svg/add-outline.svg",
+          "/svg/arrow-down-outline.svg",
+          "/svg/send-outline.svg"
         ]
       }
     }
