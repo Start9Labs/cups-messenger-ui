@@ -1,36 +1,35 @@
-import { Plugins } from '@capacitor/core'
-import { BehaviorSubject, Observable, NextObserver } from 'rxjs'
+import { Observable, NextObserver } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
 import { LogBehaviorSubject } from 'src/rxjs/util'
 import { LogLevel } from 'src/app/config'
-
-const { Storage } = Plugins
+import { Storage } from '@ionic/storage'
 
 export enum AuthStatus {
     UNVERIFED, VERIFIED
 }
 
 export class AuthState {
-    private static readonly passwordKey = { key: 'password' }
     password: string = undefined
     private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })
 
-    constructor(){
+    constructor(
+      private readonly storage: Storage = new Storage({ }),
+    ) {
     }
 
     async init(): Promise<void> {
-        const p = await Storage.get(AuthState.passwordKey)
+        const p = await this.storage.get('password')
 
-        if(p && p.value){
+        if (p && p.value) {
             this.password = p.value
             this.$status$.next(AuthStatus.VERIFIED)
             return
         }
 
-        if((window as any).platform) {
+        if ((window as any).platform) {
             const shellPassword = await getContext().getConfigValue(['password'], 5000)
-            if(shellPassword){
-                await Storage.set({... AuthState.passwordKey, value: shellPassword})
+            if (shellPassword) {
+                await this.storage.set('password', shellPassword)
                 this.password = shellPassword
                 this.$status$.next(AuthStatus.VERIFIED)
                 return
@@ -45,18 +44,18 @@ export class AuthState {
         return { next: a => this.$status$.next(a) }
     }
 
-    emitStatus$(): Observable<AuthStatus>{
+    emitStatus$(): Observable<AuthStatus> {
         return this.$status$.asObservable()
     }
 
     async setPassword(p: string): Promise<void> {
-        if(!p) return // empty password not permitted
-        await Storage.set({... AuthState.passwordKey, value: p})
+        if (!p) { return } // empty password not permitted
+        await this.storage.set('password', p)
         this.init()
     }
 
     async clearPassword(): Promise<void> {
-        await Storage.remove(AuthState.passwordKey)
+        await this.storage.remove('password')
         this.password = undefined
         this.$status$.next(AuthStatus.UNVERIFED)
     }
