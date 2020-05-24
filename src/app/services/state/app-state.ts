@@ -1,5 +1,5 @@
 import { Observable, NextObserver, Observer, of, Subject, BehaviorSubject } from 'rxjs'
-import { ContactWithMessageCount, Message, Contact, ServerMessage, server } from '../cups/types'
+import { ContactWithMessageMeta, Message, Contact, ServerMessage, server } from '../cups/types'
 import { filter, map, concatMap, take } from 'rxjs/operators'
 import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T } from 'src/app/config'
@@ -9,7 +9,7 @@ import { MessageStore } from './message-store'
 // Raw app state. Shouldn't be accessed directly except by the below.
 const Private = {
     $currentContact$: new LogBehaviorSubject<Contact | undefined>(undefined, { topic: T.CURRENT_CONTACT, level: L.INFO, desc: 'currentContact' }),
-    $contacts$: new LogBehaviorSubject<ContactWithMessageCount[]>([], { topic: T.CONTACTS, level: L.DEBUG, desc: 'contacts' }),
+    $contacts$: new LogBehaviorSubject<ContactWithMessageMeta[]>([], { topic: T.CONTACTS, level: L.DEBUG, desc: 'contacts' }),
     messagesStore: {} as { [torAddress: string]: MessageStore }
 }
 
@@ -21,11 +21,11 @@ export class AppState{
     hasLoadedContacts: boolean
     currentContact: Contact = undefined
     $ingestCurrentContact:  NextObserver<Contact>
-    $ingestContacts:  NextObserver<ContactWithMessageCount[]>
+    $ingestContacts:  NextObserver<ContactWithMessageMeta[]>
     $ingestMessages: NextObserver<{ contact: Contact, messages: Message[] }>
 
     emitCurrentContact$: Observable<Contact>
-    emitContacts$: Observable<ContactWithMessageCount[]>
+    emitContacts$: Observable<ContactWithMessageMeta[]>
     emitMessages$: (tor: string) => Observable<Message[]>
 
     // Subscribing to this will trigger the current contact to change, then emit the new contact c

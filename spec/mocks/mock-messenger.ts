@@ -1,11 +1,10 @@
-import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 import { of, timer, interval } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { Log } from 'src/app/log'
 import { mockL, mockContact, mockMessage } from './util'
-
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
@@ -18,21 +17,23 @@ export class StandardMockCupsMessenger {
                 this.mocks[c.torAddress] = mockL(mockMessage, 0)
                 c.unreadMessages = 0
             } else {
-                this.mocks[c.torAddress] = mockL(mockMessage, 30)
+                const ms = mockL(mockMessage, 30)
+                this.mocks[c.torAddress] = ms
                 c.unreadMessages = 30
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
         interval(10000).subscribe(i => {
             this.contacts.forEach( c => {
-                this.mocks[c.torAddress].push(mockMessage(i, new Date()))
-            })
-            this.contacts.forEach(c => {
+                const m = mockMessage(i, new Date())
+                this.mocks[c.torAddress].push(m)
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = m
                 c.unreadMessages += 1
             })
         })
     }
 
-    contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
+    contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
         Log.trace('showing this.contacts', this.contacts)
         return timer(this.serverTimeToLoad).pipe(map(() => this.contacts.map(clone)), take(1))
     }
@@ -41,7 +42,7 @@ export class StandardMockCupsMessenger {
         return timer(this.serverTimeToLoad).pipe(map(() => {
             const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
             this.mocks[contact.torAddress] = []
-            this.contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0 }, contact))
+            this.contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0, lastMessages: [] }, contact))
         }), take(1))
     }
 
@@ -56,7 +57,7 @@ export class StandardMockCupsMessenger {
         )
     }
 
-    messagesShow (contact: ContactWithMessageCount, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
+    messagesShow (contact: ContactWithMessageMeta, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
         const messages = this.getMessageMocks(contact)
         let toReturn: ServerMessage[]

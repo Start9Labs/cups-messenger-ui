@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
-import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed } from '../../services/cups/types'
+import { Component, OnInit, ViewChild, NgZone, ElementRef } from '@angular/core'
+import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, mkSent, SentMessage, failed, attending } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, LoadingController } from '@ionic/angular'
 import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
@@ -10,8 +10,9 @@ import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
 import { exists, overlayLoader } from 'src/rxjs/util'
-
-
+import { Tunnel } from './animations/tunnel'
+// import * as s from '@svgdotjs/svg.js'
+// const SVG = s.SVG
 /*
 1.) Entering message page needs loader for initial messages
 2.) Messages load we should jump to the bottom
@@ -25,6 +26,9 @@ import { exists, overlayLoader } from 'src/rxjs/util'
 })
 export class MessagesPage implements OnInit {
     @ViewChild('content') private content: any
+    @ViewChild('animation') animation: ElementRef<HTMLElement>
+
+    private tunnel: Tunnel
 
     app = App
 
@@ -56,7 +60,6 @@ export class MessagesPage implements OnInit {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
-        private readonly loadingCtrl: LoadingController
     ){
         // html will subscribe to this to get message additions/updates
         this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c =>
@@ -66,7 +69,10 @@ export class MessagesPage implements OnInit {
                 if(isAtBottom()){ this.jumpToBottom() }
             }))
         ))
+    }
 
+    ngAfterViewInit(){
+        this.tunnel = new Tunnel(this.animation, { w: 400, h: 40 })
     }
 
     ngOnInit() {
@@ -87,12 +93,20 @@ export class MessagesPage implements OnInit {
         // if we receive a new inbound messages, and we're not at the bottom of the screen, then we have unreads
         this.ngOnInitSubs.push(combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).subscribe(
             ([c, messages]) => {
+                if(this.tunnel) messages.filter(server).filter(m => this.newMessage(c,m)).forEach(m => this.tunnel.send(m))
                 const { updatedNewest } = this.updateViewedMessageEndpoints(c, messages.filter(server))
                 if(updatedNewest) {
                     this.$unreads$.next(!isAtBottom())
                 }
             }
         ))
+    }
+
+    newMessage(c: Contact, m: Message): boolean {
+        const newest = this.getMetadata(c.torAddress).newestRendered
+        if(!newest) return true
+        if(attending(m) || failed(m)) return true
+        return m.timestamp > newest.timestamp
     }
 
     ionViewWillEnter(){
@@ -122,7 +136,8 @@ export class MessagesPage implements OnInit {
 
     // Can send with shift+return key on desktop
     checkSubmit (e: any, contact: Contact) {
-        if (e.keyCode === 13) this.sendMessage(contact)
+        // if (e.keyCode === 13) 
+        this.sendMessage(contact)
       }
 
     sendMessage(contact: Contact) {

@@ -1,4 +1,4 @@
-import { ContactWithMessageCount, ServerMessage, mkInbound } from 'src/app/services/cups/types'
+import { ContactWithMessageMeta, ServerMessage, mkInbound } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 
 export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
@@ -9,11 +9,12 @@ export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
     return toReturn
 }
 
-export function mockContact(i: number): ContactWithMessageCount {
+export function mockContact(i: number): ContactWithMessageMeta {
     return {
         torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
         name: 'contact-' + i + 'dfoifd',
-        unreadMessages: 3
+        unreadMessages: 0,
+        lastMessages: []
     }
 }
 

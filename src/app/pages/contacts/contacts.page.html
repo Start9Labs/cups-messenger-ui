@@ -10,82 +10,37 @@
 </ion-header>
 
 <ion-content fullscreen>
-  <ion-item-group>
-      <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
+    <ion-item-group>
+        <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
             <ion-item-sliding>
-            
-                <!-- If we fall through to the else, one of two things is happening: either the contact has no messages at all (sent or received), or we haven't loaded them yet -->
-                <div *ngIf="app.emitMostRecentServerMessage$(contact) | async as message; else loadMessages">
-                    <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
-                        <ion-avatar [class.item-avatar]="contact.unreadMessages === 0" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
-                            <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                        </ion-avatar>
-                        <ion-grid>
-                            <ion-row class="contact-name">{{ (contact | truncateEllipses:18) }}</ion-row>
-                            <ion-row ><div class="message-preview">{{ message.text }}</div></ion-row>
-                        </ion-grid>
-                    </ion-item>
-                    <ion-item-options side="end" lines="full">
-                        <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
-                        <ion-item-option color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
-                    </ion-item-options>
-                </div>
-
-                <ng-template #loadMessages>
-                    <!-- If the contact has no messages at all, or we haven't loaded them yet -->
-                    <div *ngIf="contact.unreadMessages === 0; else loader">
-                        <ion-item class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
-                            <ion-avatar class="item-avatar" slot="start">
-                                <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                            </ion-avatar>
-
-                            <ion-grid>
-                                <ion-row class="contact-name">{{ (contact | truncateEllipses:18) }}</ion-row>
-                                <ion-row class="message-preview"> </ion-row>
-                            </ion-grid>
-
-                            <!-- <ion-label>{{ (contact | truncateEllipses:18) }}</
-                                ion-label>
-                            <ion-item> --- </ion-item> -->
-                        </ion-item>
-                        <ion-item-options side="end" lines="full">
-                            <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
-                            <ion-item-option  color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
-                        </ion-item-options>
-                    </div>
-                    
-                    <ng-template #loader>
-                        <ion-item class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button disabled (click)="jumpToChat(contact)">
-                            <ion-avatar  class="item-avatar-unreads" slot="start">
-                                <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                            </ion-avatar>
-
-                            <ion-grid>
-                                <ion-row class="contact-name">{{ (contact | truncateEllipses:18) }}</ion-row>
-                                <ion-row><ion-spinner name="crescent"></ion-spinner></ion-row>
-                            </ion-grid>
-
-                            <!-- <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label> -->
-                            
-                        </ion-item>
-                    </ng-template>
-                </ng-template>
-
-                
-
-                
-                
-                
+                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
+                    <ion-avatar [class.item-avatar]="contact.unreadMessages === 0" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
+                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                    </ion-avatar>
+                    <ion-grid>
+                        <ion-row class="contact-name">{{ (contact | truncateEllipses:18) }}</ion-row>
+                        <ion-row >
+                            <div class="message-preview" *ngIf="contact.lastMessages[0]">{{ contact.lastMessages[0].text }}</div>
+                            <div class="message-preview" *ngIf="!contact.lastMessages[0]">{{ "\t" }}</div>
+                        </ion-row>
+                    </ion-grid>
+                </ion-item>
+                <ion-item-options side="end" lines="full">
+                    <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
+                    <ion-item-option color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
+                </ion-item-options>
             </ion-item-sliding>
-      </div>
-</ion-item-group>  
-<ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button class="new-contact-button" size="small" fill="clear" color="primary" (click)="toNewContactPage()">
-        <ion-icon name="add-outline"></ion-icon>
-    </ion-fab-button>
-</ion-fab>
-
+        </div>
+        
+      </ion-item-group>  
+      <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+          <ion-fab-button class="new-contact-button" size="small" fill="clear" color="primary" (click)="toNewContactPage()">
+              <ion-icon name="add-outline"></ion-icon>
+          </ion-fab-button>
+      </ion-fab>
+    
 </ion-content>
 
 <ion-footer>
 </ion-footer>
+

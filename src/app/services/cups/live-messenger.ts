@@ -1,6 +1,6 @@
 import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce, mkSent, mkInbound } from './types'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent, mkInbound } from './types'
 import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
 import { Observable, from, interval, race } from 'rxjs'
 import { map, take, catchError } from 'rxjs/operators'
@@ -26,10 +26,11 @@ export class LiveCupsMessenger {
         return config.cupsMessenger.url
     }
 
-    contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageCount[]> {
+    contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageMeta[]> {
         return withTimeout(this.http.get(this.hostUrl, {
             params: {
-                type: 'users'
+                type: 'users',
+                includeRecentMessages: '1'
             },
             headers: this.authHeaders(loginTestPassword),
             responseType: 'arraybuffer'

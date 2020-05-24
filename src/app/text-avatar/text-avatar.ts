@@ -16,15 +16,7 @@ export class TextAvatarComponent {
 
   public firstLetter = ''
 
-  
-
-  public styles = {
-
-//     border-width: 3.5px;
-// border-style: double;
-// border-color: var(--ion-color-medium-shade);
-//     // 'background-color': 'var(--ion-color-medium)',
-  }
+  public styles = {}
 
   constructor (private colorGenerator: ColorGenerator) {}
 

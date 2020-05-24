@@ -1,3 +1,20 @@
+
+.avatar-toolbar {
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.item-avatar{
+    background: #696c71;
+}
+
+.item-avatar-unreads {
+    background:  radial-gradient(#696c71 25%, var(--ion-color-warning));
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--ion-color-warning)
+}
+
 .chat {
     overflow: auto;
     display: flex;
@@ -12,7 +29,7 @@
 }
 
 .submit{
-    --background: linear-gradient(to bottom, rgba(96, 154, 254, 1), rgba(34,34,34,0.7) 20%);
+    --background: linear-gradient(to bottom, rgba(96, 154, 254, 1), rgba(34,34,34,0.7) 2%);
 }
 
 .contact-coloring {
@@ -41,9 +58,9 @@
     font-size: inherit;
     background: black;
     border-width: 1px;
-    border-style: solid;
+    // border-style: solid;
     border-color: #4d78c5;
-    border-radius: 15px;
+    border-radius: 10px;
 }
 
 .left-bubble {
@@ -55,7 +72,7 @@
     margin-left: 2%;
     float: left;
     font-family: 'OpenSans';
-    color: var(--ion-color-light);
+    color: white;
     max-width: 80%;
     min-width: 20%;
     text-align: right;
@@ -85,7 +102,7 @@
     padding: 5px 10px 20px;
     margin-top: -12px;
     margin: 10px;
-    color: var(--ion-color-light);
+    color: white;
     border-width: 0em 0.3em 0em 0em;
     border-style: solid;
     border-image-source: linear-gradient(var(--ion-background-color), var(--ion-color-primary), var(--ion-background-color));

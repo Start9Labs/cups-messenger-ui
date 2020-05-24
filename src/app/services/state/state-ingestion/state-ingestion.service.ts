@@ -4,7 +4,7 @@ import { Subscription, Observable, timer, from, combineLatest, iif } from 'rxjs'
 import { concatMap, switchMap, map, tap, filter, mergeMap, pairwise, startWith, skip } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
-import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
+import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
 import { suppressErrorOperator } from 'src/rxjs/util'
@@ -30,7 +30,7 @@ export class StateIngestionService {
 
     // subscribe to this to get new contacts + automatically update state. Subscription callback
     // triggered on completion of both tasks.
-    refreshContacts(testPassword?: string): Observable<ContactWithMessageCount[]>{
+    refreshContacts(testPassword?: string): Observable<ContactWithMessageMeta[]>{
         return new Observable(
             subscriber => {
                 acquireContacts(this.cups, testPassword).subscribe(
@@ -76,24 +76,11 @@ export class StateIngestionService {
     init(){
         this.startContactsCooldownSub()
         this.startMessagesCooldownSub()
-        this.startPreviewMessagesCooldownSub()
     }
 
     shutdown(){
         if(this.contactsCooldown)        this.contactsCooldown.unsubscribe()
         if(this.messagesCooldown)        this.messagesCooldown.unsubscribe()
-        if(this.previewMessagesCooldown) this.previewMessagesCooldown.unsubscribe()
-    }
-
-    // everytime we get contacts, grab their messages without marking as read.
-    private startPreviewMessagesCooldownSub(){
-        if(subIsActive(this.previewMessagesCooldown)) return
-
-        this.previewMessagesCooldown = App.emitContacts$.pipe(
-            concatMap(cs => from(cs)),
-            mergeMap(c => acquireMessages(this.cups, c, { markAsRead: false })),
-            suppressErrorOperator('message preview')
-        ).subscribe(App.$ingestMessages)
     }
 
     private startContactsCooldownSub(){
@@ -148,7 +135,7 @@ function acquireMessages(
 
 function acquireContacts(
     cups: CupsMessenger, testPassword?: string
-) : Observable<ContactWithMessageCount[]> {
+) : Observable<ContactWithMessageMeta[]> {
     return cups.contactsShow(testPassword).pipe(
         tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS)),
         map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))

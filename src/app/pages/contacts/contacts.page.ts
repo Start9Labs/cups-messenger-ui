@@ -1,6 +1,6 @@
-import { Component, OnInit, NgZone } from '@angular/core'
+import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
 import { Observable, BehaviorSubject, from } from 'rxjs'
-import { ContactWithMessageCount, Contact } from '../../services/cups/types'
+import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
 import { NavController, LoadingController } from '@ionic/angular'
@@ -11,13 +11,16 @@ import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, mergeMap } from 'rxjs/operators'
+import { SVG, Container }from '@svgdotjs/svg.js'
 @Component({
   selector: 'app-contacts',
   templateUrl: './contacts.page.html',
   styleUrls: ['./contacts.page.scss'],
 })
 export class ContactsPage implements OnInit {
-    public contacts$: Observable<ContactWithMessageCount[]>
+    @ViewChild('animation') animation: ElementRef<HTMLElement>
+
+    public contacts$: Observable<ContactWithMessageMeta[]>
     public makeNewContactForm = false
     public $submittingNewContact$ = new BehaviorSubject(false)
     public newContactTorAddress: string
@@ -38,6 +41,7 @@ export class ContactsPage implements OnInit {
         private readonly nav: NavController
     ) {
     }
+
 
     ngOnInit(){
         if(!this.app.hasLoadedContacts){
