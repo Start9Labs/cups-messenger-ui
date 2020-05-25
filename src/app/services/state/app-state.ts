@@ -5,6 +5,7 @@ import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T } from 'src/app/config'
 import { Log } from 'src/app/log'
 import { MessageStore } from './message-store'
+import { partitionBy, sortByTimestamp } from 'src/app/util'
 
 // Raw app state. Shouldn't be accessed directly except by the below.
 const Private = {
@@ -24,7 +25,7 @@ export class AppState{
     $ingestContacts:  NextObserver<ContactWithMessageMeta[]>
     $ingestMessages: NextObserver<{ contact: Contact, messages: Message[] }>
 
-    emitCurrentContact$: Observable<Contact>
+    emitCurrentContact$: Observable<ContactWithMessageMeta>
     emitContacts$: Observable<ContactWithMessageMeta[]>
     emitMessages$: (tor: string) => Observable<Message[]>
 
@@ -36,7 +37,10 @@ export class AppState{
     constructor(){
         this.$ingestCurrentContact = Private.$currentContact$
         this.$ingestContacts       = {
-            next: cs => { this.hasLoadedContacts = true; Private.$contacts$.next(cs) },
+            next: cs => { 
+                this.hasLoadedContacts = true
+                Private.$contacts$.next(cs)
+            },
             complete: () => Log.error(`Critical: contacts observer completed`),
             error: e => Log.error('Critical: contacts observer errored', e)
         }
@@ -49,7 +53,9 @@ export class AppState{
         }
 
         this.emitCurrentContact$   = Private.$currentContact$.asObservable().pipe(filter(exists))
-        this.emitContacts$         = Private.$contacts$.asObservable()
+        this.emitContacts$         = Private.$contacts$.asObservable().pipe(map(cs => 
+            cs.sort(byMostRecentMessage)
+        ))
         this.emitMessages$ = (tor: string) => this.messagesFor(tor).toObservable()
 
         this.emitCurrentContact$.subscribe(c => this.currentContact = c)
@@ -81,5 +87,10 @@ export class AppState{
     }
 }
 
-
+function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {
+    if(!a.lastMessages[0]) return 1
+    if(!b.lastMessages[0]) return -1
+    return new Date(b.lastMessages[0].timestamp).getTime() - new Date(a.lastMessages[0].timestamp).getTime()
+}
+    
 export const App = new AppState()

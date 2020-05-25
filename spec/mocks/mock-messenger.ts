@@ -16,6 +16,11 @@ export class StandardMockCupsMessenger {
             if(index === 0){
                 this.mocks[c.torAddress] = mockL(mockMessage, 0)
                 c.unreadMessages = 0
+            } else if (index === 4) {
+                const message = mockMessage(100)
+                this.mocks[c.torAddress] = [message]
+                c.unreadMessages = 1
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
             } else {
                 const ms = mockL(mockMessage, 30)
                 this.mocks[c.torAddress] = ms
@@ -73,7 +78,7 @@ export class StandardMockCupsMessenger {
         const i = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
 
         this.contacts.forEach(c => {
-            if(c.torAddress === contact.torAddress && options.markAsRead){
+            if(c.torAddress === contact.torAddress){
                 this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
             }
         })

@@ -125,7 +125,7 @@ export class StateIngestionService {
 function acquireMessages(
     cups: CupsMessenger,
     contact: Contact,
-    options: ShowMessagesOptions = { markAsRead: true }
+    options: ShowMessagesOptions = {}
 ): Observable<{ contact: Contact, messages: ServerMessage[] }> {
     return cups.messagesShow(contact, options).pipe(
         tap(ms => Log.trace(`messages daemon returning`, ms, LogTopic.MESSAGES)),
@@ -137,8 +137,7 @@ function acquireContacts(
     cups: CupsMessenger, testPassword?: string
 ) : Observable<ContactWithMessageMeta[]> {
     return cups.contactsShow(testPassword).pipe(
-        tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS)),
-        map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
+        tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS))
     )
 }
 

@@ -11,7 +11,7 @@ export class Tunnel {
 
     private readonly messagesInFlight: { [trackingId: string]: { shape: Shape, classification: MessageClassification }} = {}
 
-    constructor(canvas: ElementRef<HTMLElement>, view: { w: number, h: number }){
+    constructor(canvas: ElementRef<HTMLElement>, view: { w: number, h: number }, firstLetterOfContact: string){
         this.w = view.w
         this.h = view.h
         this.draw = (SVG(canvas.nativeElement) as Container).size('100%', '100%').viewbox(0, 0, this.w, this.h)

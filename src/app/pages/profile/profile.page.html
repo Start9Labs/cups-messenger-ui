@@ -23,6 +23,7 @@
 			</ion-text>
 		</ion-item>
 	</ion-item-group>
-	<ion-text class="ion-text-wrap" color="danger">{{ $error$ | async }}</ion-text>
-
+	<ion-item lines="none" *ngIf="($error$ | async) as error">
+		<ion-text  color="danger">{{ $error$ | async }}</ion-text>
+	</ion-item>
 </ion-content>

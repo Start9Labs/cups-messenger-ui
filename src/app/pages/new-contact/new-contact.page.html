@@ -13,15 +13,13 @@
 <ion-content class="ion-padding">
     <ion-item-group>
 		<ion-item>
-			<!-- <ion-label position="stacked">Name</ion-label> -->
 			<ion-input placeholder="contact name" [(ngModel)]="name"></ion-input>
 		</ion-item>
 		<ion-item>
-			<!-- <ion-label position="stacked">Cups Tor Address</ion-label> -->
 			<ion-input placeholder="contact cups tor address (.onion)" [(ngModel)]="torAddress"></ion-input>
-    </ion-item>
-    </ion-item-group>
-    <div *ngIf="($error$ | async) as error">
-      <ion-text class="ion-text-wrap" color="danger">{{ $error$ | async }}</ion-text>
-    </div>
+		</ion-item>
+	</ion-item-group>
+	<ion-item lines="none" *ngIf="($error$ | async) as error">
+		<ion-text  color="danger">{{ $error$ | async }}</ion-text>
+	</ion-item>
 </ion-content>

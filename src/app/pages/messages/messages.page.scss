@@ -29,7 +29,15 @@
 }
 
 .submit{
-    --background: linear-gradient(to bottom, rgba(96, 154, 254, 1), rgba(34,34,34,0.7) 2%);
+    background: rgba(65, 65, 65, 0.7);
+    padding: 10px;
+    color: #fafafa
+}
+
+.submit form {
+    display: grid;
+    grid-template-columns: 5fr 1fr;
+    align-items: center;
 }
 
 .contact-coloring {
@@ -50,17 +58,20 @@
 
 
 .enter-text{
-    --padding-top: 10px;
-    --padding-end: 10px;
-    --padding-bottom: 10px;
-    --padding-start: 10px;
-    margin-left: 5px;
-    font-size: inherit;
     background: black;
     border-width: 1px;
-    // border-style: solid;
-    border-color: #4d78c5;
     border-radius: 10px;
+    padding-left: 10px;
+}
+
+.native-textarea.sc-ion-textarea-ios {
+    padding-right: 0;
+}
+
+.enter-text textarea {
+    margin: 0;
+    padding: 0;
+    padding-right: 0;
 }
 
 .left-bubble {

@@ -57,7 +57,7 @@ export const config: Config = {
     defaultServerTimeout: 180000,
     logs: {
         level: LogLevel.TRACE,
-        topics: [LogTopic.MESSAGES, LogTopic.CONTACTS, LogTopic.NAV]
+        topics: [LogTopic.CONTACTS]
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
