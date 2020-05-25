@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, failed, attending } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, LoadingController } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
-import { switchMap, tap, filter, catchError, concatMap, take, delay } from 'rxjs/operators'
+import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer } from 'rxjs'
+import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
@@ -33,10 +33,13 @@ export class MessagesPage implements OnInit {
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    // Used to determine whether we should present jump button in green or transparent
-    $unreads$ = new BehaviorSubject(false)
     // Used to determine whether we should present jump button
-    $atBottom$ = new BehaviorSubject(true)
+    private $atBottom$ = new BehaviorSubject(true)
+    atBottom$ = this.$atBottom$.asObservable().pipe(distinctUntilChanged()) // only notify subs if things have changed
+
+    // Used for green highlights
+    private $unreads$ = new BehaviorSubject(false)
+    unreads$ = this.$unreads$.asObservable().pipe(distinctUntilChanged()) // only notify subs if things have changed
 
     // Synced to text entry field in UI
     messageToSend: string
@@ -175,8 +178,11 @@ export class MessagesPage implements OnInit {
     /* Jumping logic */
 
     async jumpToBottom(timeToScroll = 200) {
-        if(this.content) { this.content.scrollToBottom(timeToScroll) }
-        this.$unreads$.next(false)
+        if(this.content) {
+            this.content.scrollToBottom(timeToScroll)
+            this.$atBottom$.next(true)
+            this.$unreads$.next(false)
+        }
     }
 
     // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is meh.
@@ -185,14 +191,15 @@ export class MessagesPage implements OnInit {
     }
 
     onScrollStart(){
-        const bottom = isAtBottom()
-        this.$atBottom$.next(bottom)
+        timer(300).pipe(take(1)).subscribe(
+            () =>  this.$atBottom$.next(isAtBottom())
+        )
     }
 
     onScrollEnd(){
         const bottom = isAtBottom()
         this.$atBottom$.next(bottom)
-        if(bottom) this.$atBottom$.next(true)
+        if(bottom) this.$unreads$.next(false)
     }
 
     /* older message logic */
