@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
-import { Observable, BehaviorSubject } from 'rxjs'
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
@@ -10,7 +10,7 @@ import { getContext } from 'ambassador-sdk'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { concatMap } from 'rxjs/operators'
+import { concatMap, map } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contacts',
@@ -21,16 +21,7 @@ export class ContactsPage implements OnInit {
     @ViewChild('animation') animation: ElementRef<HTMLElement>
 
     public contacts$: Observable<ContactWithMessageMeta[]>
-    public makeNewContactForm = false
-    public $submittingNewContact$ = new BehaviorSubject(false)
-    public newContactTorAddress: string
-    public newContactName: string
-
-    public loading$ = new BehaviorSubject(false)
-    public $error$ = new BehaviorSubject(undefined)
-
-    public app = App
-    public auth = Auth
+    private $forceRerender$ = new BehaviorSubject({})
 
     constructor(
         private readonly navController: NavController,
@@ -40,11 +31,14 @@ export class ContactsPage implements OnInit {
         private readonly stateIngestion: StateIngestionService,
         private readonly nav: NavController
     ) {
+        this.contacts$ = combineLatest([this.$forceRerender$, App.emitContacts$]).pipe(
+            map(([_,cs]) => cs.sort(byMostRecentMessage))
+        )
     }
 
 
     ngOnInit(){
-        if(!this.app.hasLoadedContacts){
+        if(!App.hasLoadedContacts){
             overlayLoader(
                 this.stateIngestion.refreshContacts(), this.loadingCtrl, 'Fetching contacts...'
             ).subscribe(() => {})
@@ -52,6 +46,7 @@ export class ContactsPage implements OnInit {
     }
 
     ionViewWillEnter() {
+        this.$forceRerender$.next({})
     }
 
     ionViewWillLeave() {
@@ -64,11 +59,8 @@ export class ContactsPage implements OnInit {
     }
 
     logout(){
+        Log.debug('Logging out', {}, LogTopic.AUTH)
         Auth.clearPassword()
-        if((window as any).platform){
-            Log.debug('logging out through shell', getContext(), LogTopic.NAV)
-            getContext().close()
-        }
     }
 
     toNewContactPage(){
@@ -87,10 +79,16 @@ export class ContactsPage implements OnInit {
     }
 
     editContact(c: Contact){
-        this.app.alterCurrentContact$(c).subscribe(() => {
+        App.alterCurrentContact$(c).subscribe(() => {
             this.zone.run(() => {
                 this.nav.navigateForward('profile')
             })
         })
     }
+}
+
+function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {
+    if(!a.lastMessages[0]) return 1
+    if(!b.lastMessages[0]) return -1
+    return new Date(b.lastMessages[0].timestamp).getTime() - new Date(a.lastMessages[0].timestamp).getTime()
 }

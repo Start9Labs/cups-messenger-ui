@@ -53,9 +53,7 @@ export class AppState{
         }
 
         this.emitCurrentContact$   = Private.$currentContact$.asObservable().pipe(filter(exists))
-        this.emitContacts$         = Private.$contacts$.asObservable().pipe(map(cs => 
-            cs.sort(byMostRecentMessage)
-        ))
+        this.emitContacts$         = Private.$contacts$.asObservable()
         this.emitMessages$ = (tor: string) => this.messagesFor(tor).toObservable()
 
         this.emitCurrentContact$.subscribe(c => this.currentContact = c)
@@ -85,12 +83,6 @@ export class AppState{
     emitOldestServerMessage$(c: Contact): Observable<ServerMessage | undefined> {
         return this.emitMessages$(c.torAddress).pipe(map(ms => ms.filter(server)[ms.length - 1]))
     }
-}
-
-function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {
-    if(!a.lastMessages[0]) return 1
-    if(!b.lastMessages[0]) return -1
-    return new Date(b.lastMessages[0].timestamp).getTime() - new Date(a.lastMessages[0].timestamp).getTime()
 }
     
 export const App = new AppState()

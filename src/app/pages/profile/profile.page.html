@@ -1,11 +1,11 @@
 <ion-header>
 	<ion-toolbar *ngIf="(app.emitCurrentContact$ | async) as contact">
 		<ion-buttons slot="start">
-		  	<ion-back-button></ion-back-button>
+		  	<ion-back-button color="primary"></ion-back-button>
 		</ion-buttons>
-		<ion-title>Profile</ion-title>
+		<ion-title>Contact</ion-title>
 		<ion-buttons slot="end">
-			<ion-button style="color: #000000" (click)="save(contact)">Save</ion-button>
+			<ion-button color="primary" (click)="save(contact)">Save</ion-button>
 	  	</ion-buttons>
 	</ion-toolbar>
 </ion-header>

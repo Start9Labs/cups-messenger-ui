@@ -1,7 +1,7 @@
 <ion-header translucent>
     <ion-toolbar>
         <ion-buttons class="avatar-toolbar">
-            <ion-back-button (click)="toContacts()"></ion-back-button>
+            <ion-back-button color="primary" (click)="toContacts()"></ion-back-button>
             <div style="
                 display: grid;
                 justify-items: center;
@@ -23,8 +23,8 @@
             <ion-button style="
                 --padding-start: 0;
                 --padding-end: 6px;
-            " fill="clear" color="warning" *ngIf="(app.emitCurrentContact$ | async)" (click)="toProfile()">
-                Profile
+            " fill="clear" color="primary" *ngIf="(app.emitCurrentContact$ | async)" (click)="toProfile()">
+                Edit
             </ion-button>
         </ion-buttons>
         

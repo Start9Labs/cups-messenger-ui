@@ -4,6 +4,7 @@ import { getContext } from 'ambassador-sdk'
 import { LogBehaviorSubject } from 'src/rxjs/util'
 import { LogLevel, LogTopic } from 'src/app/config'
 import { Log } from 'src/app/log'
+import { pauseFor } from '../cups/types'
 
 const { Storage } = Plugins
 
@@ -30,6 +31,8 @@ export class AuthState {
             return
         }
 
+        Log.info('We will pause for window.platform. Its presently:', (!!(window as any).platform).toString(), LogTopic.AUTH)
+        await pauseFor(500)
         Log.info('We will consult ambassador context for password?', (!!(window as any).platform).toString(), LogTopic.AUTH)
 
         if((window as any).platform) {

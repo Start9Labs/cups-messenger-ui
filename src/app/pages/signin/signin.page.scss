@@ -9,13 +9,3 @@
     margin-left: 50%;
     margin-top: 5%;
 }
-
-
-:host {
-    .item-interactive.ion-invalid{
-     --highlight-background: #d00909 !important;
-   }
-   .item-interactive.ion-valid{
-     --highlight-background: #0e7717 !important;
-   }
- }

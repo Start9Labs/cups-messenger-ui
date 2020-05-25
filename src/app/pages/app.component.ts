@@ -8,6 +8,8 @@ import { sent, inbound, failed, attending, server, outbound } from '../services/
 import { getContext } from 'ambassador-sdk'
 import { Router, NavigationStart } from '@angular/router'
 import { filter } from 'rxjs/operators'
+import { Log } from '../log'
+import { LogTopic } from '../config'
 
 @Component({
   selector: 'app-root',
@@ -15,7 +17,7 @@ import { filter } from 'rxjs/operators'
   styleUrls: ['app.component.scss']
 })
 export class AppComponent {
-    
+
 
     constructor(
         private readonly navCtrl: NavController,
@@ -46,7 +48,14 @@ export class AppComponent {
     handleAuthChange(s: AuthStatus){
         this.zone.run(() => {
             switch (s) {
-                case AuthStatus.UNVERIFED: this.navCtrl.navigateRoot('signin'); return
+                case AuthStatus.UNVERIFED: {
+                    if((window as any).platform){
+                        Log.debug('logging out through shell', getContext(), LogTopic.NAV)
+                        getContext().close()
+                    } else {
+                        this.navCtrl.navigateRoot('signin')
+                    }
+                } return
                 case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); return
             }
         })

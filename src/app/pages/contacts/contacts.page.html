@@ -1,6 +1,6 @@
 <ion-header translucent>
     <ion-toolbar>   
-        <ion-title color="primary">Contacts</ion-title>               
+        <ion-title>Contacts</ion-title>               
         <ion-buttons collapse="true" slot="end">
             <ion-button color="primary" fill="clear" (click)="logout()">
                 Logout
@@ -11,10 +11,13 @@
 
 <ion-content fullscreen>
     <ion-item-group>
-        <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
+        <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
                 <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
-                    <ion-avatar [class.item-avatar]="contact.unreadMessages === 0" [class.item-avatar-unreads]="contact.unreadMessages > 0" slot="start">
+                    <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
+                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                    </ion-avatar>
+                    <ion-avatar *ngIf="contact.unreadMessages > 0" class="item-avatar-unreads" slot="start">
                         <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
                     </ion-avatar>
                     <ion-grid>

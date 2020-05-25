@@ -7,7 +7,7 @@ export function sanitizeOnion(unsanitizedOnion: string): string {
     try {
         onionToPubkeyString(sanitizedOnion)
     } catch (e) {
-        throw new Error(`Invalid Cups Tor Address.`)
+        throw new Error(`Invalid Tor Address.`)
     }
     return sanitizedOnion
 }

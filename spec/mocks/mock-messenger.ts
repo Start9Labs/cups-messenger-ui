@@ -1,10 +1,11 @@
-import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent, server } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 import { of, timer, interval } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { Log } from 'src/app/log'
 import { mockL, mockContact, mockMessage } from './util'
+import { sortByTimestamp } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
@@ -32,7 +33,8 @@ export class StandardMockCupsMessenger {
             this.contacts.forEach( c => {
                 const m = mockMessage(i, new Date())
                 this.mocks[c.torAddress].push(m)
-                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = m
+                const mostRecent = this.mocks[c.torAddress].filter(server).sort(sortByTimestamp)
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = mostRecent[0]
                 c.unreadMessages += 1
             })
         })
@@ -40,6 +42,7 @@ export class StandardMockCupsMessenger {
 
     contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
         Log.trace('showing this.contacts', this.contacts)
+
         return timer(this.serverTimeToLoad).pipe(map(() => this.contacts.map(clone)), take(1))
     }
 
@@ -75,9 +78,7 @@ export class StandardMockCupsMessenger {
         } else {
             toReturn = messages.slice(messages.length - limit + 1, messages.length)
         }
-        const i = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
-
-        this.contacts.forEach(c => {
+        this.contacts.forEach((c, i) => {
             if(c.torAddress === contact.torAddress){
                 this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
             }
