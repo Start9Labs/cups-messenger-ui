@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
-import { Observable, BehaviorSubject, from } from 'rxjs'
+import { Observable, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
@@ -10,7 +10,7 @@ import { getContext } from 'ambassador-sdk'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { concatMap, mergeMap } from 'rxjs/operators'
+import { concatMap } from 'rxjs/operators'
 
 @Component({
   selector: 'app-contacts',
