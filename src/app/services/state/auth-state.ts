@@ -2,7 +2,8 @@ import { Plugins } from '@capacitor/core'
 import { BehaviorSubject, Observable, NextObserver } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
 import { LogBehaviorSubject } from 'src/rxjs/util'
-import { LogLevel } from 'src/app/config'
+import { LogLevel, LogTopic } from 'src/app/config'
+import { Log } from 'src/app/log'
 
 const { Storage } = Plugins
 
@@ -21,14 +22,20 @@ export class AuthState {
     async init(): Promise<void> {
         const p = await Storage.get(AuthState.passwordKey)
 
+        Log.info('password retreived from local storage', p, LogTopic.AUTH)
+
         if(p && p.value){
             this.password = p.value
             this.$status$.next(AuthStatus.VERIFIED)
             return
         }
 
+        Log.info('We will consult ambassador context for password?', (!!(window as any).platform).toString(), LogTopic.AUTH)
+
         if((window as any).platform) {
             const shellPassword = await getContext().getConfigValue(['password'], 5000)
+
+            Log.info('Retreived shell password', shellPassword, LogTopic.AUTH)
             if(shellPassword){
                 await Storage.set({... AuthState.passwordKey, value: shellPassword})
                 this.password = shellPassword

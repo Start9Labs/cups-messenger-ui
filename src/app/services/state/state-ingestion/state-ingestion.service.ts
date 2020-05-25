@@ -57,7 +57,6 @@ export class StateIngestionService {
                 acquireMessages(this.cups, contact, options).subscribe(
                     {
                         next: ms => {
-                            console.log(`acquireMessages ${JSON.stringify(ms)}`)
                             App.$ingestMessages.next(ms)
                             subscriber.next(ms)
                         },

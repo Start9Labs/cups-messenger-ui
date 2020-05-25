@@ -10,7 +10,8 @@ export enum LogTopic {
     CONTACTS = 'CONTACTS',
     CURRENT_CONTACT = 'CURRENT_CONTACT',
     MESSAGES = 'MESSAGE',
-    NO_TOPIC = 'NO_TOPIC'
+    NO_TOPIC = 'NO_TOPIC',
+    AUTH = 'AUTH'
 }
 
 export enum CupsMessengerType {
@@ -57,7 +58,7 @@ export const config: Config = {
     defaultServerTimeout: 180000,
     logs: {
         level: LogLevel.TRACE,
-        topics: [LogTopic.CONTACTS]
+        topics: [LogTopic.AUTH]
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
