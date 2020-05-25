@@ -11,7 +11,7 @@ import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, mergeMap } from 'rxjs/operators'
-import { SVG, Container }from '@svgdotjs/svg.js'
+
 @Component({
   selector: 'app-contacts',
   templateUrl: './contacts.page.html',
