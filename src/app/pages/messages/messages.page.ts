@@ -33,8 +33,10 @@ export class MessagesPage implements OnInit {
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    // Used to determine whether we should present jump button
+    // Used to determine whether we should present jump button in green or transparent
     $unreads$ = new BehaviorSubject(false)
+    // Used to determine whether we should present jump button
+    $atBottom$ = new BehaviorSubject(true)
 
     // Synced to text entry field in UI
     messageToSend: string
@@ -182,8 +184,15 @@ export class MessagesPage implements OnInit {
         this.jumpToBottom()
     }
 
+    onScrollStart(){
+        const bottom = isAtBottom()
+        this.$atBottom$.next(bottom)
+    }
+
     onScrollEnd(){
-        if(isAtBottom()){ this.$unreads$.next(false) }
+        const bottom = isAtBottom()
+        this.$atBottom$.next(bottom)
+        if(bottom) this.$atBottom$.next(true)
     }
 
     /* older message logic */

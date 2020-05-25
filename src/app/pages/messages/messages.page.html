@@ -32,7 +32,7 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content fullscreen [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
+<ion-content #content fullscreen [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" (ionScrollStart)="onScrollStart()">
     <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
         <ion-infinite-scroll *ngIf="!metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
