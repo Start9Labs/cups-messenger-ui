@@ -42,7 +42,6 @@ export class AppComponent {
 
         this.stateIngestion.init()
         Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))
-        Auth.init()
     }
 
     handleAuthChange(s: AuthStatus){
@@ -50,13 +49,14 @@ export class AppComponent {
             switch (s) {
                 case AuthStatus.UNVERIFED: {
                     if((window as any).platform){
-                        Log.debug('logging out through shell', getContext(), LogTopic.NAV)
+                        Log.debug('Unverified: Popping out to shell', getContext(), LogTopic.AUTH)
                         getContext().close()
                     } else {
                         this.navCtrl.navigateRoot('signin')
                     }
-                } return
-                case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); return
+                } break
+                case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); break
+                case AuthStatus.INITIATING: Auth.retrievePassword(); break
             }
         })
     }
