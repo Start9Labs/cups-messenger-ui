@@ -10,7 +10,8 @@ export enum LogTopic {
     CONTACTS = 'CONTACTS',
     CURRENT_CONTACT = 'CURRENT_CONTACT',
     MESSAGES = 'MESSAGE',
-    NO_TOPIC = 'NO_TOPIC'
+    NO_TOPIC = 'NO_TOPIC',
+    AUTH = 'AUTH'
 }
 
 export enum CupsMessengerType {
@@ -18,7 +19,8 @@ export enum CupsMessengerType {
     STANDARD_MOCK,
     ERROR_MOCK,
     NO_MESSAGES_MOCK,
-    AUTH_MOCK
+    AUTH_MOCK,
+    FAST_MOCK
 }
 
 export interface Config {
@@ -43,11 +45,11 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.STANDARD_MOCK,
+        type: CupsMessengerType.FAST_MOCK,
         url: '/api'
     },
     contactsDaemon: {
-        frequency: 5000
+        frequency: 10000
     },
     messagesDaemon: {
         frequency: 3000
@@ -56,7 +58,7 @@ export const config: Config = {
     defaultServerTimeout: 180000,
     logs: {
         level: LogLevel.TRACE,
-        topics: [LogTopic.CONTACTS, LogTopic.MESSAGES, LogTopic.CURRENT_CONTACT, LogTopic.NAV, LogTopic.NO_TOPIC]
+        topics: [LogTopic.AUTH]
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }

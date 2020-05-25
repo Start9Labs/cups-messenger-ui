@@ -1,6 +1,6 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
-import { ContactWithMessageCount, MessageDirection, MessageClassification } from './types'
+import { ContactWithMessageMeta, MessageDirection, MessageClassification, ServerMessage } from './types'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
@@ -15,7 +15,7 @@ export interface CupsMessageShow {
 export class CupsResParser {
     constructor() {}
 
-    deserializeContactsShow(rawRes: ArrayBuffer): ContactWithMessageCount[] {
+    deserializeContactsShow(rawRes: ArrayBuffer): ContactWithMessageMeta[] {
         const p = new ArrayBufferParser(rawRes)
         if (p.isEmpty) { return [] }
         const toReturn = []
@@ -83,13 +83,19 @@ class ArrayBufferParser {
 
 const PKEY_LENGTH = 32
 const UNREADS_LENGTH = 8
+const MESSAGES_COUNT = 1
 const NAME_LENGTH = 1
-function pullContact(p: ArrayBufferParser): ContactWithMessageCount {
-    const torAddress     = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
-    const unreadsCount   = p.chopNParse(UNREADS_LENGTH, bigEndian)
-    const nameSize       = p.chopNParse(NAME_LENGTH   , bigEndian)
-    const name           = p.chopNParse(nameSize      , a => utf8Decoder.decode(a))
-    return { torAddress, unreadMessages: unreadsCount, name }
+function pullContact(p: ArrayBufferParser): ContactWithMessageMeta {
+    const torAddress          = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
+    const unreadsCount        = p.chopNParse(UNREADS_LENGTH, bigEndian)
+    const nameSize            = p.chopNParse(NAME_LENGTH   , bigEndian)
+    const name                = p.chopNParse(nameSize      , a => utf8Decoder.decode(a))
+    const ensuingMessageCount = p.chopNParse(MESSAGES_COUNT, bigEndian)
+    const lastMessages = []
+    for(let i = 0; i < ensuingMessageCount; i ++) {
+        lastMessages.push(pullMessage(p))
+    }
+    return { torAddress, unreadMessages: unreadsCount, name, lastMessages }
 }
 
 function pullMessage(p: ArrayBufferParser): CupsMessageShow {

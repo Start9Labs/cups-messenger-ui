@@ -51,7 +51,6 @@ export function overlayLoader<T>(
         concatMap(() => loadingProcess),
         take(1),
         finalize(() => {
-            console.log('we made it to the loader')
             loader.dismiss()
         }),
     )

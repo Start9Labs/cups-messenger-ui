@@ -1,23 +1,36 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, timer } from 'rxjs'
-import { concatMap, switchMap, map, tap } from 'rxjs/operators'
+import { Subscription, Observable, timer, from, combineLatest, iif } from 'rxjs'
+import { concatMap, switchMap, map, tap, filter, mergeMap, pairwise, startWith, skip } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
-import { Contact, ContactWithMessageCount, ServerMessage } from '../../cups/types'
+import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
 import { suppressErrorOperator } from 'src/rxjs/util'
+import { Router, NavigationStart } from '@angular/router'
+
+enum Page {
+    CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
+}
 
 @Injectable({providedIn: 'root'})
 export class StateIngestionService {
+    private page: Page
     private contactsCooldown: Subscription
     private messagesCooldown: Subscription
-    constructor(private readonly cups: CupsMessenger){}
+    private previewMessagesCooldown: Subscription
+
+    constructor(private readonly cups: CupsMessenger, private readonly router: Router){
+        this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
+            Log.info(`navigated to`, e, LogTopic.NAV)
+            this.page = e.url as Page
+        })
+    }
 
     // subscribe to this to get new contacts + automatically update state. Subscription callback
     // triggered on completion of both tasks.
-    refreshContacts(testPassword?: string): Observable<ContactWithMessageCount[]>{
+    refreshContacts(testPassword?: string): Observable<ContactWithMessageMeta[]>{
         return new Observable(
             subscriber => {
                 acquireContacts(this.cups, testPassword).subscribe(
@@ -44,7 +57,6 @@ export class StateIngestionService {
                 acquireMessages(this.cups, contact, options).subscribe(
                     {
                         next: ms => {
-                            console.log(`acquireMessages ${JSON.stringify(ms)}`)
                             App.$ingestMessages.next(ms)
                             subscriber.next(ms)
                         },
@@ -66,12 +78,13 @@ export class StateIngestionService {
     }
 
     shutdown(){
-        if(this.contactsCooldown) this.contactsCooldown.unsubscribe()
-        if(this.messagesCooldown) this.messagesCooldown.unsubscribe()
+        if(this.contactsCooldown)        this.contactsCooldown.unsubscribe()
+        if(this.messagesCooldown)        this.messagesCooldown.unsubscribe()
     }
 
     private startContactsCooldownSub(){
         if(subIsActive(this.contactsCooldown)) return
+
         this.contactsCooldown =
                 timer(0, config.contactsDaemon.frequency).pipe(
                     concatMap(
@@ -81,6 +94,7 @@ export class StateIngestionService {
             .subscribe(App.$ingestContacts)
     }
 
+    // When we're on the messages page for the current contact, get messages more frequently, and mark as read
     private startMessagesCooldownSub(){
         if(subIsActive(this.messagesCooldown)) return
 
@@ -88,6 +102,7 @@ export class StateIngestionService {
             switchMap(contact => {
                 Log.trace(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
                 return timer(0, config.messagesDaemon.frequency).pipe(
+                    filter(() => this.messagesPage()),
                     concatMap(
                         () => acquireMessages(this.cups, contact).pipe(suppressErrorOperator('acquire messages'))
                     ),
@@ -96,6 +111,13 @@ export class StateIngestionService {
         ).subscribe(ms =>{
             App.$ingestMessages.next(ms)
         })
+    }
+
+    contactsPage(): boolean {
+        return this.page === Page.CONTACTS
+    }
+    messagesPage(): boolean {
+        return this.page === Page.MESSAGES
     }
 }
 
@@ -112,10 +134,9 @@ function acquireMessages(
 
 function acquireContacts(
     cups: CupsMessenger, testPassword?: string
-) : Observable<ContactWithMessageCount[]> {
+) : Observable<ContactWithMessageMeta[]> {
     return cups.contactsShow(testPassword).pipe(
-        tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS)),
-        map(cs => cs.sort((c1, c2) => c2.unreadMessages - c1.unreadMessages))
+        tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS))
     )
 }
 

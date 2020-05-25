@@ -28,12 +28,19 @@ export class SigninPage implements OnInit {
   ) { }
 
   ngOnInit() {
-      Auth.init().then(() => this.signin())
+      Auth.retrievePassword().then(() => this.signin())
   }
 
   async enterCupsMessengerPassword() {
     this.$error$.next(undefined)
     const pass = this.password.trim()
+
+    if(!pass){
+      const e = `Password cannot be empty`
+      Log.error(`Error on login`, e)
+      this.$error$.next(e)
+      return
+    }
 
     overlayLoader(
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'

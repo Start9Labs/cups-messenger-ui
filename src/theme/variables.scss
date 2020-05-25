@@ -4,10 +4,11 @@
 /** Ionic CSS Variables **/
 :root {
   /** primary **/
-  --ion-color-primary: #3880ff;
-  --ion-color-primary-rgb: 56, 128, 255;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary: #568de6;
+  --ion-color-primary-faded: rgba(56, 128, 255, 0.7);
+  --ion-color-primary-rgb: 86, 141, 230;
+  --ion-color-primary-contrast: #bad2f7;
+  --ion-color-primary-contrast-rgb: 186, 210, 247;
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
 
@@ -28,23 +29,23 @@
   --ion-color-tertiary-tint: #7e57ff;
 
   /** success **/
-  --ion-color-success: #10dc60;
-  --ion-color-success-rgb: 16, 220, 96;
+  --ion-color-success: var(--ion-color-primary-contrast);
+  --ion-color-success-rgb: 186, 210, 247;
   --ion-color-success-contrast: #ffffff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
   --ion-color-success-shade: #0ec254;
   --ion-color-success-tint: #28e070;
 
   /** warning **/
-  --ion-color-warning: #ffce00;
-  --ion-color-warning-rgb: 255, 206, 0;
+  --ion-color-warning: #86e6ab; //#feae71;
+  --ion-color-warning-rgb: 134, 230, 171;
   --ion-color-warning-contrast: #ffffff;
   --ion-color-warning-contrast-rgb: 255, 255, 255;
   --ion-color-warning-shade: #e0b500;
   --ion-color-warning-tint: #ffd31a;
 
   /** danger **/
-  --ion-color-danger: #f04141;
+  --ion-color-danger: #f95c5c;
   --ion-color-danger-rgb: 245, 61, 61;
   --ion-color-danger-contrast: #ffffff;
   --ion-color-danger-contrast-rgb: 255, 255, 255;
@@ -52,7 +53,7 @@
   --ion-color-danger-tint: #f25454;
 
   /** dark **/
-  --ion-color-dark: #222428;
+  --ion-color-dark: #1a1c21;
   --ion-color-dark-rgb: 34, 34, 34;
   --ion-color-dark-contrast: #ffffff;
   --ion-color-dark-contrast-rgb: 255, 255, 255;
@@ -60,18 +61,94 @@
   --ion-color-dark-tint: #383a3e;
 
   /** medium **/
-  --ion-color-medium: #989aa2;
+  --ion-color-medium: #55565b;
   --ion-color-medium-rgb: 152, 154, 162;
   --ion-color-medium-contrast: #ffffff;
   --ion-color-medium-contrast-rgb: 255, 255, 255;
-  --ion-color-medium-shade: #86888f;
+  --ion-color-medium-shade: rgb(134, 136, 143);
   --ion-color-medium-tint: #a2a4ab;
 
   /** light **/
-  --ion-color-light: #f4f5f8;
+  --ion-color-light: #d0d0d0;
   --ion-color-light-rgb: 244, 244, 244;
-  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast: #2b2b30;
   --ion-color-light-contrast-rgb: 0, 0, 0;
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
+
+
+  --ion-background-color: var(--ion-color-dark);
+
+  --ion-text-color: var(--ion-color-light);
+
+
+  --ion-font-family: 'OpenSans';
+  // --ion-text-color-rgb 	Text color of the entire app, rgb format
+  // --ion-backdrop-color 	Color of the Backdrop component
+  // --ion-backdrop-opacity 	Opacity of the Backdrop component
+  // --ion-overlay-background-color 	Background color of the overlays
+  --ion-border-color: var(--ion-color-dark-tint); // ion-item borders
+  // --ion-box-shadow-color: var(--ion-color-warning); // ???
+  // --ion-tab-bar-background 	Background of the Tab Bar
+  // --ion-tab-bar-background-focused 	Background of the focused Tab Bar
+  // --ion-tab-bar-border-color 	Border color of the Tab Bar
+  // --ion-tab-bar-color 	Color of the Tab Bar
+  // --ion-tab-bar-color-selected 	Color of the selected Tab Button
+  --ion-toolbar-background: rgba(65, 65, 65, 0.7); // 	Background of the Toolbar
+  // --ion-toolbar-border-color 	Border color of the Toolbar
+  // --ion-toolbar-color 	Color of the components in the Toolbar
+  // --ion-toolbar-segment-color 	Color of the Segment Buttons in the Toolbar
+  // --ion-toolbar-segment-color-checked 	Color of the checked Segment Buttons in the Toolbar
+  // --ion-toolbar-segment-background 	Background of the Segment Buttons in the Toolbar
+  // --ion-toolbar-segment-background-checked 	Background of the Segment Buttons in the Toolbar
+  // --ion-toolbar-segment-indicator-color 	Color of the Segment Button indicator in the Toolbar
+  // --ion-item-background // 	Background of the Item
+  // --ion-item-border-color //	Border color of the Item
+  // --ion-item-color 	Color // of the components in the Item
+  // --ion-placeholder-color 	// Color of the placeholder in Inputs
+  --ion-item-background-activated: var(--ion-color-red);
 }
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../assets/fonts/Montserrat-Thin.ttf');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Montserrat';
+    src: url('../assets/fonts/Montserrat-Black.ttf');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Montserrat';
+    src: url('../assets/fonts/Montserrat-Bold.ttf');
+    font-weight: 900;
+    font-style: normal;
+  }
+
+@font-face {
+    font-family: 'OpenSans';
+    src: url('../assets/fonts/OpenSans-Light.ttf');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'OpenSans';
+    src: url('../assets/fonts/OpenSans-Regular.ttf');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'OpenSans';
+    src: url('../assets/fonts/OpenSans-Bold.ttf');
+    font-weight: 900;
+    font-style: normal;
+  }
+
+ 

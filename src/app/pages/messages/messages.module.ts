@@ -9,6 +9,7 @@ import { MessagesPageRoutingModule } from './messages-routing.module'
 import { MessagesPage } from './messages.page'
 import { MessageClassificationPipe } from '../../pipes/classify-message.pipe'
 import { SharingModule } from '../../modules/sharing.module'
+import { TextAvatarModule } from 'src/app/text-avatar'
 
 @NgModule({
   imports: [
@@ -16,7 +17,8 @@ import { SharingModule } from '../../modules/sharing.module'
     FormsModule,
     IonicModule,
     MessagesPageRoutingModule,
-    SharingModule
+    SharingModule,
+    TextAvatarModule
   ],
   exports: [MessageClassificationPipe],
   declarations: [MessagesPage, MessageClassificationPipe],

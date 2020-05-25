@@ -1,44 +1,49 @@
-<ion-header>
+<ion-header translucent>
     <ion-toolbar>   
         <ion-title>Contacts</ion-title>               
         <ion-buttons collapse="true" slot="end">
-            <ion-button style="color: #000000" fill="clear" (click)="logout()">
+            <ion-button color="primary" fill="clear" (click)="logout()">
                 Logout
               </ion-button>
         </ion-buttons> 
       </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <!-- contacts list -->
-  <ion-item-group>
-      <div *ngFor="let contact of (app.emitContacts$ | async); index as i" >
-    
-          <div *ngIf="(app.emitCurrentContact$ | async) || {}; let cc" >
+<ion-content fullscreen>
+    <ion-item-group>
+        <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
-
-                <ion-item button detail="false" (click)="jumpToChat(contact)" [color]="(app.emitCurrentContact$ | async)?.torAddress === contact.torAddress ? 'light' : undefined">
-                    <ion-avatar slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:18)'></text-avatar>
+                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
+                    <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
+                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
                     </ion-avatar>
-                    <ion-label>{{ (contact | truncateEllipses:18) }}</ion-label>
-                    <ion-badge slot="end" style="border-radius: 5px; background-color:#efefef; color:#424242" *ngIf="((app.emitCurrentContact$ | async)?.torAddress !== contact.torAddress) && contact.unreadMessages > 0">{{ contact.unreadMessages }}</ion-badge>    
+                    <ion-avatar *ngIf="contact.unreadMessages > 0" class="item-avatar-unreads" slot="start">
+                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                    </ion-avatar>
+                    <ion-grid>
+                        <ion-row class="contact-name">{{ (contact | truncateEllipses:18) }}</ion-row>
+                        <ion-row >
+                            <div class="message-preview" *ngIf="contact.lastMessages[0]">{{ contact.lastMessages[0].text }}</div>
+                            <div class="message-preview" *ngIf="!contact.lastMessages[0]">{{ "\t" }}</div>
+                        </ion-row>
+                    </ion-grid>
                 </ion-item>
-
-                <ion-item-options side="end">
-                    <ion-item-option (click)="deleteContact(contact)">Delete</ion-item-option>
+                <ion-item-options side="end" lines="full">
+                    <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
+                    <ion-item-option color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
                 </ion-item-options>
             </ion-item-sliding>
-          </div>
-      </div>
-</ion-item-group>  
-<ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button size="medium" color="white" fill="clear" (click)="toNewContactPage()">
-        <ion-icon name="add-outline"></ion-icon>
-    </ion-fab-button>
-</ion-fab>
-
+        </div>
+        
+      </ion-item-group>  
+      <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+          <ion-fab-button class="new-contact-button" size="small" fill="clear" color="primary" (click)="toNewContactPage()">
+              <ion-icon name="add-outline"></ion-icon>
+          </ion-fab-button>
+      </ion-fab>
+    
 </ion-content>
 
 <ion-footer>
 </ion-footer>
+

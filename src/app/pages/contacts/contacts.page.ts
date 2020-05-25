@@ -1,6 +1,6 @@
-import { Component, OnInit, NgZone } from '@angular/core'
-import { Observable, BehaviorSubject } from 'rxjs'
-import { ContactWithMessageCount, Contact } from '../../services/cups/types'
+import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
+import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
 import { NavController, LoadingController } from '@ionic/angular'
@@ -10,40 +10,46 @@ import { getContext } from 'ambassador-sdk'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { concatMap } from 'rxjs/operators'
+import { concatMap, map } from 'rxjs/operators'
+
 @Component({
   selector: 'app-contacts',
   templateUrl: './contacts.page.html',
   styleUrls: ['./contacts.page.scss'],
 })
 export class ContactsPage implements OnInit {
-    public contacts$: Observable<ContactWithMessageCount[]>
-    public makeNewContactForm = false
-    public $submittingNewContact$ = new BehaviorSubject(false)
-    public newContactTorAddress: string
-    public newContactName: string
+    @ViewChild('animation') animation: ElementRef<HTMLElement>
 
-    public loading$ = new BehaviorSubject(false)
-    public $error$ = new BehaviorSubject(undefined)
-
-    public app = App
-    public auth = Auth
+    public contacts$: Observable<ContactWithMessageMeta[]>
+    private $forceRerender$ = new BehaviorSubject({})
 
     constructor(
         private readonly navController: NavController,
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly loadingCtrl: LoadingController,
-        private readonly stateIngestion: StateIngestionService
+        private readonly stateIngestion: StateIngestionService,
+        private readonly nav: NavController
     ) {
+        this.contacts$ = combineLatest([this.$forceRerender$, App.emitContacts$]).pipe(
+            map(([_,cs]) => cs.sort(byMostRecentMessage))
+        )
     }
 
+
     ngOnInit(){
-        if(!this.app.hasLoadedContacts){
+        if(!App.hasLoadedContacts){
             overlayLoader(
                 this.stateIngestion.refreshContacts(), this.loadingCtrl, 'Fetching contacts...'
             ).subscribe(() => {})
         }
+    }
+
+    ionViewWillEnter() {
+        this.$forceRerender$.next({})
+    }
+
+    ionViewWillLeave() {
     }
 
     jumpToChat(c: Contact) {
@@ -53,11 +59,8 @@ export class ContactsPage implements OnInit {
     }
 
     logout(){
+        Log.debug('Logging out', {}, LogTopic.AUTH)
         Auth.clearPassword()
-        if((window as any).platform){
-            Log.debug('logging out through shell', getContext(), LogTopic.NAV)
-            getContext().close()
-        }
     }
 
     toNewContactPage(){
@@ -74,4 +77,18 @@ export class ContactsPage implements OnInit {
             this.loadingCtrl, `Deleting ${c.name || 'contact'}...`
         ).subscribe(() => Log.info(`Contact ${c.torAddress} deleted`))
     }
+
+    editContact(c: Contact){
+        App.alterCurrentContact$(c).subscribe(() => {
+            this.zone.run(() => {
+                this.nav.navigateForward('profile')
+            })
+        })
+    }
+}
+
+function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {
+    if(!a.lastMessages[0]) return 1
+    if(!b.lastMessages[0]) return -1
+    return new Date(b.lastMessages[0].timestamp).getTime() - new Date(a.lastMessages[0].timestamp).getTime()
 }

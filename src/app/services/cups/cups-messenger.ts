@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core'
 import { config, CupsMessengerType } from '../../config'
 import { HttpClient } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage, ObservableOnce } from './types'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce } from './types'
 import { StandardMockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
 import { Auth } from '../state/auth-state'
@@ -10,21 +10,23 @@ import { map } from 'rxjs/operators'
 import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 import { NoMessagesMockCupsMessenger } from 'spec/mocks/empty-messages-mock-messenger'
 import { AuthMockCupsMessenger } from 'spec/mocks/auth-mock-messenger'
+import { FastMockMessenger } from 'spec/mocks/fast-mock-messenger'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private readonly impl
     constructor(http: HttpClient) {
         switch(config.cupsMessenger.type){
-            case CupsMessengerType.LIVE: this.impl = new LiveCupsMessenger(http)                   ; break
-            case CupsMessengerType.STANDARD_MOCK: this.impl = new StandardMockCupsMessenger()      ; break
-            case CupsMessengerType.ERROR_MOCK: this.impl = new ErrorMockCupsMessenger()            ; break
+            case CupsMessengerType.LIVE:             this.impl = new LiveCupsMessenger(http)       ; break
+            case CupsMessengerType.STANDARD_MOCK:    this.impl = new StandardMockCupsMessenger()   ; break
+            case CupsMessengerType.ERROR_MOCK:       this.impl = new ErrorMockCupsMessenger()      ; break
             case CupsMessengerType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
-            case CupsMessengerType.AUTH_MOCK: this.impl = new AuthMockCupsMessenger()              ; break
+            case CupsMessengerType.AUTH_MOCK:        this.impl = new AuthMockCupsMessenger()       ; break
+            case CupsMessengerType.FAST_MOCK:        this.impl = new FastMockMessenger()           ; break
         }
     }
 
-    contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageCount[]> {
+    contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
         Log.trace(`higher-order cups messenger contacts show...`)
         return this.impl.contactsShow(loginTestPassword || Auth.password)
     }

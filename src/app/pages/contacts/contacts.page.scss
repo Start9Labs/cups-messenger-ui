@@ -1,0 +1,40 @@
+.item-contact{
+    --min-height: 100px;
+}
+
+
+.item-avatar {
+    background: #696c71;
+}
+
+.item-avatar-unreads {
+    background:  radial-gradient(#696c71 25%, var(--ion-color-warning));
+}
+
+.contact-name {
+    font-weight: 900;
+    font-size: larger;
+    text-transform: capitalize;
+}
+
+.message-preview {
+    font-weight: 400;
+    font-size: smaller;
+    max-height: 40px;
+    color: var(--ion-color-medium-shade);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes border {
+    0% {
+        border-color: rgb(96, 154, 254);
+    }
+    50% {
+        border-color: rgb(192, 215, 255);
+        color: white;
+    }
+    100% {
+        border-color: rgb(96, 154, 254);
+    }
+}

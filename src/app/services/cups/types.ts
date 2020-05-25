@@ -8,8 +8,9 @@ export interface Contact {
     torAddress: string
     name?: string
 }
-export interface ContactWithMessageCount extends Contact {
+export interface ContactWithMessageMeta extends Contact {
     unreadMessages: number
+    lastMessages: ServerMessage[]
 }
 
 export type MessageClassification = 'Inbound' | 'Sent' | 'Attending' | 'Failed'
