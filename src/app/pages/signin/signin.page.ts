@@ -20,15 +20,12 @@ export class SigninPage implements OnInit {
   $error$ = new BehaviorSubject(undefined)
 
   constructor(
-    private readonly cups: CupsMessenger,
-    private readonly navCtrl: NavController,
-    private readonly ngZone: NgZone,
     private readonly loadingCtrl: LoadingController,
     private readonly stateIngestion: StateIngestionService
   ) { }
 
   ngOnInit() {
-      Auth.retrievePassword().then(() => this.signin())
+    
   }
 
   async enterCupsMessengerPassword() {
@@ -45,20 +42,11 @@ export class SigninPage implements OnInit {
     overlayLoader(
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
     ).subscribe({
-      next: async () => {
-        await Auth.setPassword(pass)
-        this.signin()
-      },
+      next: () => Auth.setPassword(pass),
       error: (e) => {
         Log.error(`Error on login`, e)
         this.$error$.next(`Invalid Password`)
       }
     })
-  }
-
-  private signin() {
-    if (Auth.password) {
-        this.ngZone.run(() => this.navCtrl.navigateRoot('contacts'))
-    }
   }
 }

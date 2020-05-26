@@ -5,11 +5,6 @@ import { AuthGuard } from '../modules/auth.guard'
 
 const routes: Routes = [
   {
-    path: '',
-    redirectTo: 'signin',
-    pathMatch: 'full'
-  },
-  {
     path: 'signin',
     canActivate: [UnauthGuard],
     loadChildren: () => import('./signin/signin.module').then( m => m.SigninPageModule)

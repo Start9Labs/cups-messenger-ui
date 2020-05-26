@@ -16,7 +16,6 @@ export class UnauthGuard implements CanActivate {
     Auth.emitStatus$().subscribe(s => {
         Log.trace('Auth subscriber: UnauthGurad', AuthStatus[s], LogTopic.AUTH)
         switch (s){
-            case AuthStatus.INITIATING: this.enabled = true; return
             case AuthStatus.UNVERIFED: this.enabled = true; return
             case AuthStatus.VERIFIED: this.enabled = false; return
         }

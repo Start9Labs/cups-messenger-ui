@@ -41,6 +41,7 @@ export class AppComponent {
         window['context'] = getContext()
 
         this.stateIngestion.init()
+        Auth.retrievePassword()
         Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))
     }
 
@@ -56,14 +57,6 @@ export class AppComponent {
                     }
                 } break
                 case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); break
-                case AuthStatus.INITIATING: { 
-                    try {
-                        this.navCtrl.navigateRoot('contacts');
-                    } catch (e) {
-                        Log.error(`naving problem?`, e)
-                    }
-                    break
-                }
             }
         })
     }
