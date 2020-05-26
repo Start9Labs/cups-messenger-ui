@@ -56,7 +56,14 @@ export class AppComponent {
                     }
                 } break
                 case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); break
-                case AuthStatus.INITIATING: Auth.retrievePassword(); break
+                case AuthStatus.INITIATING: { 
+                    try {
+                        this.navCtrl.navigateRoot('contacts');
+                    } catch (e) {
+                        Log.error(`naving problem?`, e)
+                    }
+                    break
+                }
             }
         })
     }

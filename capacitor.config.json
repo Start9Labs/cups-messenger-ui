@@ -1,8 +1,0 @@
-{
-  "appId": "com.cups.ui",
-  "appName": "cups-messenger-ui",
-  "bundledWebRuntime": false,
-  "npmClient": "npm",
-  "webDir": "www",
-  "cordova": {}
-}

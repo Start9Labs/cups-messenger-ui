@@ -1,6 +1,6 @@
 import { StandardMockCupsMessenger } from './mock-messenger'
-import { timer, of } from 'rxjs'
-import { tap, map, take, delay } from 'rxjs/operators'
+import { of } from 'rxjs'
+import { tap, map, delay } from 'rxjs/operators'
 
 export class AuthMockCupsMessenger extends StandardMockCupsMessenger {
     requiredPassword = 'password'
