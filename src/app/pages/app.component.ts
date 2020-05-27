@@ -6,8 +6,6 @@ import { Auth, AuthStatus } from '../services/state/auth-state'
 import { App } from '../services/state/app-state'
 import { sent, inbound, failed, attending, server, outbound } from '../services/cups/types'
 import { getContext } from 'ambassador-sdk'
-import { Router, NavigationStart } from '@angular/router'
-import { filter } from 'rxjs/operators'
 import { Log } from '../log'
 import { LogTopic } from '../config'
 
@@ -17,15 +15,11 @@ import { LogTopic } from '../config'
   styleUrls: ['app.component.scss']
 })
 export class AppComponent {
-
-
     constructor(
         private readonly navCtrl: NavController,
         private readonly stateIngestion: StateIngestionService,
-        private zone: NgZone,
-        private readonly router: Router
-    ) {
-    }
+        private readonly zone: NgZone
+    ) {}
 
     async ngOnInit(){
         window['Auth'] = Auth
