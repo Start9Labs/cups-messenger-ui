@@ -190,11 +190,11 @@ export class MessagesPage implements OnInit {
         this.jumpToBottom()
     }
 
-    onScrollStart(){
-        timer(300).pipe(take(1)).subscribe(
-            () =>  this.$atBottom$.next(isAtBottom())
-        )
-    }
+    // onScrollStart(){
+    //     timer(300).pipe(take(1)).subscribe(
+    //         () =>  this.$atBottom$.next(isAtBottom())
+    //     )
+    // }
 
     onScrollEnd(){
         const bottom = isAtBottom()
