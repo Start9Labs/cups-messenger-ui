@@ -27,7 +27,7 @@ export class AppComponent {
     ) {
     }
 
-    ngOnInit(){
+    async ngOnInit(){
         window['Auth'] = Auth
         window['App'] = App
         window['classification'] = {
@@ -41,7 +41,7 @@ export class AppComponent {
         window['context'] = getContext()
 
         this.stateIngestion.init()
-        Auth.retrievePassword()
+        await Auth.retrievePassword()
         Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))
     }
 

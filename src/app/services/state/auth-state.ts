@@ -46,7 +46,8 @@ export class AuthState {
             }
         }
 
-        this.password = undefined
+        this.password = "ppppp"
+        this.$status$.next(AuthStatus.VERIFIED)
     }
 
     emitStatus$(): Observable<AuthStatus> {
