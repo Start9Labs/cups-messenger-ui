@@ -3,7 +3,7 @@ import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
-import { NavController, LoadingController } from '@ionic/angular'
+import { NavController, LoadingController, AlertController } from '@ionic/angular'
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
 import { getContext } from 'ambassador-sdk'
@@ -29,7 +29,8 @@ export class ContactsPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly loadingCtrl: LoadingController,
         private readonly stateIngestion: StateIngestionService,
-        private readonly nav: NavController
+        private readonly nav: NavController,
+        private readonly alertCtrl: AlertController
     ) {
         this.contacts$ = combineLatest([this.$forceRerender$, App.emitContacts$]).pipe(
             map(([_,cs]) => cs.sort(byMostRecentMessage))
@@ -77,14 +78,30 @@ export class ContactsPage implements OnInit {
         ).subscribe(() => Log.info(`Contact ${c.torAddress} deleted`))
     }
 
-    editContact(c: Contact){
-        App.alterCurrentContact$(c).subscribe(() => {
-            this.zone.run(() => {
-                this.nav.navigateForward('profile')
-            })
+    async presentAlertDelete (c: Contact) {
+        const alert = await this.alertCtrl.create({
+          backdropDismiss: false,
+          cssClass: 'alert-danger',
+          header: 'Delete Contact?',
+          message: `Your message history will be deleted permanently.`,
+          buttons: [
+            {
+                text: 'Cancel',
+                handler: () => {},
+            },  
+            {
+                text: `Delete`,
+                handler: () => {
+                    this.deleteContact(c)
+                },
+            },
+          ],
         })
+        await alert.present()
     }
 }
+
+
 
 function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {
     if(!a.lastMessages[0]) return 1

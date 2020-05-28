@@ -11,7 +11,7 @@
     <ion-item-group>
         <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
-                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-back-outline" button (click)="jumpToChat(contact)">
+                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">
                     <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
                         <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
                     </ion-avatar>
@@ -27,8 +27,7 @@
                     </ion-grid>
                 </ion-item>
                 <ion-item-options side="end" lines="full">
-                    <ion-item-option color="primary" (click)="editContact(contact)">Edit</ion-item-option>
-                    <ion-item-option color="light" (click)="deleteContact(contact)">Delete</ion-item-option>
+                    <ion-item-option color="medium" (click)="presentAlertDelete(contact)">Delete</ion-item-option>
                 </ion-item-options>
             </ion-item-sliding>
         </div>

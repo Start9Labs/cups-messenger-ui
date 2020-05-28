@@ -12,18 +12,20 @@
 
 <ion-content class="ion-padding">
   <ion-item>
-    <ion-label position="stacked">Tor Address</ion-label>
     <div style="
       display: flex;
       justify-content: space-between;
       align-items: center;
       width: 100%;"
     >
-      <ion-text color="light">
-        <h5>{{ myTorAddress }}</h5>
-      </ion-text>
-      <ion-button (click)="copyTorAddress()">Copy</ion-button>
+      <ion-label>Tor Address</ion-label>
+      <ion-button (click)="copyTorAddress()" fill="clear">Copy</ion-button>
     </div>
+  </ion-item>
+  <ion-item lines="none">
+    <ion-text color="light">
+      <h5 style="font-size: smaller; font-style: italic;">{{ {torAddress: myTorAddress} | truncateEllipses:42 }}</h5>
+    </ion-text>
   </ion-item>
   <div style="display: flex; justify-content: center; padding: 25px;">
     <canvas id="qr-canvas"></canvas>
