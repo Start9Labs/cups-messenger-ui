@@ -29,6 +29,11 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     loadChildren: () => import('./new-contact/new-contact.module').then( m => m.NewContactPageModule)
   },
+  {
+    path: 'me',
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./me/me.module').then( m => m.MePageModule)
+  },
 ]
 
 @NgModule({

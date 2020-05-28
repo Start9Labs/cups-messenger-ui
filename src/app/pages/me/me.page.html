@@ -1,0 +1,31 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button color="primary"></ion-back-button>
+    </ion-buttons>
+  <ion-title>Settings</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="primary" (click)="logout()">Logout</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label position="stacked">Tor Address</ion-label>
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;"
+    >
+      <ion-text color="light">
+        <h5>{{ myTorAddress }}</h5>
+      </ion-text>
+      <ion-button (click)="copyTorAddress()">Copy</ion-button>
+    </div>
+  </ion-item>
+  <div style="display: flex; justify-content: center; padding: 25px;">
+    <canvas id="qr-canvas"></canvas>
+  </div>
+</ion-content>

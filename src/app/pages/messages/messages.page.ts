@@ -185,7 +185,7 @@ export class MessagesPage implements OnInit {
         }
     }
 
-    // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is meh.
+    // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is fine.
     async jumpToLastViewed() {
         this.jumpToBottom()
     }

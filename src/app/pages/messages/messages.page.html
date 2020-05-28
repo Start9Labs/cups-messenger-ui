@@ -1,4 +1,4 @@
-<ion-header>
+<ion-header translucent>
     <ion-toolbar>
         <ion-buttons *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
             <ion-back-button color="primary" (click)="toContacts()"></ion-back-button>
@@ -8,17 +8,17 @@
                 grid-gap: 10px;
                 padding: 0 10px;"
             >
-                <ion-avatar [class.item-avatar]="!(unreads$ | async)" [class.item-avatar-unreads]="(unreads$ | async)">
-                    <text-avatar [text]='contact | truncateEllipses:12'></text-avatar>
-                </ion-avatar>
-                <ion-title style="
-                    position: unset; 
-                    padding: 0; 
-                    overflow: hidden;
-                    font-size: 12px;
-                ">
-                    {{contact.name || contact.torAddress}}
-                </ion-title>
+            <ion-avatar style="width: 36px; height: 36px" [class.item-avatar]="!(unreads$ | async)" [class.item-avatar-unreads]="(unreads$ | async)">
+                <text-avatar [text]='contact | truncateEllipses:12'></text-avatar>
+            </ion-avatar>
+            <ion-title style="
+                position: unset; 
+                padding: 0; 
+                overflow: hidden;
+                font-size: 12px;
+            ">
+                {{contact.name || contact.torAddress}}
+            </ion-title>
             </div>
             <ion-button style="
                 --padding-start: 0;
@@ -63,8 +63,8 @@
             </div>    
         </ion-list>
         <div id="end-of-scroll"></div>
-        
     </div>
+    
 
     <ion-fab *ngIf="!(atBottom$ | async)" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button size="small" color="warning" *ngIf="(unreads$ | async)" (click)="jumpToBottom()">
@@ -76,11 +76,11 @@
     </ion-fab>
 </ion-content>
 
-<ion-footer class="submit" *ngIf="(app.emitCurrentContact$ | async) as current">
-    <form (keydown.meta.Enter)="checkSubmit($event, current)" (keydown.shift.Enter)="checkSubmit($event, current)">
+<ion-footer >
+    <div class="submit" *ngIf="(app.emitCurrentContact$ | async) as contact">
         <ion-textarea class="enter-text" autoGrow rows="1" [(ngModel)]="messageToSend" name="message" placeholder="Text message"></ion-textarea>
-        <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(current)">
+        <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">
             <ion-icon slot="icon-only" name="chevron-up-outline"></ion-icon>
         </ion-button>
-    </form>
+    </div>
 </ion-footer>

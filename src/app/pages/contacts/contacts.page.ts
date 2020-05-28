@@ -58,9 +58,8 @@ export class ContactsPage implements OnInit {
         this.navController.navigateForward('messages')
     }
 
-    logout(){
-        Log.debug('Logging out', {}, LogTopic.AUTH)
-        Auth.clearPassword()
+    me(){
+        this.navController.navigateForward('me')
     }
 
     toNewContactPage(){

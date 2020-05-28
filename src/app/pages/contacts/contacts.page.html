@@ -1,12 +1,10 @@
-<ion-header translucent>
-    <ion-toolbar>   
-        <ion-title>Contacts</ion-title>               
-        <ion-buttons collapse="true" slot="end">
-            <ion-button color="primary" fill="clear" (click)="logout()">
-                Logout
-              </ion-button>
-        </ion-buttons> 
-      </ion-toolbar>
+<ion-header>
+    <div class="contacts-header">
+        <ion-text class="page-title">Cups Messager</ion-text>               
+        <ion-button color="primary" fill="clear" (click)="me()">
+            <ion-icon name="settings-outline"></ion-icon>
+        </ion-button>
+    </div>   
 </ion-header>
 
 <ion-content fullscreen>
@@ -34,14 +32,12 @@
                 </ion-item-options>
             </ion-item-sliding>
         </div>
-        
-      </ion-item-group>  
-      <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-          <ion-fab-button class="new-contact-button" size="small" fill="clear" color="primary" (click)="toNewContactPage()">
-              <ion-icon name="add-outline"></ion-icon>
-          </ion-fab-button>
-      </ion-fab>
-    
+    </ion-item-group>  
+    <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button class="new-contact-button" size="medium" fill="clear" color="primary" (click)="toNewContactPage()">
+            <ion-icon name="add-outline"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
 </ion-content>
 
 <ion-footer>

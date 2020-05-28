@@ -1,20 +1,37 @@
 .item-contact{
+    border-style: solid;
+    border-width: 1px 0 0 0;
     --min-height: 100px;
+    border-color: #383a3e;
 }
-
 
 .item-avatar {
     background: #696c71;
 }
 
 .item-avatar-unreads {
-    background:  radial-gradient(#696c71 25%, var(--ion-color-warning));
+    background:  radial-gradient(#696c71 25%, var(--ion-color-primary-contrast));
 }
 
 .contact-name {
     font-weight: 900;
     font-size: larger;
     text-transform: capitalize;
+}
+
+.contacts-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0 7px 14px;
+    align-items: center;
+}
+
+.page-title{
+    font-size: xx-large;
+    font-weight: 900;
+    color: #686b71; 
+    font-family: Montserrat;
+    padding: 2px 0 0 2px;
 }
 
 .message-preview {
@@ -24,17 +41,4 @@
     color: var(--ion-color-medium-shade);
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-@keyframes border {
-    0% {
-        border-color: rgb(96, 154, 254);
-    }
-    50% {
-        border-color: rgb(192, 215, 255);
-        color: white;
-    }
-    100% {
-        border-color: rgb(96, 154, 254);
-    }
 }
