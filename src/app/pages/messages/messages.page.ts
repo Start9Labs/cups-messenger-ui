@@ -9,7 +9,7 @@ import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, overlayLoader } from 'src/rxjs/util'
+import { exists, overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { cshake128 } from 'js-sha3'
 // import * as s from '@svgdotjs/svg.js'
 // const SVG = s.SVG
@@ -29,6 +29,9 @@ export class MessagesPage implements OnInit {
 
     app = App
     contact: Contact
+
+
+    $loading$ = new BehaviorSubject(true)
 
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
@@ -63,27 +66,14 @@ export class MessagesPage implements OnInit {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
-        private readonly loadingCtrl: LoadingController,
-    ){
-        // html will subscribe to this to get message additions/updates
-        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c => App.emitMessages$(c.torAddress)))
-    }
-
-    ngAfterViewInit(){
-    }
+    ){}
 
     ngOnInit() {
-        combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
-            if(ms.length) return of({contact: c, messages: ms})
-            if(c.unreadMessages === 0) return of({contact: c, messages: []})
-            return overlayLoader(
-                this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...'
-            )
-        }), delay(100)).subscribe( ({contact, messages}) => {
-            Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
-            this.jumpToBottom(0)
-        })
+        // html will subscribe to this to get message additions/updates
+        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c => App.emitMessages$(c.torAddress)))
 
+        this.loadMessages()
+       
         // Every time new messages are received, we update the oldest and newest message that's been loaded.
         // if we receive a new inbound messages, and we're not at the bottom of the screen, then we have unreads
         this.ngOnInitSubs.push(combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).subscribe(
@@ -98,15 +88,21 @@ export class MessagesPage implements OnInit {
         ))
     }
 
+    loadMessages(){
+        combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
+            return nonBlockingLoader(
+                this.stateIngestion.refreshMessages(c).pipe(delay(200), tap(() => this.jumpToBottom(100))), this.$loading$
+            )
+        })).subscribe( ({contact, messages}) => {
+            Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
+        })
+    }
+
     newMessage(c: Contact, m: Message): boolean {
         const newest = this.getMetadata(c.torAddress).newestRendered
         if(!newest) return true
         if(attending(m) || failed(m)) return true
         return m.timestamp > newest.timestamp
-    }
-
-    ionViewWillEnter(){
-        this.jumpToBottom(0) // blech, we also need this in case we navigate to the page from the back button on the profile page
     }
 
     ngOnDestroy(): void {
@@ -198,6 +194,7 @@ export class MessagesPage implements OnInit {
 
     /* older message logic */
     fetchOlderMessages(event: any, contact: Contact) {
+        console.log('fetching old boys')
         const messagesToRetrieve = config.loadMesageBatchSize
         const metadata = this.getMetadata(contact.torAddress)
 

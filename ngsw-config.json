@@ -12,6 +12,7 @@
           "/*.css",
           "/*.js",
           "/svg/add-outline.svg",
+          "/svg/settings-outline.svg",
           "/svg/arrow-down-outline.svg",
           "/svg/send-outline.svg",
           "/svg/chevron-up-outline.svg",

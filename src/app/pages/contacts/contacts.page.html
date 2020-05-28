@@ -31,6 +31,13 @@
                 </ion-item-options>
             </ion-item-sliding>
         </div>
+        <div *ngIf="$loading$ | async">
+            <div style="height: 100%; width: 100%; align-items:center; display: flex; justify-content: center;">
+                <ion-item>
+                    <ion-spinner name="crescent"></ion-spinner>
+                </ion-item>
+            </div>
+        </div>
     </ion-item-group>  
     <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button class="new-contact-button" size="medium" fill="clear" color="primary" (click)="toNewContactPage()">
