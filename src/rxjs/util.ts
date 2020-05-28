@@ -1,4 +1,4 @@
-import { Observable, BehaviorSubject, of, OperatorFunction, from } from 'rxjs'
+import { Observable, BehaviorSubject, of, OperatorFunction, from, Subject } from 'rxjs'
 import { concatMap, tap, catchError, filter, take, finalize } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 import { LogLevel, LogTopic } from 'src/app/config'
@@ -58,24 +58,15 @@ export function overlayLoader<T>(
 
 export function nonBlockingLoader<T>(
     loadingProcess: Observable<T>,
-    loading: LoadingController,
-    loadingDesc: string = 'loading...'
+    loading: Subject<boolean>,
 ): Observable<T> {
     let loader: HTMLIonLoadingElement
 
-    return from(
-        loading.create({
-            message: loadingDesc,
-            spinner: 'lines',
-        }).then(l => {
-            loader = l
-            loader.present()
-        })
-    ).pipe(
-        concatMap(() => loadingProcess),
+    loading.next(true)
+    return loadingProcess.pipe(
         take(1),
         finalize(() => {
-            loader.dismiss()
+            loading.next(false)
         }),
     )
 }

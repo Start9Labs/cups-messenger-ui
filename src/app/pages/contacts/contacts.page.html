@@ -8,7 +8,7 @@
 </ion-header>
 
 <ion-content fullscreen>
-    <ion-item-group>
+    <ion-item-group *ngIf="!($loading$ | async); else loadContacts">
         <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
                 <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">

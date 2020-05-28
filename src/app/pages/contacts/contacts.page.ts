@@ -22,6 +22,7 @@ export class ContactsPage implements OnInit {
 
     public contacts$: Observable<ContactWithMessageMeta[]>
     private $forceRerender$ = new BehaviorSubject({})
+    private $loading$ = new BehaviorSubject(false)
 
     constructor(
         private readonly navController: NavController,
@@ -81,11 +82,11 @@ export class ContactsPage implements OnInit {
     async presentAlertDelete (c: Contact) {
         const alert = await this.alertCtrl.create({
           backdropDismiss: false,
-          cssClass: 'alert-danger',
           header: 'Delete Contact?',
           message: `Your message history will be deleted permanently.`,
           buttons: [
             {
+                cssClass: 'alert-danger',
                 text: 'Cancel',
                 handler: () => {},
             },  

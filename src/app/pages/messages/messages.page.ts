@@ -64,24 +64,21 @@ export class MessagesPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
         private readonly loadingCtrl: LoadingController,
-    ){
-        // html will subscribe to this to get message additions/updates
-        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c => App.emitMessages$(c.torAddress)))
-    }
-
-    ngAfterViewInit(){
-    }
+    ){}
 
     ngOnInit() {
+        // html will subscribe to this to get message additions/updates
+        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c => App.emitMessages$(c.torAddress)))
+
         combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
             if(ms.length) return of({contact: c, messages: ms})
             if(c.unreadMessages === 0) return of({contact: c, messages: []})
             return overlayLoader(
                 this.stateIngestion.refreshMessages(c), this.loadingCtrl, 'Fetching messages...'
             )
-        }), delay(100)).subscribe( ({contact, messages}) => {
+        }), delay(200)).subscribe( ({contact, messages}) => {
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
-            this.jumpToBottom(0)
+            this.jumpToBottom(100)
         })
 
         // Every time new messages are received, we update the oldest and newest message that's been loaded.
@@ -103,10 +100,6 @@ export class MessagesPage implements OnInit {
         if(!newest) return true
         if(attending(m) || failed(m)) return true
         return m.timestamp > newest.timestamp
-    }
-
-    ionViewWillEnter(){
-        this.jumpToBottom(0) // blech, we also need this in case we navigate to the page from the back button on the profile page
     }
 
     ngOnDestroy(): void {
@@ -198,6 +191,7 @@ export class MessagesPage implements OnInit {
 
     /* older message logic */
     fetchOlderMessages(event: any, contact: Contact) {
+        console.log('fetching old boys')
         const messagesToRetrieve = config.loadMesageBatchSize
         const metadata = this.getMetadata(contact.torAddress)
 
