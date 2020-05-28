@@ -6,8 +6,6 @@ import { Auth, AuthStatus } from '../services/state/auth-state'
 import { App } from '../services/state/app-state'
 import { sent, inbound, failed, attending, server, outbound } from '../services/cups/types'
 import { getContext } from 'ambassador-sdk'
-import { Router, NavigationStart } from '@angular/router'
-import { filter } from 'rxjs/operators'
 import { Log } from '../log'
 import { LogTopic } from '../config'
 
@@ -17,17 +15,13 @@ import { LogTopic } from '../config'
   styleUrls: ['app.component.scss']
 })
 export class AppComponent {
-
-
     constructor(
         private readonly navCtrl: NavController,
         private readonly stateIngestion: StateIngestionService,
-        private zone: NgZone,
-        private readonly router: Router
-    ) {
-    }
+        private readonly zone: NgZone
+    ) {}
 
-    ngOnInit(){
+    async ngOnInit(){
         window['Auth'] = Auth
         window['App'] = App
         window['classification'] = {
@@ -41,6 +35,7 @@ export class AppComponent {
         window['context'] = getContext()
 
         this.stateIngestion.init()
+        await Auth.retrievePassword()
         Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))
     }
 
@@ -56,14 +51,6 @@ export class AppComponent {
                     }
                 } break
                 case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); break
-                case AuthStatus.INITIATING: { 
-                    try {
-                        this.navCtrl.navigateRoot('contacts');
-                    } catch (e) {
-                        Log.error(`naving problem?`, e)
-                    }
-                    break
-                }
             }
         })
     }

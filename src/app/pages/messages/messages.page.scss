@@ -9,10 +9,7 @@
 }
 
 .item-avatar-unreads {
-    background:  radial-gradient(#696c71 25%, var(--ion-color-warning));
-    border-style: solid;
-    border-width: 1px;
-    border-color: var(--ion-color-warning)
+    background:  radial-gradient(#696c71 25%, var(--ion-color-primary-contrast));
 }
 
 .chat {
@@ -22,16 +19,19 @@
 }
 
 .chat-message {
-    // min-height: 40px;
     background: none;
     text-align: left;
-    // width: 100%;
 }
 
 .submit{
-    background: rgba(65, 65, 65, 0.7);
+    background: var(--ion-color-dark);
     padding: 10px;
-    color: #fafafa
+    color: #fafafa;
+    border-width: 0;
+    border-top: 1px;
+    border-style: double;
+    border-color: var(--ion-color-primary-faded);
+    display: flex;
 }
 
 .submit form {
@@ -43,7 +43,6 @@
 .contact-coloring {
     color: var(--ion-color-warning);
     font-weight: bold;
-    
 }
 
 .contact-name {
@@ -58,9 +57,6 @@
 
 
 .enter-text{
-    background: black;
-    border-width: 1px;
-    border-radius: 10px;
     padding-left: 10px;
 }
 

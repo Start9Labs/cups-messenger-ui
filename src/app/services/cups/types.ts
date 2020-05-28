@@ -8,6 +8,10 @@ export interface Contact {
     torAddress: string
     name?: string
 }
+export const placeholder: Contact = {
+    torAddress: 'placeholder'
+}
+
 export interface ContactWithMessageMeta extends Contact {
     unreadMessages: number
     lastMessages: ServerMessage[]

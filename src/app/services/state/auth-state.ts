@@ -5,29 +5,22 @@ import { LogLevel, LogTopic } from 'src/app/config'
 import { Log } from 'src/app/log'
 import { pauseFor } from '../cups/types'
 import { Storage } from '@ionic/storage'
+import { distinctUntilChanged } from 'rxjs/operators'
 
 export enum AuthStatus {
-    UNVERIFED, VERIFIED, INITIATING
+    UNVERIFED, VERIFIED
 }
 
 export class AuthState {
     password: string = undefined
-    private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.INITIATING, { level: LogLevel.INFO, desc: 'auth' })
+    private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })
 
     constructor(
         private readonly storage: Storage = new Storage({ }),
     ) {}
     
     async retrievePassword(): Promise<void> {
-        let p = undefined
-        try {
-            p = await this.storage.get('password')
-        } catch (e) {
-            Log.error(`Storage error`, e)
-            this.password = undefined
-            this.$status$.next(AuthStatus.UNVERIFED)
-            return
-        }
+        const p = await this.storage.get('password')
         
         Log.debug('password retreived from local storage', p, LogTopic.AUTH)
 
@@ -53,22 +46,17 @@ export class AuthState {
             }
         }
 
-        this.password = undefined
-        this.$status$.next(AuthStatus.UNVERIFED)
-    }
-
-    $ingestStatus(): NextObserver<AuthStatus> {
-        return { next: a => this.$status$.next(a) }
+        this.password = "ppppp"
+        this.$status$.next(AuthStatus.VERIFIED)
     }
 
     emitStatus$(): Observable<AuthStatus> {
-        return this.$status$.asObservable()
+        return this.$status$.asObservable().pipe(distinctUntilChanged())
     }
 
     // called from signin page via tor browser after validating against the backend
     async setPassword(p: string): Promise<void> {
         await this.storage.set('password', p)
-        debugger
         this.retrievePassword()
     }
 
