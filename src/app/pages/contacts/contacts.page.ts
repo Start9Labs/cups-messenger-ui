@@ -8,7 +8,7 @@ import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
 import { getContext } from 'ambassador-sdk'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
-import { overlayLoader } from 'src/rxjs/util'
+import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, map } from 'rxjs/operators'
 
@@ -38,11 +38,10 @@ export class ContactsPage implements OnInit {
         )
     }
 
-
     ngOnInit(){
         if(!App.hasLoadedContacts){
-            overlayLoader(
-                this.stateIngestion.refreshContacts(), this.loadingCtrl, 'Fetching contacts...'
+            nonBlockingLoader(
+                this.stateIngestion.refreshContacts(), this.$loading$,
             ).subscribe(() => {})
         }
     }

@@ -35,8 +35,8 @@
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
     <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
-        <ion-infinite-scroll *ngIf="!metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
-          <ion-infinite-scroll-content style="margin-top: 10%" loadingSpinner="lines"></ion-infinite-scroll-content>
+        <ion-infinite-scroll *ngIf="!($loading$ | async) && !metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+            <ion-infinite-scroll-content style="margin-top: 10%" loadingSpinner="crescent"></ion-infinite-scroll-content>
         </ion-infinite-scroll>
 
         <ion-list #chat class="chat">
@@ -60,12 +60,19 @@
                     <div class="msg-date" color="warning">{{message.sentToServer | date:'short'}}</div>
                     <span class="msg-date retry" (click)="retry(contact, message)"><u>RETRY</u></span>
                 </div>
-            </div>    
+            </div>
         </ion-list>
+        <div *ngIf="$loading$ | async">
+            <div style="height: 100%; width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
+                <ion-item lines="none">
+                    <ion-spinner name="crescent"></ion-spinner>
+                </ion-item>
+            </div>
+        </div>        
         <div id="end-of-scroll"></div>
     </div>
+        
     
-
     <ion-fab *ngIf="!(atBottom$ | async)" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button size="small" color="warning" *ngIf="(unreads$ | async)" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
@@ -74,6 +81,7 @@
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </ion-fab>
+    
 </ion-content>
 
 <ion-footer >

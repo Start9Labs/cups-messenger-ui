@@ -60,8 +60,6 @@ export function nonBlockingLoader<T>(
     loadingProcess: Observable<T>,
     loading: Subject<boolean>,
 ): Observable<T> {
-    let loader: HTMLIonLoadingElement
-
     loading.next(true)
     return loadingProcess.pipe(
         take(1),
