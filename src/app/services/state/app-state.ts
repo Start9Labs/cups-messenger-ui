@@ -40,6 +40,9 @@ export class AppState{
             next: cs => { 
                 this.hasLoadedContacts = true
                 Private.$contacts$.next(cs)
+                cs.filter(c => c.lastMessages[0]).forEach(c => {
+                    this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
+                })
             },
             complete: () => Log.error(`Critical: contacts observer completed`),
             error: e => Log.error('Critical: contacts observer errored', e)

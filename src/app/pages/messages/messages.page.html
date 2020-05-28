@@ -35,7 +35,7 @@
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
     <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
-        <ion-infinite-scroll *ngIf="!($loading$ | async) && !metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+        <ion-infinite-scroll *ngIf="!($loading$ | async) && !($historicalLoadingEnabled$ | async) && !metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
             <ion-infinite-scroll-content style="margin-top: 10%" loadingSpinner="crescent"></ion-infinite-scroll-content>
         </ion-infinite-scroll>
 

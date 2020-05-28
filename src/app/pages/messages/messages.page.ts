@@ -11,6 +11,7 @@ import { StateIngestionService } from '../../services/state/state-ingestion/stat
 import { Log } from '../../log'
 import { exists, overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { cshake128 } from 'js-sha3'
+import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 // import * as s from '@svgdotjs/svg.js'
 // const SVG = s.SVG
 /*
@@ -32,6 +33,7 @@ export class MessagesPage implements OnInit {
 
 
     $loading$ = new BehaviorSubject(true)
+    $historicalLoadingEnabled$ = new BehaviorSubject(false)
 
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
@@ -66,21 +68,25 @@ export class MessagesPage implements OnInit {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
-    ){}
-
-    ngOnInit() {
+    ){
         // html will subscribe to this to get message additions/updates
         this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c => App.emitMessages$(c.torAddress)))
+    }
 
+    ngOnInit() {
+        // load messages right away so we don't have to wait for daemon
         this.loadMessages()
        
         // Every time new messages are received, we update the oldest and newest message that's been loaded.
-        // if we receive a new inbound messages, and we're not at the bottom of the screen, then we have unreads
+        // if we receive new inbound messages, and we're not at the bottom of the screen, then we have unreads
         this.ngOnInitSubs.push(combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).subscribe(
             ([c, messages]) => {
-                this.getMetadata(c.torAddress)
+                // initializes the metadata object if it's not already there
+                this.getMetadata(c.torAddress) 
                 if(isAtBottom()){ this.jumpToBottom() }
+
                 const { updatedNewest } = this.updateViewedMessageEndpoints(c, messages.filter(server))
+
                 if(updatedNewest) { // if we updated the newest message, mark unread if we're not at the bottom
                     this.$unreads$.next(!isAtBottom())
                 }
@@ -88,12 +94,20 @@ export class MessagesPage implements OnInit {
         ))
     }
 
+    ionViewDidEnter(){
+        this.jumpToBottom()
+    }
+
     loadMessages(){
         combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
+            const lastMessage = c.lastMessages[0]
+            const options: ShowMessagesOptions = lastMessage ? { offset: { id: lastMessage.id, direction: 'before' } } : {}
             return nonBlockingLoader(
-                this.stateIngestion.refreshMessages(c).pipe(delay(300), tap(() => this.jumpToBottom(100))), this.$loading$
+                this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom(100))), 
+                this.$loading$
             )
         })).subscribe( ({contact, messages}) => {
+            if(messages.length < config.loadMesageBatchSize){ this.$historicalLoadingEnabled$.next(true) }
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
         })
     }
@@ -110,7 +124,6 @@ export class MessagesPage implements OnInit {
     }
 
     /* Navigation Buttons */
-
 
     toProfile(){
         this.zone.run(() => {

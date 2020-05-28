@@ -23,7 +23,7 @@ export class StandardMockCupsMessenger {
                 c.unreadMessages = 1
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
             } else {
-                const ms = mockL(mockMessage, 30)
+                const ms = mockL(mockMessage, 30).sort(sortByTimestamp)
                 this.mocks[c.torAddress] = ms
                 c.unreadMessages = 30
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
