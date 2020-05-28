@@ -56,6 +56,30 @@ export function overlayLoader<T>(
     )
 }
 
+export function nonBlockingLoader<T>(
+    loadingProcess: Observable<T>,
+    loading: LoadingController,
+    loadingDesc: string = 'loading...'
+): Observable<T> {
+    let loader: HTMLIonLoadingElement
+
+    return from(
+        loading.create({
+            message: loadingDesc,
+            spinner: 'lines',
+        }).then(l => {
+            loader = l
+            loader.present()
+        })
+    ).pipe(
+        concatMap(() => loadingProcess),
+        take(1),
+        finalize(() => {
+            loader.dismiss()
+        }),
+    )
+}
+
 // LogBehaviorSubjects simply decorate BehaviorSubjects with logging on ingestion. Any time their state is
 // updated (or queried with getValue()) a log will be emitted of that state.
 export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
