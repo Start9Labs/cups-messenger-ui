@@ -4,8 +4,7 @@ import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
 import * as Clipboard from 'clipboard/dist/clipboard.min.js'
 import { ToastController } from '@ionic/angular'
-
-const QRCode = require('qrcode')
+import * as QRCode from 'qrcode'
 
 @Component({
   selector: 'app-me',

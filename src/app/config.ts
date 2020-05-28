@@ -55,7 +55,7 @@ export const config: Config = {
         frequency: 3000
     },
     loadMesageBatchSize: 15,
-    defaultServerTimeout: 180000,
+    defaultServerTimeout: 45000,
     logs: {
         level: LogLevel.TRACE,
         topics: [LogTopic.AUTH]
