@@ -22,7 +22,7 @@ export class ContactsPage implements OnInit {
 
     public contacts$: Observable<ContactWithMessageMeta[]>
     private $forceRerender$ = new BehaviorSubject({})
-    private $loading$ = new BehaviorSubject(false)
+    $loading$ = new BehaviorSubject(false)
 
     constructor(
         private readonly navController: NavController,

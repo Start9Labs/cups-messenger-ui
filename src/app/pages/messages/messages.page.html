@@ -74,7 +74,7 @@
         
     
     <ion-fab *ngIf="!(atBottom$ | async)" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button size="small" color="warning" *ngIf="(unreads$ | async)" (click)="jumpToBottom()">
+        <ion-fab-button size="small" color="success" *ngIf="(unreads$ | async)" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
         <ion-fab-button size="small" color="medium" *ngIf="!(unreads$ | async)" (click)="jumpToBottom()">
