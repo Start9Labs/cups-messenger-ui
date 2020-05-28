@@ -91,7 +91,7 @@ export class MessagesPage implements OnInit {
     loadMessages(){
         combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
             return nonBlockingLoader(
-                this.stateIngestion.refreshMessages(c).pipe(delay(200), tap(() => this.jumpToBottom(100))), this.$loading$
+                this.stateIngestion.refreshMessages(c).pipe(delay(300), tap(() => this.jumpToBottom(100))), this.$loading$
             )
         })).subscribe( ({contact, messages}) => {
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
