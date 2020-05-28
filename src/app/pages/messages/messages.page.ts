@@ -94,10 +94,6 @@ export class MessagesPage implements OnInit {
         ))
     }
 
-    ionViewDidEnter(){
-        this.jumpToBottom()
-    }
-
     loadMessages(){
         combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
             const lastMessage = c.lastMessages[0]
@@ -107,7 +103,8 @@ export class MessagesPage implements OnInit {
                 this.$loading$
             )
         })).subscribe( ({contact, messages}) => {
-            if(messages.length < config.loadMesageBatchSize){ this.$historicalLoadingEnabled$.next(true) }
+            if(messages.length >= config.loadMesageBatchSize){ this.$historicalLoadingEnabled$.next(true) }
+            this.jumpToBottom(100)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
         })
     }
