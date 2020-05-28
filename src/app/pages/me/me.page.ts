@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core'
 import { Auth } from 'src/app/services/state/auth-state'
 import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
-import * as Clipboard from 'clipboard/dist/clipboard.min.js'
-import { ToastController } from '@ionic/angular'
+import { ToastController, IonicSafeString } from '@ionic/angular'
 import * as QRCode from 'qrcode'
 
 @Component({
@@ -14,12 +13,9 @@ import * as QRCode from 'qrcode'
 export class MePage implements OnInit {
   public myTorAddress = config.myTorAddress
 
-  private readonly clipboard
-
-  constructor(public toastCtrl: ToastController) {
-    this.clipboard = new Clipboard('#cpyBtn')
-    this.clipboard.on('success', () => this.showMsg())
-  }
+  constructor(
+    public toastCtrl: ToastController
+  ) { }
   
   ngOnInit() {
     this.renderQR()
@@ -37,29 +33,18 @@ export class MePage implements OnInit {
     })    
   }
 
-  copyTorAddress(){
-    copyToClipboard(this.myTorAddress)
+  async copyTorAddress() {
+    await navigator.clipboard.writeText(this.myTorAddress)
     this.showMsg()
   }
 
   async showMsg() {
+    const message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="success"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
     const toast = await this.toastCtrl.create({
-        message: 'Successfully copied to clipboard',
+        message,
         duration: 2000,
         position: 'bottom',
     })
-    toast.present()
+    await toast.present()
   } 
-}
-
-const copyToClipboard = str => {
-  const el = document.createElement('textarea')
-  el.value = str
-  el.setAttribute('readonly', '')
-  el.style.position = 'absolute'
-  el.style.left = '-9999px'
-  document.body.appendChild(el)
-  el.select()
-  document.execCommand('copy')
-  document.body.removeChild(el)
 }

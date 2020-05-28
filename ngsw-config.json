@@ -13,7 +13,9 @@
           "/*.js",
           "/svg/add-outline.svg",
           "/svg/arrow-down-outline.svg",
-          "/svg/send-outline.svg"
+          "/svg/send-outline.svg",
+          "/svg/chevron-up-outline.svg",
+          "/svg/arrow-back-sharp.svg"
         ]
       }
     }
