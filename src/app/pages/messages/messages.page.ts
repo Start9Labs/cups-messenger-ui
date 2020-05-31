@@ -1,16 +1,16 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, failed, attending } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController, LoadingController } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer } from 'rxjs'
+import { NavController } from '@ionic/angular'
+import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
 import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
-import { cshake128 } from 'js-sha3'
+import { exists, nonBlockingLoader } from 'src/rxjs/util'
+
 // import * as s from '@svgdotjs/svg.js'
 // const SVG = s.SVG
 /*
@@ -28,8 +28,6 @@ export class MessagesPage implements OnInit {
     @ViewChild('content') private content: any
 
     app = App
-    contact: Contact
-
 
     $loading$ = new BehaviorSubject(true)
 
@@ -93,7 +91,7 @@ export class MessagesPage implements OnInit {
             return nonBlockingLoader(
                 this.stateIngestion.refreshMessages(c).pipe(delay(200), tap(() => this.jumpToBottom(100))), this.$loading$
             )
-        })).subscribe( ({contact, messages}) => {
+        })).subscribe(({contact, messages}) => {
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
         })
     }
@@ -111,7 +109,6 @@ export class MessagesPage implements OnInit {
 
     /* Navigation Buttons */
 
-
     toProfile(){
         this.zone.run(() => {
             this.nav.navigateForward('profile')
@@ -127,7 +124,7 @@ export class MessagesPage implements OnInit {
     /* Sending + Retrying Message */
 
     // Can send with shift+return key on desktop
-    checkSubmit (contact: Contact) {
+    checkSubmit(contact: Contact) {
         // if (e.keyCode === 13)
         this.sendMessage(contact)
       }

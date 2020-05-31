@@ -1,12 +1,10 @@
 import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
-import { Auth } from '../../services/state/auth-state'
 import { App } from '../../services/state/app-state'
 import { NavController, LoadingController, AlertController } from '@ionic/angular'
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
-import { getContext } from 'ambassador-sdk'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
@@ -30,7 +28,6 @@ export class ContactsPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly loadingCtrl: LoadingController,
         private readonly stateIngestion: StateIngestionService,
-        private readonly nav: NavController,
         private readonly alertCtrl: AlertController
     ) {
         this.contacts$ = combineLatest([this.$forceRerender$, App.emitContacts$]).pipe(

@@ -1,26 +1,25 @@
 import { NgModule } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
+import { Routes, RouterModule } from '@angular/router'
 
 import { IonicModule } from '@ionic/angular'
 
-import { SigninPageRoutingModule } from './signin-routing.module'
-
 import { SigninPage } from './signin.page'
-import { RouterModule } from '@angular/router'
+
+const routes: Routes = [
+  {
+    path: '',
+    component: SigninPage,
+  },
+]
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    RouterModule.forChild([
-        {
-          path: '',
-          component: SigninPage
-        }
-      ]),
-    SigninPageRoutingModule
+    RouterModule.forChild(routes),
   ],
   declarations: [SigninPage]
 })

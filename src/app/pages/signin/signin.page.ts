@@ -1,13 +1,9 @@
-import { Component, OnInit, NgZone } from '@angular/core'
-
-import { NavController, LoadingController } from '@ionic/angular'
-import { CupsMessenger } from '../../services/cups/cups-messenger'
-import { BehaviorSubject, of } from 'rxjs'
-import { pauseFor } from '../../services/cups/types'
+import { Component, OnInit } from '@angular/core'
+import { LoadingController } from '@ionic/angular'
+import { BehaviorSubject } from 'rxjs'
 import { Auth } from '../../services/state/auth-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { overlayLoader } from 'src/rxjs/util'
-import { catchError } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 
 @Component({

@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core'
-import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe';
+import { TruncateEllipsesPipe } from '../pipes/truncate-ellipses.pipe'
 
 @NgModule({
   declarations: [
