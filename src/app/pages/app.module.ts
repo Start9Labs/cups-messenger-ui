@@ -8,8 +8,6 @@ import { IonicStorageModule } from '@ionic/storage'
 
 import { AppComponent } from './app.component'
 import { AppRoutingModule } from './app-routing.module'
-// import { TextAvatarModule } from '../text-avatar'
-// import { SharingModule } from 'src/app/modules/sharing.module'
 
 @NgModule({
   declarations: [AppComponent],
@@ -19,8 +17,6 @@ import { AppRoutingModule } from './app-routing.module'
     IonicStorageModule.forRoot(),
     AppRoutingModule,
     HttpClientModule,
-    // TextAvatarModule,
-    // SharingModule,
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
