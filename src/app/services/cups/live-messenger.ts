@@ -112,26 +112,6 @@ export class LiveCupsMessenger {
             )
     }
 
-    newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {
-        const params = {
-            type: 'new',
-            pubkey: onionToPubkeyString(contact.torAddress),
-        }
-
-        return withTimeout(this.http.get(this.hostUrl, {
-            params,
-            headers: this.authHeaders(),
-            responseType: 'arraybuffer'
-        })).pipe(
-                map( arrayBuffer => this.parser.deserializeMessagesShow(arrayBuffer)
-                                               .map(m => hydrateCupsMessageResponse(contact, m))
-                ),
-                catchError(e => {
-                    console.error('New messages show', JSON.stringify(e)); throw e
-                })
-            )
-    }
-
     messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         const headers = this.authHeaders()

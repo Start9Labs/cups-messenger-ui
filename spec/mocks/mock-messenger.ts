@@ -5,7 +5,7 @@ import { map, take } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { Log } from 'src/app/log'
 import { mockL, mockContact, mockMessage } from './util'
-import { sortByTimestamp } from 'src/app/util'
+import { sortByTimestampDESC } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
@@ -23,17 +23,21 @@ export class StandardMockCupsMessenger {
                 c.unreadMessages = 1
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
             } else {
-                const ms = mockL(mockMessage, 30).sort(sortByTimestamp)
+                const ms = mockL(mockMessage, 30).sort(sortByTimestampDESC) //most recent message is first
                 this.mocks[c.torAddress] = ms
                 c.unreadMessages = 30
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
+        // this.kickoffMessages()
+    }
+
+    kickoffMessages(){
         interval(10000).subscribe(i => {
             this.contacts.forEach( c => {
                 const m = mockMessage(i, new Date())
                 this.mocks[c.torAddress].push(m)
-                const mostRecent = this.mocks[c.torAddress].filter(server).sort(sortByTimestamp)
+                const mostRecent = this.mocks[c.torAddress].filter(server).sort(sortByTimestampDESC)
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = mostRecent[0]
                 c.unreadMessages += 1
             })
@@ -71,24 +75,20 @@ export class StandardMockCupsMessenger {
         let toReturn: ServerMessage[]
         if(offset){
             const i = messages.findIndex(m => m.id && m.id === offset.id)
+             //recall, most recent message is first
             switch(offset.direction){
-                case 'after'  : toReturn = messages.slice(i + 1, i + 1 + limit); break
-                case 'before' : toReturn = messages.slice(i - limit, i); break
+                case 'before'  : toReturn = messages.slice(i + 1, i + 1 + limit + 1); break
+                case 'after' : toReturn = messages.slice(i - limit, i); break
             }
         } else {
-            toReturn = messages.slice(messages.length - limit + 1, messages.length)
+            toReturn = messages.slice(messages.length - limit, messages.length)
         }
         this.contacts.forEach((c, i) => {
             if(c.torAddress === contact.torAddress){
                 this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
             }
         })
-
         return timer(this.serverTimeToLoad).pipe(map(() => toReturn), take(1))
-    }
-
-    newMessagesShow(): ObservableOnce<ServerMessage[]> {
-        return of([])
     }
 
     messagesSend (contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {

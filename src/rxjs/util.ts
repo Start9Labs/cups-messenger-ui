@@ -1,4 +1,4 @@
-import { Observable, BehaviorSubject, of, OperatorFunction, from, Subject } from 'rxjs'
+import { Observable, BehaviorSubject, of, OperatorFunction, from, Subject, NextObserver } from 'rxjs'
 import { concatMap, tap, catchError, filter, take, finalize } from 'rxjs/operators'
 import { Log } from 'src/app/log'
 import { LogLevel, LogTopic } from 'src/app/config'
@@ -54,6 +54,13 @@ export function overlayLoader<T>(
             loader.dismiss()
         }),
     )
+}
+
+export function both<T>(n1: NextObserver<T>, n2: NextObserver<T>): NextObserver<T> {
+    return { next: t => {
+        n1.next(t)
+        n2.next(t)
+    } }
 }
 
 export function nonBlockingLoader<T>(

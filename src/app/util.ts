@@ -1,6 +1,6 @@
 import { Message, server } from './services/cups/types'
 
-export const sortByTimestamp =
+export const sortByTimestampDESC =
     (a: Message, b: Message) => {
         const aT = server(a) ? new Date(a.timestamp) : new Date(a.sentToServer)
         const bT = server(b) ? new Date(b.timestamp) : new Date(b.sentToServer)

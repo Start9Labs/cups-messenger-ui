@@ -46,8 +46,4 @@ export class CupsMessenger {
     messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         return this.impl.messagesSend(contact, trackingId, message)
     }
-
-    newMessagesShow(contact: Contact): ObservableOnce<ServerMessage[]> {
-        return this.impl.newMessagesShow(contact)
-    }
 }

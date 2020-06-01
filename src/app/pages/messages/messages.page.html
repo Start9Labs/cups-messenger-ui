@@ -35,9 +35,17 @@
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
     <div *ngIf="(app.emitCurrentContact$ | async) as contact">
 
-        <ion-infinite-scroll position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
-            <ion-infinite-scroll-content *ngIf="!($loading$ | async) && !($historicalLoadingEnabled$ | async) && !metadata[contact.torAddress].hasAllHistoricalMessages" style="margin-top: 10%" loadingSpinner="crescent"></ion-infinite-scroll-content>
+        <ion-infinite-scroll #infiniteScroll position="top" threshold="5%" (ionInfinite)="oldMessageLoad($event, contact)">
+            <ion-infinite-scroll-content style="margin-top: 10%" loadingSpinner="crescent"></ion-infinite-scroll-content>
         </ion-infinite-scroll>
+
+        <div *ngIf="$previousMessagesLoading$ | async">
+            <div style="height: 100%; width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
+                <ion-item lines="none">
+                    <ion-spinner name="crescent"></ion-spinner>
+                </ion-item>
+            </div>
+        </div>        
 
         <ion-list #chat class="chat">
             <div id="start-of-scroll"></div>
@@ -62,7 +70,8 @@
                 </div>
             </div>
         </ion-list>
-        <div *ngIf="$loading$ | async">
+
+        <div *ngIf="$newMessagesLoading$ | async">
             <div style="height: 100%; width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
                 <ion-item lines="none">
                     <ion-spinner name="crescent"></ion-spinner>

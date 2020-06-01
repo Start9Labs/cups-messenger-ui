@@ -30,9 +30,11 @@ export interface Config {
     }
     contactsDaemon: {
         frequency: number
+        on: boolean
     }
     messagesDaemon: {
         frequency: number
+        on: boolean
     }
     loadMesageBatchSize: number
     defaultServerTimeout: number
@@ -49,16 +51,18 @@ export const config: Config = {
         url: '/api'
     },
     contactsDaemon: {
-        frequency: 10000
+        frequency: 10000,
+        on: true
     },
     messagesDaemon: {
-        frequency: 3000
+        frequency: 3000,
+        on: false
     },
     loadMesageBatchSize: 15,
     defaultServerTimeout: 45000,
     logs: {
         level: LogLevel.TRACE,
-        topics: [LogTopic.AUTH]
+        topics: [LogTopic.MESSAGES]
     },
     myTorAddress: "rdu6rtxlazgu5nw4o2sjfpsrnqpkwipk4qqalsb4ky7iyy2ciq5lb6qd.onion"
 

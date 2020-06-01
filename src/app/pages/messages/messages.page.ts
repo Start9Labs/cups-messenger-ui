@@ -1,17 +1,17 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, failed, attending } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController, LoadingController } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer } from 'rxjs'
-import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged } from 'rxjs/operators'
+import { NavController, LoadingController, IonInfiniteScroll } from '@ionic/angular'
+import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer, Subject } from 'rxjs'
+import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
-import { cshake128 } from 'js-sha3'
+import { exists, nonBlockingLoader, both } from 'src/rxjs/util'
 import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
+import { sortByTimestampDESC } from 'src/app/util'
 // import * as s from '@svgdotjs/svg.js'
 // const SVG = s.SVG
 /*
@@ -32,8 +32,9 @@ export class MessagesPage implements OnInit {
     contact: Contact
 
 
-    $loading$ = new BehaviorSubject(true)
-    $historicalLoadingEnabled$ = new BehaviorSubject(false)
+    $newMessagesLoading$ = new BehaviorSubject(false)
+    $previousMessagesLoading$ = new BehaviorSubject(false)
+    @ViewChild('infiniteScroll', {read: IonInfiniteScroll }) public infiniteScroll:IonInfiniteScroll
 
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
@@ -49,14 +50,10 @@ export class MessagesPage implements OnInit {
     // Synced to text entry field in UI
     messageToSend: string
 
-    // Save particular data about what to view. Timestamps can be moved to DB in future iterations.
-    // newest rendered should be used to jump to last viewed in future iterations
-    // oldest rendered is used for fetching older messages
-    metadata: { [ tor: string ]: {
-        hasAllHistoricalMessages: boolean
-        newestRendered: ServerMessage | undefined
-        oldestRendered: ServerMessage | undefined
-    }} = {}
+    
+    newestRendered: ServerMessage | undefined = undefined // newest rendered should be used to jump to last viewed in future iterations
+    oldestRendered: ServerMessage | undefined = undefined // oldest rendered is used for fetching older messages
+
 
     myTorAddress = config.myTorAddress
 
@@ -69,23 +66,31 @@ export class MessagesPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
     ){
-        // html will subscribe to this to get message additions/updates
-        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(switchMap(c => App.emitMessages$(c.torAddress)))
     }
 
-    ngOnInit() {
+    ngAfterViewInit() {
         // load messages right away so we don't have to wait for daemon
-        this.loadMessages()
-       
+        this.infiniteScroll.disabled = true
+        this.initialMessageLoad()
+    }  
+
+    ngOnInit() {    
+        // html will subscribe to this to get message additions/updates
+        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(
+            take(1), concatMap(c => App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC))))
+        )
+
+
         // Every time new messages are received, we update the oldest and newest message that's been loaded.
         // if we receive new inbound messages, and we're not at the bottom of the screen, then we have unreads
-        this.ngOnInitSubs.push(combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).subscribe(
-            ([c, messages]) => {
+        this.ngOnInitSubs.push(this.messagesForDisplay$.subscribe(
+            messages => {
                 // initializes the metadata object if it's not already there
-                this.getMetadata(c.torAddress) 
                 if(isAtBottom()){ this.jumpToBottom() }
-
-                const { updatedNewest } = this.updateViewedMessageEndpoints(c, messages.filter(server))
+                debugger
+                const { updatedNewest } = this.updateRenderedMessageBoundary(
+                    messages.filter(server)
+                )
 
                 if(updatedNewest) { // if we updated the newest message, mark unread if we're not at the bottom
                     this.$unreads$.next(!isAtBottom())
@@ -94,26 +99,50 @@ export class MessagesPage implements OnInit {
         ))
     }
 
-    loadMessages(){
-        combineLatest([App.emitCurrentContact$, this.messagesForDisplay$]).pipe(take(1), concatMap(([c, ms]) => {
+    initialMessageLoad(){
+        App.emitCurrentContact$.pipe(take(1), concatMap(c => {
             const lastMessage = c.lastMessages[0]
-            const options: ShowMessagesOptions = lastMessage ? { offset: { id: lastMessage.id, direction: 'before' } } : {}
+            const justOneMessage = this.newestRendered === this.oldestRendered
+            let loader: Subject<boolean>
+            let options: ShowMessagesOptions
+            
+            if(lastMessage && justOneMessage){ //we have last message from contacts call, but have yet to make call for messages.
+                loader = this.$previousMessagesLoading$
+                options = { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
+            } else {
+                loader = this.$newMessagesLoading$
+                options = {}
+            }
             return nonBlockingLoader(
                 this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom(100))), 
-                this.$loading$
+                loader
             )
         })).subscribe( ({contact, messages}) => {
-            if(messages.length >= config.loadMesageBatchSize){ this.$historicalLoadingEnabled$.next(true) }
+            this.infiniteScroll.disabled = messages.length < config.loadMesageBatchSize
             this.jumpToBottom(100)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
         })
     }
-
-    newMessage(c: Contact, m: Message): boolean {
-        const newest = this.getMetadata(c.torAddress).newestRendered
-        if(!newest) return true
-        if(attending(m) || failed(m)) return true
-        return m.timestamp > newest.timestamp
+    
+    // Triggered by enabled infinite scroll
+    oldMessageLoad(event: any, contact: Contact) {
+        if(this.oldestRendered){
+            debugger
+            this.stateIngestion.refreshMessages(
+                contact, { limit: config.loadMesageBatchSize, offset: { direction: 'before', id: this.oldestRendered.id }}
+            ).subscribe({
+                next: ({ messages }) => {
+                    this.infiniteScroll.disabled = messages.length < config.loadMesageBatchSize
+                    event.target.complete()
+                },
+                error: e => {
+                    Log.error('Exception fetching older messages for ' + contact.torAddress, e, LogTopic.MESSAGES)
+                    event.target.complete()
+                }
+            })
+        } else {
+            event.target.complete()
+        }
     }
 
     ngOnDestroy(): void {
@@ -121,7 +150,6 @@ export class MessagesPage implements OnInit {
     }
 
     /* Navigation Buttons */
-
     toProfile(){
         this.zone.run(() => {
             this.nav.navigateForward('profile')
@@ -135,13 +163,6 @@ export class MessagesPage implements OnInit {
     }
 
     /* Sending + Retrying Message */
-
-    // Can send with shift+return key on desktop
-    checkSubmit (contact: Contact) {
-        // if (e.keyCode === 13)
-        this.sendMessage(contact)
-      }
-
     sendMessage(contact: Contact) {
         const attendingMessage = mkAttending({
             direction: 'Outbound',
@@ -202,65 +223,27 @@ export class MessagesPage implements OnInit {
         if(bottom) this.$unreads$.next(false)
     }
 
-    /* older message logic */
-    fetchOlderMessages(event: any, contact: Contact) {
-        console.log('fetching old boys')
-        const messagesToRetrieve = config.loadMesageBatchSize
-        const metadata = this.getMetadata(contact.torAddress)
-
-        if(metadata.hasAllHistoricalMessages) {
-            event.target.complete()
-            return
-        }
-
-        if(metadata.oldestRendered){
-            this.stateIngestion.refreshMessages(
-                contact, { limit: messagesToRetrieve, offset: { direction: 'before', id: metadata.oldestRendered.id }}
-            ).subscribe({
-                next: ({ messages }) => {
-                    if(messages.length < messagesToRetrieve){
-                        Log.debug(`fetched all historical messages`)
-                        this.getMetadata(contact.torAddress).hasAllHistoricalMessages = true
-                    }
-                    event.target.complete()
-                },
-                error: e => {
-                    console.error(e.message)
-                    event.target.complete()
-                }
-            })
-        } else {
-            event.target.complete()
-        }
-    }
-
-    private updateViewedMessageEndpoints(
-        c: Contact, serverMessages: ServerMessage[]
+    private updateRenderedMessageBoundary(
+        serverMessages: ServerMessage[]
     ): { updatedOldest: boolean, updatedNewest: boolean }{
         const toReturn = { updatedOldest: false, updatedNewest: false }
 
         const oldestMessage = serverMessages[serverMessages.length - 1]
-        const oldestRendered = this.getMetadata(c.torAddress).oldestRendered
+        const oldestRendered = this.oldestRendered
         if(oldestMessage && isOlder(oldestMessage, oldestRendered)){
-            this.getMetadata(c.torAddress).oldestRendered = oldestMessage
+
+            this.oldestRendered = oldestMessage
             toReturn.updatedOldest = true
         }
 
         const newestMessage = serverMessages.filter(server)[0]
-        const newestRendered = this.getMetadata(c.torAddress).newestRendered
+        const newestRendered = this.newestRendered
         if(newestMessage && isNewer(newestMessage, newestRendered)){
-            this.getMetadata(c.torAddress).newestRendered = newestMessage
+            this.newestRendered = newestMessage
             toReturn.updatedNewest = true
         }
 
         return toReturn
-    }
-
-    private getMetadata(tor: string){
-        if(!this.metadata[tor]){
-            this.metadata[tor] = { hasAllHistoricalMessages: false, newestRendered: undefined, oldestRendered: undefined }
-        }
-        return this.metadata[tor]
     }
 }
 

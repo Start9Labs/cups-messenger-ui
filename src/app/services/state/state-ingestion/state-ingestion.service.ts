@@ -78,12 +78,12 @@ export class StateIngestionService {
     }
 
     shutdown(){
-        if(this.contactsCooldown)        this.contactsCooldown.unsubscribe()
-        if(this.messagesCooldown)        this.messagesCooldown.unsubscribe()
+        if(this.contactsCooldown) this.contactsCooldown.unsubscribe()
+        if(this.messagesCooldown) this.messagesCooldown.unsubscribe()
     }
 
     private startContactsCooldownSub(){
-        if(subIsActive(this.contactsCooldown)) return
+        if(subIsActive(this.contactsCooldown) || !config.contactsDaemon.on) return
 
         this.contactsCooldown =
                 timer(0, config.contactsDaemon.frequency).pipe(
@@ -96,7 +96,7 @@ export class StateIngestionService {
 
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
     private startMessagesCooldownSub(){
-        if(subIsActive(this.messagesCooldown)) return
+        if(subIsActive(this.messagesCooldown) || !config.messagesDaemon.on) return
 
         this.messagesCooldown = App.emitCurrentContact$.pipe(
             switchMap(contact => {
@@ -127,7 +127,7 @@ function acquireMessages(
     options: ShowMessagesOptions = {}
 ): Observable<{ contact: Contact, messages: ServerMessage[] }> {
     return cups.messagesShow(contact, options).pipe(
-        tap(ms => Log.trace(`messages daemon returning`, ms, LogTopic.MESSAGES)),
+        tap(ms => Log.trace(`messages returning`, ms, LogTopic.MESSAGES)),
         map(ms => ({ contact, messages: ms }))
     )
 }

@@ -5,7 +5,7 @@ import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T } from 'src/app/config'
 import { Log } from 'src/app/log'
 import { MessageStore } from './message-store'
-import { partitionBy, sortByTimestamp } from 'src/app/util'
+import { partitionBy, sortByTimestampDESC } from 'src/app/util'
 
 // Raw app state. Shouldn't be accessed directly except by the below.
 const Private = {
@@ -40,9 +40,9 @@ export class AppState{
             next: cs => { 
                 this.hasLoadedContacts = true
                 Private.$contacts$.next(cs)
-                // cs.filter(c => c.lastMessages[0]).forEach(c => {
-                //     this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
-                // })
+                cs.filter(c => c.lastMessages[0]).forEach(c => {
+                    this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
+                })
             },
             complete: () => Log.error(`Critical: contacts observer completed`),
             error: e => Log.error('Critical: contacts observer errored', e)

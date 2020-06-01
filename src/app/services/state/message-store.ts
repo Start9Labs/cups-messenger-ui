@@ -2,7 +2,7 @@ import { LogBehaviorSubject } from 'src/rxjs/util'
 import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, outbound, local, server } from '../cups/types'
 import { Observable } from 'rxjs'
 import { map, take, distinctUntilChanged } from 'rxjs/operators'
-import { sortByTimestamp, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
+import { sortByTimestampDESC, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
 import * as uuid from 'uuid'
 import { LogLevel, LogTopic } from 'src/app/config'
 
@@ -28,8 +28,8 @@ export class MessageStore {
             map(ms => {
                 // finalized messages include inbounds, sents, and faileds
                 const {yes : attendings, no : finalizedMessages } = partitionBy(ms, attending)
-                const sortedAs = attendings.sort(sortByTimestamp)
-                const sortedFs = finalizedMessages.sort(sortByTimestamp)
+                const sortedAs = attendings.sort(sortByTimestampDESC)
+                const sortedFs = finalizedMessages.sort(sortByTimestampDESC)
 
                 // attending messages presented after all finalized messages.
                 return sortedAs.concat(sortedFs)
