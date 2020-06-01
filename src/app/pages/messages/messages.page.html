@@ -32,7 +32,7 @@
     <ion-spinner *ngIf="$loading$ | async" class="center" name="crescent"></ion-spinner>
 
     <div *ngIf="!($loading$ | async) && (app.emitCurrentContact$ | async) as contact">
-        <ion-infinite-scroll *ngIf="!($loading$ | async) && !metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
+        <ion-infinite-scroll *ngIf="!metadata[contact.torAddress].hasAllHistoricalMessages" position="top" threshold="5%" (ionInfinite)="fetchOlderMessages($event, contact)">
             <ion-infinite-scroll-content style="margin-top: 10%" loadingSpinner="crescent"></ion-infinite-scroll-content>
         </ion-infinite-scroll>
 
@@ -76,7 +76,7 @@
 </ion-content>
 
 <ion-footer>
-    <div class="submit" *ngIf="!($loading$ | async) && (app.emitCurrentContact$ | async) as contact">
+    <div class="submit" *ngIf="(app.emitCurrentContact$ | async) as contact">
         <ion-textarea class="enter-text" autoGrow rows="1" [(ngModel)]="messageToSend" name="message" placeholder="Text message"></ion-textarea>
         <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">
             <ion-icon slot="icon-only" name="chevron-up-outline"></ion-icon>

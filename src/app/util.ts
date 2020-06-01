@@ -1,10 +1,9 @@
 import { Message, server } from './services/cups/types'
-import { config } from './config'
 
 export const sortByTimestamp =
     (a: Message, b: Message) => {
-        const aT = server(a) ? a.timestamp : a.sentToServer
-        const bT = server(b) ? b.timestamp : b.sentToServer
+        const aT = server(a) ? new Date(a.timestamp) : new Date(a.sentToServer)
+        const bT = server(b) ? new Date(b.timestamp) : new Date(b.sentToServer)
         return bT.getTime() - aT.getTime()
     }
 
