@@ -1,19 +1,25 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { NgModule } from '@angular/core'
+import { CommonModule } from '@angular/common'
+import { FormsModule } from '@angular/forms'
+import { Routes, RouterModule } from '@angular/router'
 
-import { IonicModule } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular'
 
-import { NewContactPageRoutingModule } from './new-contact-routing.module';
+import { NewContactPage } from './new-contact.page'
 
-import { NewContactPage } from './new-contact.page';
+const routes: Routes = [
+  {
+    path: '',
+    component: NewContactPage,
+  },
+]
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    NewContactPageRoutingModule
+    RouterModule.forChild(routes),
   ],
   declarations: [NewContactPage]
 })

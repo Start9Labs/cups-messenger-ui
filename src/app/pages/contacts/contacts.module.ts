@@ -1,25 +1,28 @@
 import { NgModule } from '@angular/core'
 import { CommonModule } from '@angular/common'
-import { FormsModule } from '@angular/forms'
+import { Routes, RouterModule } from '@angular/router'
 
 import { IonicModule } from '@ionic/angular'
-
-import { ContactsPageRoutingModule } from './contacts-routing.module'
 
 import { ContactsPage } from './contacts.page'
 import { SharingModule } from '../../modules/sharing.module'
 import { TextAvatarModule } from 'src/app/text-avatar'
 
+const routes: Routes = [
+  {
+    path: '',
+    component: ContactsPage,
+  },
+]
+
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,
     IonicModule,
-    ContactsPageRoutingModule,
+    RouterModule.forChild(routes),
     SharingModule,
-    TextAvatarModule
+    TextAvatarModule,
   ],
   declarations: [ContactsPage],
-  exports: [],
 })
 export class ContactsPageModule {}

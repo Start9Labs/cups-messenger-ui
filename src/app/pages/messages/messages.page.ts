@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, failed, attending } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController, LoadingController } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer } from 'rxjs'
+import { NavController } from '@ionic/angular'
+import { Observable, of, combineLatest, Subscription, BehaviorSubject } from 'rxjs'
 import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
@@ -29,8 +29,6 @@ export class MessagesPage implements OnInit {
     @ViewChild('content') private content: any
 
     app = App
-    contact: Contact
-
 
     $loading$ = new BehaviorSubject(true)
     $historicalLoadingEnabled$ = new BehaviorSubject(false)
@@ -137,7 +135,7 @@ export class MessagesPage implements OnInit {
     /* Sending + Retrying Message */
 
     // Can send with shift+return key on desktop
-    checkSubmit (contact: Contact) {
+    checkSubmit(contact: Contact) {
         // if (e.keyCode === 13)
         this.sendMessage(contact)
       }
