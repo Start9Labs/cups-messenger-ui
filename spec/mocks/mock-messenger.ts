@@ -29,16 +29,15 @@ export class StandardMockCupsMessenger {
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
-        // this.kickoffMessages()
+        this.kickoffMessages()
     }
 
     kickoffMessages(){
         interval(10000).subscribe(i => {
             this.contacts.forEach( c => {
                 const m = mockMessage(i, new Date())
-                this.mocks[c.torAddress].push(m)
-                const mostRecent = this.mocks[c.torAddress].filter(server).sort(sortByTimestampDESC)
-                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = mostRecent[0]
+                this.mocks[c.torAddress].unshift(m)
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = m
                 c.unreadMessages += 1
             })
         })
@@ -75,9 +74,9 @@ export class StandardMockCupsMessenger {
         let toReturn: ServerMessage[]
         if(offset){
             const i = messages.findIndex(m => m.id && m.id === offset.id)
-             //recall, most recent message is first
             switch(offset.direction){
-                case 'before'  : toReturn = messages.slice(i + 1, i + 1 + limit + 1); break
+                // most recent message is first
+                case 'before'  : toReturn = messages.slice(i + 1, i + limit + 1); break
                 case 'after' : toReturn = messages.slice(i - limit, i); break
             }
         } else {

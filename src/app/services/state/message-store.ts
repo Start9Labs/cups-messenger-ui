@@ -1,5 +1,5 @@
 import { LogBehaviorSubject } from 'src/rxjs/util'
-import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, outbound, local, server } from '../cups/types'
+import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, outbound, local, server, OutboundMessage } from '../cups/types'
 import { Observable } from 'rxjs'
 import { map, take, distinctUntilChanged } from 'rxjs/operators'
 import { sortByTimestampDESC, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
@@ -36,6 +36,22 @@ export class MessageStore {
             }),
             distinctUntilChanged(eqByJSON)
         )
+    }
+
+    removeMessage(msg: OutboundMessage): Observable<boolean> {
+        return this.$messages$.asObservable().pipe(take(1), map(
+            ms => {
+                const ind = ms.findIndex(m => m.trackingId === msg.trackingId)
+                if(ind >= 0) {
+                    const msClone = JSON.parse(JSON.stringify(ms))
+                    msClone.splice(ind, 1)
+                    this.$messages$.next(msClone)
+                    return true
+                } else {
+                    return false
+                }
+            }
+        ))
     }
 }
 

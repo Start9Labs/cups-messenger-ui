@@ -1,5 +1,5 @@
 import { Observable, NextObserver, Observer, of, Subject, BehaviorSubject } from 'rxjs'
-import { ContactWithMessageMeta, Message, Contact, ServerMessage, server } from '../cups/types'
+import { ContactWithMessageMeta, Message, Contact, ServerMessage, server, OutboundMessage } from '../cups/types'
 import { filter, map, concatMap, take } from 'rxjs/operators'
 import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T } from 'src/app/config'
@@ -70,6 +70,10 @@ export class AppState{
             }),
             take(1)
         )
+    }
+
+    removeMessage$(c: Contact, o: OutboundMessage): Observable<boolean> {
+        return this.messagesFor(c.torAddress).removeMessage(o)
     }
 
     private messagesFor(tor: string) {

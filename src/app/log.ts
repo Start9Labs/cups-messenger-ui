@@ -2,8 +2,8 @@ import { config, LogLevel, LogTopic } from './config'
 
 export const Log = {
     info : (msg, object?, topic?) => safeLog({ level: LogLevel.INFO , msg, object, topic }, console.info ),
-    debug: (msg, object?, topic?) => safeLog({ level: LogLevel.DEBUG, msg, object, topic }, console.debug),
-    trace: (msg, object?, topic?) => safeLog({ level: LogLevel.TRACE, msg, object, topic }, console.trace),
+    debug: (msg, object?, topic?) => safeLog({ level: LogLevel.DEBUG, msg, object, topic }, console.info),
+    trace: (msg, object?, topic?) => safeLog({ level: LogLevel.TRACE, msg, object, topic }, console.info),
     error: (msg, object?, topic?) => safeLog({ level: LogLevel.ERROR, msg, object, topic }, console.error),
     safeLog
 }

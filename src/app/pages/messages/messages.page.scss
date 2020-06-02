@@ -16,6 +16,8 @@
     overflow: auto;
     display: flex;
     flex-direction: column-reverse;
+    justify-content: flex-start;
+    height: 100%;   
 }
 
 .chat-message {
@@ -52,6 +54,11 @@
 
 .my-coloring {
     color: var(--ion-color-primary);
+    font-weight: bold;
+}
+
+.my-failed-coloring {
+    color: var(--ion-color-danger);
     font-weight: bold;
 }
 
@@ -97,9 +104,22 @@
     }
 }
 
+.msg-status {
+    --ionicon-stroke-width: 32px;
+    padding: 4px;
+}
+
 .retry {
-    color: #5d5d5d;
+    color: #fafafa;
     cursor: pointer;
+    // --ionicon-stroke-width: 64px;
+}
+
+.cancel {
+    color: #eb7b7b;
+    cursor: pointer;
+    font-size: 23px;
+    padding: 0px;
 }
 
 .right-bubble {

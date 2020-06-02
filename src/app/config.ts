@@ -47,7 +47,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.STANDARD_MOCK,
+        type: CupsMessengerType.ERROR_MOCK,
         url: '/api'
     },
     contactsDaemon: {

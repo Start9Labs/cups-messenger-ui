@@ -1,9 +1,9 @@
-import { Component, OnInit, ViewChild, NgZone } from '@angular/core'
+import { Component, OnInit, ViewChild, NgZone, HostListener } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, failed, attending } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController, LoadingController, IonInfiniteScroll } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer, Subject } from 'rxjs'
-import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map } from 'rxjs/operators'
+import { NavController, IonInfiniteScroll } from '@ionic/angular'
+import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer, Subject, fromEvent } from 'rxjs'
+import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
@@ -26,18 +26,22 @@ import { sortByTimestampDESC } from 'src/app/util'
   styleUrls: ['./messages.page.scss'],
 })
 export class MessagesPage implements OnInit {
-    @ViewChild('content') private content: any
+    chatElement // listen for scroll events on this
+    bottomOfChatElement // scroll to bottom with this
+    mutationObserver: MutationObserver // notifies when chat list has changed
 
     app = App
     contact: Contact
-
+    shouldGetAllOldMessages = false
+    hasAllOldMessages = false
 
     $newMessagesLoading$ = new BehaviorSubject(false)
     $previousMessagesLoading$ = new BehaviorSubject(false)
-    @ViewChild('infiniteScroll', {read: IonInfiniteScroll }) public infiniteScroll:IonInfiniteScroll
 
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
+
+    jumpNext = false
 
     // Used to determine whether we should present jump button
     private $atBottom$ = new BehaviorSubject(true)
@@ -50,15 +54,13 @@ export class MessagesPage implements OnInit {
     // Synced to text entry field in UI
     messageToSend: string
 
-    
-    newestRendered: ServerMessage | undefined = undefined // newest rendered should be used to jump to last viewed in future iterations
-    oldestRendered: ServerMessage | undefined = undefined // oldest rendered is used for fetching older messages
-
-
-    myTorAddress = config.myTorAddress
+    // newest rendered should be used to jump to last viewed in future iterations
+    newestRendered: ServerMessage | undefined = undefined 
+    // oldest rendered is used for fetching older messages
+    oldestRendered: ServerMessage | undefined = undefined 
 
     // These will be unsubbed on ngOnDestroy
-    private ngOnInitSubs: Subscription[] = []
+    private subsToTeardown: Subscription[] = []
 
     constructor(
         private readonly nav: NavController,
@@ -69,34 +71,50 @@ export class MessagesPage implements OnInit {
     }
 
     ngAfterViewInit() {
-        // load messages right away so we don't have to wait for daemon
-        this.infiniteScroll.disabled = true
+        this.shouldGetAllOldMessages = false
+        this.chatElement = document.getElementById('chat')
+        this.bottomOfChatElement = document.getElementById('end-of-scroll')
+        this.subsToTeardown.push(fromEvent(this.chatElement, 'scroll').pipe(debounceTime(200)).subscribe(e => {
+            console.log(`in the scrolling sub`, JSON.stringify(e))
+            this.onScrollEnd()
+        }))
         this.initialMessageLoad()
+
+        this.mutationObserver = new MutationObserver(() => {
+            if(this.jumpNext) this.jumpToBottom()
+        })
+
+        this.mutationObserver.observe(this.chatElement, {
+            childList: true
+        })
     }  
 
     ngOnInit() {    
         // html will subscribe to this to get message additions/updates
         this.messagesForDisplay$ = App.emitCurrentContact$.pipe(
-            take(1), concatMap(c => App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC))))
+            take(1), 
+            tap(c => this.contact = c), 
+            concatMap(c => 
+                App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
+            )
         )
-
 
         // Every time new messages are received, we update the oldest and newest message that's been loaded.
         // if we receive new inbound messages, and we're not at the bottom of the screen, then we have unreads
-        this.ngOnInitSubs.push(this.messagesForDisplay$.subscribe(
-            messages => {
-                // initializes the metadata object if it's not already there
-                if(isAtBottom()){ this.jumpToBottom() }
-                debugger
-                const { updatedNewest } = this.updateRenderedMessageBoundary(
-                    messages.filter(server)
-                )
+        this.subsToTeardown.push(
+            this.messagesForDisplay$.subscribe(
+                messages => {
+                    const { updatedNewest } = this.updateRenderedMessageBoundary(
+                        messages.filter(server)
+                    )
 
-                if(updatedNewest) { // if we updated the newest message, mark unread if we're not at the bottom
-                    this.$unreads$.next(!isAtBottom())
+                    if(isAtBottom() && updatedNewest) this.jumpNext = true 
+                    if(updatedNewest) { // if we updated the newest message, mark unread if we're not at the bottom
+                        this.$unreads$.next(!isAtBottom())
+                    }
                 }
-            }
-        ))
+            )
+        )
     }
 
     initialMessageLoad(){
@@ -114,39 +132,40 @@ export class MessagesPage implements OnInit {
                 options = {}
             }
             return nonBlockingLoader(
-                this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom(100))), 
+                this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom('instant'))), 
                 loader
             )
         })).subscribe( ({contact, messages}) => {
-            this.infiniteScroll.disabled = messages.length < config.loadMesageBatchSize
-            this.jumpToBottom(100)
+            this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
+            this.hasAllOldMessages = !this.shouldGetAllOldMessages
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
         })
     }
     
     // Triggered by enabled infinite scroll
-    oldMessageLoad(event: any, contact: Contact) {
+    oldMessageLoad() {
+        console.log('loading oldies yo')
         if(this.oldestRendered){
-            debugger
-            this.stateIngestion.refreshMessages(
-                contact, { limit: config.loadMesageBatchSize, offset: { direction: 'before', id: this.oldestRendered.id }}
+            nonBlockingLoader(
+                this.stateIngestion.refreshMessages(
+                    this.contact, { limit: config.loadMesageBatchSize, offset: { direction: 'before', id: this.oldestRendered.id }}
+                ),
+                this.$previousMessagesLoading$
             ).subscribe({
                 next: ({ messages }) => {
-                    this.infiniteScroll.disabled = messages.length < config.loadMesageBatchSize
-                    event.target.complete()
+                    this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
+                    this.hasAllOldMessages = !this.shouldGetAllOldMessages
                 },
                 error: e => {
-                    Log.error('Exception fetching older messages for ' + contact.torAddress, e, LogTopic.MESSAGES)
-                    event.target.complete()
+                    Log.error('Exception fetching older messages for ' + this.contact.torAddress, e, LogTopic.MESSAGES)
                 }
             })
-        } else {
-            event.target.complete()
-        }
+        } 
     }
 
     ngOnDestroy(): void {
-        return this.ngOnInitSubs.forEach(s => s.unsubscribe())
+        this.subsToTeardown.forEach(s => s.unsubscribe())
+        this.mutationObserver.disconnect()
     }
 
     /* Navigation Buttons */
@@ -181,8 +200,14 @@ export class MessagesPage implements OnInit {
         this.send(contact, retryMessage)
     }
 
+    cancel(contact: Contact, message: FailedMessage) {
+        App.removeMessage$(contact, message).subscribe(b => {
+            Log.info(`Message trackingId ${message.trackingId} removed: `, b, LogTopic.MESSAGES)
+        })
+    }
+
     send(contact: Contact, message: AttendingMessage) {
-        App.alterContactMessages$({contact, messages: [message]}).subscribe( () => {
+        App.alterContactMessages$({contact, messages: [message]}).pipe(delay(100)).subscribe( () => {
             this.jumpToBottom()
         })
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
@@ -204,12 +229,11 @@ export class MessagesPage implements OnInit {
 
     /* Jumping logic */
 
-    async jumpToBottom(timeToScroll = 200) {
-        if(this.content) {
-            this.content.scrollToBottom(timeToScroll)
-            this.$atBottom$.next(true)
-            this.$unreads$.next(false)
-        }
+    async jumpToBottom(speed: 'instant' | 'smooth' = 'smooth') {
+        this.bottomOfChatElement && this.bottomOfChatElement.scrollIntoView({ behavior: speed })
+        this.$atBottom$.next(true)
+        this.$unreads$.next(false)
+        this.jumpNext = false
     }
 
     // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is fine.
@@ -218,6 +242,9 @@ export class MessagesPage implements OnInit {
     }
 
     onScrollEnd(){
+        const top = isAtTop()
+        if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
+        
         const bottom = isAtBottom()
         this.$atBottom$.next(bottom)
         if(bottom) this.$unreads$.next(false)
@@ -231,7 +258,6 @@ export class MessagesPage implements OnInit {
         const oldestMessage = serverMessages[serverMessages.length - 1]
         const oldestRendered = this.oldestRendered
         if(oldestMessage && isOlder(oldestMessage, oldestRendered)){
-
             this.oldestRendered = oldestMessage
             toReturn.updatedOldest = true
         }
@@ -252,16 +278,22 @@ function isAtBottom(): boolean {
     return el ? isElementInViewport(el) : true
 }
 
+function isAtTop(): boolean {
+    const el = document.getElementById('start-of-scroll')
+    return el ? isElementInViewport(el) : true
+}
+
 // returns true if the TOP of the element is in the view port.
 function isElementInViewport(el) {
+    const content = document.getElementById('chat')
     const rect = el.getBoundingClientRect()
     return rect.top < window.innerHeight && rect.bottom >= 0
 }
 
 function isOlder(a: { timestamp: Date }, b?: { timestamp: Date }) {
-    return !b || a.timestamp < b.timestamp
+    return !b || new Date(a.timestamp) < new Date(b.timestamp)
 }
 
 function isNewer(a: { timestamp: Date }, b?: { timestamp: Date }) {
-    return !b || a.timestamp > b.timestamp
+    return !b || new Date(a.timestamp) > new Date(b.timestamp)
 }

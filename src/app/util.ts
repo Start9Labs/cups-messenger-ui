@@ -7,6 +7,13 @@ export const sortByTimestampDESC =
         return bT.getTime() - aT.getTime()
     }
 
+export const sortByTimestampASC =
+    (a: Message, b: Message) => {
+        const aT = server(a) ? new Date(a.timestamp) : new Date(a.sentToServer)
+        const bT = server(b) ? new Date(b.timestamp) : new Date(b.sentToServer)
+        return aT.getTime() - bT.getTime()
+    }
+
 export function uniqueBy<T>(projection: (t: T) => string, ts : T[], prioritized: (t1: T, t2: T) => boolean = (t1, t2) => true): T[] {
     const tracking = { } as { [projected: string] : T }
     ts.forEach( t => {
