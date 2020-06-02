@@ -64,7 +64,6 @@ export const config: Config = {
         level: LogLevel.TRACE,
         topics: [LogTopic.MESSAGES]
     },
-    myTorAddress: "rdu6rtxlazgu5nw4o2sjfpsrnqpkwipk4qqalsb4ky7iyy2ciq5lb6qd.onion"
-
+    myTorAddress: 'rdu6rtxlazgu5nw4o2sjfpsrnqpkwipk4qqalsb4ky7iyy2ciq5lb6qd.onion'
     // window.origin.split('//')[1] || window.origin
 }
