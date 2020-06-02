@@ -28,6 +28,7 @@ import { sortByTimestampDESC } from 'src/app/util'
 export class MessagesPage implements OnInit {
     chatElement // listen for scroll events on this
     bottomOfChatElement // scroll to bottom with this
+    topOfChatElement // scroll to bottom with this
     mutationObserver: MutationObserver // notifies when chat list has changed
 
     app = App
@@ -74,13 +75,14 @@ export class MessagesPage implements OnInit {
         this.shouldGetAllOldMessages = false
         this.chatElement = document.getElementById('chat')
         this.bottomOfChatElement = document.getElementById('end-of-scroll')
+        this.topOfChatElement = document.getElementById('start-of-scroll')
         this.subsToTeardown.push(fromEvent(this.chatElement, 'scroll').pipe(debounceTime(200)).subscribe(e => {
             console.log(`in the scrolling sub`, JSON.stringify(e))
             this.onScrollEnd()
         }))
         this.initialMessageLoad()
 
-        this.mutationObserver = new MutationObserver(() => {
+        this.mutationObserver = new MutationObserver((ms) => {
             if(this.jumpNext) this.jumpToBottom()
         })
 
@@ -96,23 +98,26 @@ export class MessagesPage implements OnInit {
             tap(c => this.contact = c), 
             concatMap(c => 
                 App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
-            )
+            ),
+            tap(messages => {
+                const { updatedNewest } = this.updateRenderedMessageBoundary(
+                    messages.filter(server)
+                )
+
+                const atBottom = this.isAtBottom()
+                // if there's a new message and we're at the bottom, mutation observer should jump to the bottom
+                if(atBottom && updatedNewest) this.jumpNext = true 
+                 
+                // if we updated the newest message, mark unread if we're not at the bottom
+                if(updatedNewest) this.$unreads$.next(!atBottom)
+            })
         )
 
         // Every time new messages are received, we update the oldest and newest message that's been loaded.
         // if we receive new inbound messages, and we're not at the bottom of the screen, then we have unreads
         this.subsToTeardown.push(
             this.messagesForDisplay$.subscribe(
-                messages => {
-                    const { updatedNewest } = this.updateRenderedMessageBoundary(
-                        messages.filter(server)
-                    )
-
-                    if(isAtBottom() && updatedNewest) this.jumpNext = true 
-                    if(updatedNewest) { // if we updated the newest message, mark unread if we're not at the bottom
-                        this.$unreads$.next(!isAtBottom())
-                    }
-                }
+                ms => Log.debug(`received new messages`, ms)
             )
         )
     }
@@ -230,22 +235,24 @@ export class MessagesPage implements OnInit {
     /* Jumping logic */
 
     async jumpToBottom(speed: 'instant' | 'smooth' = 'smooth') {
+        console.log('jumping?')
         this.bottomOfChatElement && this.bottomOfChatElement.scrollIntoView({ behavior: speed })
         this.$atBottom$.next(true)
         this.$unreads$.next(false)
         this.jumpNext = false
     }
 
-    // TODO: this needs to find the lastviewed element and jump there. Presently we just jump to the bottom, which is fine.
-    async jumpToLastViewed() {
-        this.jumpToBottom()
-    }
-
     onScrollEnd(){
-        const top = isAtTop()
+        console.log('We just ended scroll')
+
+        
+
+        const top = this.isAtTop()
+        top && console.log('at top')
         if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
         
-        const bottom = isAtBottom()
+        const bottom = this.isAtBottom()
+        bottom && console.log('at bottom')
         this.$atBottom$.next(bottom)
         if(bottom) this.$unreads$.next(false)
     }
@@ -271,23 +278,32 @@ export class MessagesPage implements OnInit {
 
         return toReturn
     }
+
+    isAtBottom(): boolean {
+        return this.bottomOfChatElement ? isElementInViewport(this.bottomOfChatElement) : true
+    }
+    
+    isAtTop(): boolean {
+        return this.topOfChatElement ? isElementInViewport(this.topOfChatElement) : true
+    }
+    
 }
 
-function isAtBottom(): boolean {
-    const el = document.getElementById('end-of-scroll')
-    return el ? isElementInViewport(el) : true
-}
 
-function isAtTop(): boolean {
-    const el = document.getElementById('start-of-scroll')
-    return el ? isElementInViewport(el) : true
+function isElementInViewport (el) {
+    var rect = el.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /* or $(window).height() */
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
+    )
 }
-
-// returns true if the TOP of the element is in the view port.
-function isElementInViewport(el) {
-    const rect = el.getBoundingClientRect()
-    return rect.top < window.innerHeight && rect.bottom >= 0
-}
+// // returns true if the TOP of the element is in the view port.
+// function isElementInViewport(el) {
+//     const rect = el.getBoundingClientRect()
+//     return rect.top < window.innerHeight && rect.bottom >= 0
+// }
 
 function isOlder(a: { timestamp: Date }, b?: { timestamp: Date }) {
     return !b || new Date(a.timestamp) < new Date(b.timestamp)

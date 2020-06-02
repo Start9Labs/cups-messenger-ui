@@ -9,7 +9,7 @@ import { sortByTimestampDESC } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
-    contacts = mockL(mockContact, 5)
+    contacts = mockL(mockContact, 3)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {
@@ -17,7 +17,7 @@ export class StandardMockCupsMessenger {
             if(index === 0){
                 this.mocks[c.torAddress] = mockL(mockMessage, 0)
                 c.unreadMessages = 0
-            } else if (index === 4) {
+            } else if (index === 1) {
                 const message = mockMessage(100)
                 this.mocks[c.torAddress] = [message]
                 c.unreadMessages = 1

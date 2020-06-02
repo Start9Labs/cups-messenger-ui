@@ -76,21 +76,21 @@
             </ion-item>
         </div>
     </div>
-        
-    
-    <ion-fab *ngIf="!(atBottom$ | async)" class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button size="small" color="light" *ngIf="(unreads$ | async)" (click)="jumpToBottom()">
-            <ion-icon name="arrow-down-outline"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button size="small" color="medium" *ngIf="!(unreads$ | async)" (click)="jumpToBottom()">
-            <ion-icon name="arrow-down-outline"></ion-icon>
-        </ion-fab-button>
-    </ion-fab>  
 </ion-content>
 
 <ion-footer>
+    <!-- <div style="height: 50px; wid"> -->
+        <ion-button 
+            class="jump-fab"
+            [class.jump-fab-unreads]="unreads$ | async"
+            slot="end" *ngIf="!(atBottom$ | async)" fill="clear" (click)="jumpToBottom()"
+        >
+            <ion-icon slot="icon-only" name="caret-down"></ion-icon>
+        </ion-button>
+    <!-- </div> -->
     <div class="submit" *ngIf="(app.emitCurrentContact$ | async) as contact">
         <ion-textarea class="enter-text" autoGrow rows="1" [(ngModel)]="messageToSend" name="message" placeholder="Text message"></ion-textarea>
+        
         <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">
             <ion-icon slot="icon-only" name="chevron-up-outline"></ion-icon>
         </ion-button>

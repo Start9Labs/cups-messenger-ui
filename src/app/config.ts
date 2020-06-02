@@ -11,7 +11,8 @@ export enum LogTopic {
     CURRENT_CONTACT = 'CURRENT_CONTACT',
     MESSAGES = 'MESSAGE',
     NO_TOPIC = 'NO_TOPIC',
-    AUTH = 'AUTH'
+    AUTH = 'AUTH',
+    NO_LOGS = 'NO_LOGS' //config.ts: ```topics: [LogTopic.NO_LOGS]``` disables logs
 }
 
 export enum CupsMessengerType {
@@ -61,8 +62,8 @@ export const config: Config = {
     loadMesageBatchSize: 15,
     defaultServerTimeout: 45000,
     logs: {
-        level: LogLevel.TRACE,
-        topics: [LogTopic.MESSAGES]
+        level: LogLevel.INFO,
+        topics: [LogTopic.NO_LOGS]
     },
     myTorAddress: 'rdu6rtxlazgu5nw4o2sjfpsrnqpkwipk4qqalsb4ky7iyy2ciq5lb6qd.onion'
     // window.origin.split('//')[1] || window.origin
