@@ -1,15 +1,15 @@
-import { Component, OnInit, ViewChild, NgZone, HostListener } from '@angular/core'
-import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, failed, attending } from '../../services/cups/types'
+import { Component, OnInit, NgZone } from '@angular/core'
+import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController, IonInfiniteScroll } from '@ionic/angular'
-import { Observable, of, combineLatest, Subscription, BehaviorSubject, timer, Subject, fromEvent } from 'rxjs'
-import { switchMap, tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
+import { NavController } from '@ionic/angular'
+import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent } from 'rxjs'
+import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, nonBlockingLoader, both } from 'src/rxjs/util'
+import { exists, nonBlockingLoader } from 'src/rxjs/util'
 import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { sortByTimestampDESC } from 'src/app/util'
 // import * as s from '@svgdotjs/svg.js'
@@ -285,7 +285,6 @@ function isAtTop(): boolean {
 
 // returns true if the TOP of the element is in the view port.
 function isElementInViewport(el) {
-    const content = document.getElementById('chat')
     const rect = el.getBoundingClientRect()
     return rect.top < window.innerHeight && rect.bottom >= 0
 }

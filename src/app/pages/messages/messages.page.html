@@ -20,15 +20,10 @@
                 {{contact.name || contact.torAddress}}
             </ion-title>
             </div>
-            <ion-button style="
-                --padding-start: 0;
-                --padding-end: 6px;
-            " fill="clear" color="primary" (click)="toProfile()">
+            <ion-button fill="clear" color="primary" (click)="toProfile()">
                 Edit
             </ion-button>
         </ion-buttons>
-        
-        
     </ion-toolbar>
 </ion-header>
 
@@ -93,7 +88,7 @@
     </ion-fab>  
 </ion-content>
 
-<ion-footer >
+<ion-footer>
     <div class="submit" *ngIf="(app.emitCurrentContact$ | async) as contact">
         <ion-textarea class="enter-text" autoGrow rows="1" [(ngModel)]="messageToSend" name="message" placeholder="Text message"></ion-textarea>
         <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">

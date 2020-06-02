@@ -1,21 +1,25 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { NgModule } from '@angular/core'
+import { CommonModule } from '@angular/common'
+import { Routes, RouterModule } from '@angular/router'
 
-import { IonicModule } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular'
 
-import { MePageRoutingModule } from './me-routing.module';
+import { MePage } from './me.page'
+import { SharingModule } from 'src/app/modules/sharing.module'
 
-import { MePage } from './me.page';
-import { SharingModule } from 'src/app/modules/sharing.module';
+const routes: Routes = [
+  {
+    path: '',
+    component: MePage,
+  },
+]
 
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,
     IonicModule,
-    MePageRoutingModule,
-    SharingModule
+    RouterModule.forChild(routes),
+    SharingModule,
   ],
   declarations: [MePage]
 })

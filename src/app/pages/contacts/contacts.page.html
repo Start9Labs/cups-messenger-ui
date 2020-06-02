@@ -8,7 +8,10 @@
 </ion-header>
 
 <ion-content fullscreen>
-    <ion-item-group>
+
+    <ion-spinner *ngIf="$loading$ | async" class="center" name="crescent"></ion-spinner>
+
+    <ion-item-group *ngIf="!($loading$ | async)">
         <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
                 <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">
@@ -31,21 +34,11 @@
                 </ion-item-options>
             </ion-item-sliding>
         </div>
-        <div *ngIf="$loading$ | async">
-            <div style="height: 100%; width: 100%; align-items:center; display: flex; justify-content: center;">
-                <ion-item>
-                    <ion-spinner name="crescent"></ion-spinner>
-                </ion-item>
-            </div>
-        </div>
-    </ion-item-group>  
+    </ion-item-group>
+
     <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button class="new-contact-button" size="medium" fill="clear" color="primary" (click)="toNewContactPage()">
             <ion-icon name="add-outline"></ion-icon>
         </ion-fab-button>
     </ion-fab>
 </ion-content>
-
-<ion-footer>
-</ion-footer>
-
