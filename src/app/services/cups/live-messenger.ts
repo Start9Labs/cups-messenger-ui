@@ -42,7 +42,12 @@ export class LiveCupsMessenger {
                 throw e
             })
         )).pipe(
-                map(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer)),
+                map(arrayBuffer =>
+                    this.parser.deserializeContactsShow(arrayBuffer).map(
+                        ({ contact, unreadMessages, lastMessages }) => 
+                        ({...contact, unreadMessages, lastMessages: lastMessages.map(m => hydrateCupsMessageResponse(contact, m))})
+                    )
+                ),
                 catchError( e => {
                     Log.error('Contacts show', e); throw e
                 })
@@ -144,6 +149,17 @@ export class LiveCupsMessenger {
     }
 }
 
+export function hydrateCupsMessageResponse(c: Contact, m : CupsMessageShow): ServerMessage {
+    if(m.direction === 'Inbound'){
+        return mkInbound({ ...m, direction: 'Inbound', otherParty: c})
+    } else if (m.direction === 'Outbound') {
+        return mkSent({ ...m, direction: 'Outbound', otherParty: c})
+    }
+
+    throw new Error(`Unexpected direction from server ${JSON.stringify(m)}`)
+}
+
+
 export function withTimeout<U>(req: Observable<U>, timeout: number = config.defaultServerTimeout): Observable<U> {
     return race(
         from(req),
@@ -160,14 +176,4 @@ export type ShowNewMessagesOptions = { atLeast?: number }
 export function fillNewDefaultOptions(options: ShowNewMessagesOptions): ShowNewMessagesOptions {
     const atLeast = options.atLeast || config.loadMesageBatchSize
     return { ...options, atLeast }
-}
-
-export function hydrateCupsMessageResponse(c: Contact, m : CupsMessageShow): ServerMessage {
-    if(m.direction === 'Inbound'){
-        return mkInbound({ ...m, direction: 'Inbound', otherParty: c})
-    } else if (m.direction === 'Outbound') {
-        return mkSent({ ...m, direction: 'Outbound', otherParty: c})
-    }
-
-    throw new Error(`Unexpected direction from server ${JSON.stringify(m)}`)
 }

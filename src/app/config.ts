@@ -41,14 +41,13 @@ export interface Config {
     defaultServerTimeout: number
     logs: {
         level: LogLevel,
-        topics: LogTopic[] // Leave this empty for all log topics to be displayed
     }
     myTorAddress: string
 }
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.ERROR_MOCK,
+        type: CupsMessengerType.STANDARD_MOCK,
         url: '/api'
     },
     contactsDaemon: {
@@ -57,14 +56,12 @@ export const config: Config = {
     },
     messagesDaemon: {
         frequency: 3000,
-        on: false
+        on: true
     },
     loadMesageBatchSize: 15,
-    defaultServerTimeout: 45000,
+    defaultServerTimeout: 30000,
     logs: {
-        level: LogLevel.INFO,
-        topics: [LogTopic.NO_LOGS]
+        level: LogLevel.TRACE,
     },
-    myTorAddress: 'rdu6rtxlazgu5nw4o2sjfpsrnqpkwipk4qqalsb4ky7iyy2ciq5lb6qd.onion'
-    // window.origin.split('//')[1] || window.origin
+    myTorAddress: window.origin.split('//')[1] || window.origin
 }

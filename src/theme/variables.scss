@@ -54,8 +54,8 @@
 
   /** dark **/
   --ion-color-dark: #1a1c21;
-  --ion-color-dark-rgb: 34, 34, 34;
-  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-rgb: 26, 28, 33;
+  --ion-color-dark-contrast: #fafafa;
   --ion-color-dark-contrast-rgb: 255, 255, 255;
   --ion-color-dark-shade: #1e2023;
   --ion-color-dark-tint: #383a3e;
@@ -80,9 +80,9 @@
 
 
   --ion-background-color: var(--ion-color-dark);
+//   --ion-border-color: var(--ion-color-primary-faded);
 
   --ion-text-color: var(--ion-color-light);
-
 
   --ion-font-family: 'OpenSans';
   // --ion-text-color-rgb 	Text color of the entire app, rgb format
@@ -96,8 +96,8 @@
   // --ion-tab-bar-border-color 	Border color of the Tab Bar
   // --ion-tab-bar-color 	Color of the Tab Bar
   // --ion-tab-bar-color-selected 	Color of the selected Tab Button
-  --ion-toolbar-background: rgba(65, 65, 65, 0.7); // 	Background of the Toolbar
-  // --ion-toolbar-border-color 	Border color of the Toolbar
+  --ion-toolbar-background: var(--ion-color-dark); // 	Background of the Toolbar
+  --ion-toolbar-border-color: var(--ion-color-primary-faded);
   // --ion-toolbar-color 	Color of the components in the Toolbar
   // --ion-toolbar-segment-color 	Color of the Segment Buttons in the Toolbar
   // --ion-toolbar-segment-color-checked 	Color of the checked Segment Buttons in the Toolbar

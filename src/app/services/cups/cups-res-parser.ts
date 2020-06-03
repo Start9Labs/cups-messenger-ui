@@ -1,6 +1,6 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
-import { ContactWithMessageMeta, MessageDirection, MessageClassification, ServerMessage } from './types'
+import { MessageDirection, ServerMessage, mkInbound, mkSent, Contact } from './types'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
@@ -11,11 +11,17 @@ export interface CupsMessageShow {
     direction: MessageDirection,
     id: string,
     trackingId: string
- }
+}
+export interface CupsContactShow {
+    contact: Contact,
+    unreadMessages: number,
+    lastMessages: CupsMessageShow[]
+}
+
 export class CupsResParser {
     constructor() {}
 
-    deserializeContactsShow(rawRes: ArrayBuffer): ContactWithMessageMeta[] {
+    deserializeContactsShow(rawRes: ArrayBuffer): CupsContactShow[] {
         const p = new ArrayBufferParser(rawRes)
         if (p.isEmpty) { return [] }
         const toReturn = []
@@ -57,7 +63,6 @@ export class CupsResParser {
         const messageBytes = utf8Encoder.encode(message)
         return bufferArrayConcat([new Uint8Array([0]).buffer, hexToBytes(trackingId.split('-').join('')), torBytes, messageBytes])
     }
-
 }
 
 class ArrayBufferParser {
@@ -83,9 +88,9 @@ class ArrayBufferParser {
 
 const PKEY_LENGTH = 32
 const UNREADS_LENGTH = 8
-const MESSAGES_COUNT = 1
 const NAME_LENGTH = 1
-function pullContact(p: ArrayBufferParser): ContactWithMessageMeta {
+const MESSAGES_COUNT = 1
+function pullContact(p: ArrayBufferParser): CupsContactShow {
     const torAddress          = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
     const unreadsCount        = p.chopNParse(UNREADS_LENGTH, bigEndian)
     const nameSize            = p.chopNParse(NAME_LENGTH   , bigEndian)
@@ -95,7 +100,8 @@ function pullContact(p: ArrayBufferParser): ContactWithMessageMeta {
     for(let i = 0; i < ensuingMessageCount; i ++) {
         lastMessages.push(pullMessage(p))
     }
-    return { torAddress, unreadMessages: unreadsCount, name, lastMessages }
+    const contact = { torAddress,  name }
+    return { contact, unreadMessages: unreadsCount, lastMessages }
 }
 
 function pullMessage(p: ArrayBufferParser): CupsMessageShow {

@@ -1,7 +1,7 @@
 import { config, LogTopic } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, timer, from, combineLatest, iif } from 'rxjs'
-import { concatMap, switchMap, map, tap, filter, mergeMap, pairwise, startWith, skip } from 'rxjs/operators'
+import { Subscription, Observable, timer } from 'rxjs'
+import { concatMap, switchMap, map, tap, filter, withLatestFrom } from 'rxjs/operators'
 import { App } from '../app-state'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types'
@@ -9,6 +9,7 @@ import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
 import { suppressErrorOperator } from 'src/rxjs/util'
 import { Router, NavigationStart } from '@angular/router'
+import { Auth, AuthStatus } from '../auth-state'
 
 enum Page {
     CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
@@ -19,7 +20,6 @@ export class StateIngestionService {
     private page: Page
     private contactsCooldown: Subscription
     private messagesCooldown: Subscription
-    private previewMessagesCooldown: Subscription
 
     constructor(private readonly cups: CupsMessenger, private readonly router: Router){
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
@@ -82,14 +82,18 @@ export class StateIngestionService {
         if(this.messagesCooldown) this.messagesCooldown.unsubscribe()
     }
 
-    private startContactsCooldownSub(){
+    private startContactsCooldownSub(){        
         if(subIsActive(this.contactsCooldown) || !config.contactsDaemon.on) return
-
+        Log.info('starting contacts daemon', config.contactsDaemon, LogTopic.CONTACTS)
         this.contactsCooldown =
                 timer(0, config.contactsDaemon.frequency).pipe(
+                    withLatestFrom(Auth.emitStatus$()),
+                    filter(([_, s]) => s === AuthStatus.VERIFIED),
+                    tap(i => console.log('running contacts', i, LogTopic.CONTACTS)),
                     concatMap(
-                        () => acquireContacts(this.cups).pipe(suppressErrorOperator('acquire contacts'))
-                    )
+                        () => acquireContacts(this.cups)
+                    ),
+                    suppressErrorOperator('acquire contacts')
                 )
             .subscribe(App.$ingestContacts)
     }
@@ -97,6 +101,7 @@ export class StateIngestionService {
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
     private startMessagesCooldownSub(){
         if(subIsActive(this.messagesCooldown) || !config.messagesDaemon.on) return
+        Log.info('starting messages daemon', config.messagesDaemon, LogTopic.MESSAGES)
 
         this.messagesCooldown = App.emitCurrentContact$.pipe(
             switchMap(contact => {
@@ -104,8 +109,9 @@ export class StateIngestionService {
                 return timer(0, config.messagesDaemon.frequency).pipe(
                     filter(() => this.messagesPage()),
                     concatMap(
-                        () => acquireMessages(this.cups, contact).pipe(suppressErrorOperator('acquire messages'))
+                        () => acquireMessages(this.cups, contact)
                     ),
+                    suppressErrorOperator('acquire messages')
                 )
             }),
         ).subscribe(ms =>{

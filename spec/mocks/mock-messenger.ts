@@ -29,7 +29,7 @@ export class StandardMockCupsMessenger {
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
-        this.kickoffMessages()
+        // this.kickoffMessages()
     }
 
     kickoffMessages(){

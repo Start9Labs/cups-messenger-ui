@@ -9,6 +9,7 @@ import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, map } from 'rxjs/operators'
+import { LiveCupsMessenger } from 'src/app/services/cups/live-messenger'
 
 @Component({
   selector: 'app-contacts',
@@ -82,11 +83,11 @@ export class ContactsPage implements OnInit {
           message: `Your message history will be deleted permanently.`,
           buttons: [
             {
-                cssClass: 'alert-danger',
                 text: 'Cancel',
                 handler: () => {},
             },  
             {
+                cssClass: 'alert-danger',
                 text: `Delete`,
                 handler: () => {
                     this.deleteContact(c)

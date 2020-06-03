@@ -1,14 +1,15 @@
 <ion-header>
-    <div class="contacts-header">
-        <ion-text class="page-title">Cups Messenger</ion-text>               
-        <ion-button color="primary" fill="clear" (click)="me()">
-            <ion-icon name="settings-outline"></ion-icon>
-        </ion-button>
-    </div>   
+    <ion-toolbar>
+        <div class="contacts-header">
+            <ion-text class="page-title">Cups Messenger</ion-text>               
+            <ion-button color="primary" fill="clear" (click)="me()">
+                <ion-icon name="settings-outline"></ion-icon>
+            </ion-button>
+        </div>   
+    </ion-toolbar>
 </ion-header>
 
 <ion-content fullscreen>
-
     <ion-spinner *ngIf="$loading$ | async" class="center" name="crescent"></ion-spinner>
 
     <ion-item-group *ngIf="!($loading$ | async)">

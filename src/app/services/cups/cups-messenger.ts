@@ -27,7 +27,7 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
-        Log.trace(`higher-order cups messenger contacts show...`)
+        console.log(`higher-order cups messenger contacts show...`)
         return this.impl.contactsShow(loginTestPassword || Auth.password)
     }
 

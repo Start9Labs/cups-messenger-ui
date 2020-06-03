@@ -1,8 +1,5 @@
 .item-contact{
-    border-style: solid;
-    border-width: 1px 0 0 0;
     --min-height: 100px;
-    border-color: #383a3e;
 }
 
 .item-avatar {
@@ -22,7 +19,7 @@
 .contacts-header {
     display: flex;
     justify-content: space-between;
-    padding: 7px 0 7px 14px;
+    padding: 12px 0 7px 14px;
     align-items: center;
 }
 

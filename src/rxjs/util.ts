@@ -23,7 +23,7 @@ export function suppressErrorOperator<T>(processDesc: string): OperatorFunction<
     return o => {
         return o.pipe(
             catchError(e => {
-                Log.error(`Error in ${processDesc}`, e)
+                console.error(`Error in ${processDesc}`, e)
                 return of(null)
             }),
             tap(t => Log.trace(processDesc, t)),

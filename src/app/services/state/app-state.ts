@@ -36,7 +36,7 @@ export class AppState{
 
     constructor(){
         this.$ingestCurrentContact = Private.$currentContact$
-        this.$ingestContacts       = {
+        this.$ingestContacts = {
             next: cs => { 
                 this.hasLoadedContacts = true
                 Private.$contacts$.next(cs)
@@ -44,15 +44,15 @@ export class AppState{
                     this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
                 })
             },
-            complete: () => Log.error(`Critical: contacts observer completed`),
-            error: e => Log.error('Critical: contacts observer errored', e)
+            complete: () => console.error(`Critical: contacts observer completed`),
+            error: e => console.error('Critical: contacts observer errored', e)
         }
         this.$ingestMessages       = {
             next: ({contact, messages}) =>
                 this.messagesFor(contact.torAddress).$ingestMessages(messages)
             ,
-            complete: () => Log.error(`Critical: message observer completed`),
-            error: e => Log.error('Critical: message observer errored', e)
+            complete: () => console.error(`Critical: message observer completed`),
+            error: e => console.error('Critical: message observer errored', e)
         }
 
         this.emitCurrentContact$   = Private.$currentContact$.asObservable().pipe(filter(exists))

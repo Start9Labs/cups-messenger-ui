@@ -81,7 +81,7 @@
     border-width: 0em 0em 0em 0.3em;
     border-style: solid;
     border-radius: 0em;
-    padding: 25px 10px 10px;
+    padding: 10px 10px;
     margin: 10px;
     margin-left: 2%;
     float: left;
@@ -104,6 +104,34 @@
     }
 }
 
+.right-bubble {
+    border-width: 0em 0.3em 0em 0em;
+    border-style: solid;
+    border-radius: 0em;
+    padding: 10px 10px;
+
+    float: right;
+    text-align: right;
+    margin-top: -12px;
+    margin: 10px;
+    color: white;
+    border-image-source: linear-gradient(var(--ion-background-color), var(--ion-color-primary), var(--ion-background-color));
+    border-image-slice: 2;
+    margin-right: 2%;
+    max-width: 80%;
+    min-width: 0%;
+
+    span.msg-date {
+        font-size: 10px;
+    }
+    div.msg-date {
+        // text-align: left;
+        font-size: 10px;
+        // display: block;
+    }
+}
+
+
 .msg-status {
     --ionicon-stroke-width: 32px;
     padding: 4px;
@@ -119,32 +147,6 @@
     cursor: pointer;
     font-size: 23px;
     padding: 0px;
-}
-
-.right-bubble {
-    float: right;
-    text-align: right;
-    border-radius: 0em;
-    padding: 5px 10px 20px;
-    margin-top: -12px;
-    margin: 10px;
-    color: white;
-    border-width: 0em 0.3em 0em 0em;
-    border-style: solid;
-    border-image-source: linear-gradient(var(--ion-background-color), var(--ion-color-primary), var(--ion-background-color));
-    border-image-slice: 2;
-    margin-right: 2%;
-    max-width: 80%;
-    min-width: 0%;
-
-    span.msg-date {
-        font-size: 10px;
-    }
-    div.msg-date {
-        // text-align: left;
-        font-size: 10px;
-        // display: block;
-    }
 }
 
 .failed {
@@ -173,18 +175,12 @@
 
 .jump-fab {
     position: absolute;
-    right: 3.3%;
-    bottom: 125%;
-    border-width: 1px 0.5px 1px 0.5px;
-    border-style: solid;
-    border-radius: 26%;
-    max-width: 14%;
-    border-color: var(--ion-color-primary);
+    right: -3.7%;
+    bottom: 44%;
     color: var(--ion-color-primary);
-    background-color: rgba(27, 29, 34, 0.8);
 }
 
 .jump-fab-unreads {
     border-color: var(--ion-color-primary-contrast);
-    color: var(--ion-color-primary-contrast);
+    color       : var(--ion-color-primary-contrast);
 }
