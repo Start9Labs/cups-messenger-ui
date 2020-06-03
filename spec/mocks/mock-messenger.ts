@@ -23,9 +23,9 @@ export class StandardMockCupsMessenger {
                 c.unreadMessages = 1
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
             } else {
-                const ms = mockL(mockMessage, 30).sort(sortByTimestampDESC) //most recent message is first
+                const ms = mockL(mockMessage, 100).sort(sortByTimestampDESC) //most recent message is first
                 this.mocks[c.torAddress] = ms
-                c.unreadMessages = 30
+                c.unreadMessages = 100
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
@@ -80,7 +80,7 @@ export class StandardMockCupsMessenger {
                 case 'after' : toReturn = messages.slice(i - limit, i); break
             }
         } else {
-            toReturn = messages.slice(messages.length - limit, messages.length)
+            toReturn = messages.slice(0, limit)
         }
         this.contacts.forEach((c, i) => {
             if(c.torAddress === contact.torAddress){

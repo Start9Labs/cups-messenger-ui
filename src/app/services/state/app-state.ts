@@ -48,9 +48,9 @@ export class AppState{
             error: e => console.error('Critical: contacts observer errored', e)
         }
         this.$ingestMessages       = {
-            next: ({contact, messages}) =>
+            next: ({contact, messages}) => {
                 this.messagesFor(contact.torAddress).$ingestMessages(messages)
-            ,
+            },
             complete: () => console.error(`Critical: message observer completed`),
             error: e => console.error('Critical: message observer errored', e)
         }
@@ -81,14 +81,6 @@ export class AppState{
             Private.messagesStore[tor] = new MessageStore()
         }
         return Private.messagesStore[tor]
-    }
-
-    emitMostRecentServerMessage$(c: Contact): Observable<ServerMessage | undefined> {
-        return this.emitMessages$(c.torAddress).pipe(map(ms => ms.filter(server)[0]))
-    }
-
-    emitOldestServerMessage$(c: Contact): Observable<ServerMessage | undefined> {
-        return this.emitMessages$(c.torAddress).pipe(map(ms => ms.filter(server)[ms.length - 1]))
     }
 }
     

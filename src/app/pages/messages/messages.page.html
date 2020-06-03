@@ -70,7 +70,7 @@
         <div style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
             <ion-item lines="none">
                 <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
-                <ion-icon color="medium" *ngIf="hasAllOldMessages" name="stop-outline"></ion-icon>
+                <ion-icon color="medium" *ngIf="$hasAllOldMessages$ | async" name="stop-outline"></ion-icon>
             </ion-item>
         </div>
     </ion-list>

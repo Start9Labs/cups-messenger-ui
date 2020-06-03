@@ -18,7 +18,7 @@ export function mockContact(i: number): ContactWithMessageMeta {
     }
 }
 
-export function mockMessage(i: number, dateOverride: Date = new Date(i * 1000 * 60 * 60 * 24 * 365)): ServerMessage {
+export function mockMessage(i: number, dateOverride: Date = new Date((i - 100) * 1000 * 60 * 60 * 24 * 365)): ServerMessage {
     return mkInbound({
         direction: 'Inbound',
         otherParty: mockContact(i),

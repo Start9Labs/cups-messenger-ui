@@ -86,15 +86,15 @@ export class StateIngestionService {
         if(subIsActive(this.contactsCooldown) || !config.contactsDaemon.on) return
         Log.info('starting contacts daemon', config.contactsDaemon, LogTopic.CONTACTS)
         this.contactsCooldown =
-                timer(0, config.contactsDaemon.frequency).pipe(
-                    withLatestFrom(Auth.emitStatus$()),
-                    filter(([_, s]) => s === AuthStatus.VERIFIED),
-                    tap(i => console.log('running contacts', i, LogTopic.CONTACTS)),
-                    concatMap(
-                        () => acquireContacts(this.cups)
-                    ),
-                    suppressErrorOperator('acquire contacts')
-                )
+            timer(0, config.contactsDaemon.frequency).pipe(
+                withLatestFrom(Auth.emitStatus$()),
+                filter(([_, s]) => s === AuthStatus.VERIFIED),
+                tap(i => console.log('running contacts', i, LogTopic.CONTACTS)),
+                concatMap(
+                    () => acquireContacts(this.cups)
+                ),
+                suppressErrorOperator('acquire contacts')
+            )
             .subscribe(App.$ingestContacts)
     }
 
@@ -133,7 +133,7 @@ function acquireMessages(
     options: ShowMessagesOptions = {}
 ): Observable<{ contact: Contact, messages: ServerMessage[] }> {
     return cups.messagesShow(contact, options).pipe(
-        tap(ms => Log.trace(`messages returning`, ms, LogTopic.MESSAGES)),
+        tap(ms => Log.trace(`${ms.length} messages returning`, ms[0] && ms[0].text, LogTopic.MESSAGES)),
         map(ms => ({ contact, messages: ms }))
     )
 }

@@ -1,8 +1,8 @@
 import { Component, OnInit, NgZone, ViewChild } from '@angular/core'
-import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed } from '../../services/cups/types'
+import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent } from 'rxjs'
+import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, concat } from 'rxjs'
 import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
@@ -34,9 +34,9 @@ export class MessagesPage implements OnInit {
     mutationObserver: MutationObserver // notifies when chat list has changed
 
     app = App
-    contact: Contact
+    contact: ContactWithMessageMeta
     shouldGetAllOldMessages = false
-    hasAllOldMessages = false
+    $hasAllOldMessages$ = new BehaviorSubject(false)
 
     $newMessagesLoading$ = new BehaviorSubject(false)
     $previousMessagesLoading$ = new BehaviorSubject(false)
@@ -79,8 +79,8 @@ export class MessagesPage implements OnInit {
         this.topOfChatElement = document.getElementById('start-of-scroll')
 
         this.mutationObserver = new MutationObserver(ms => {
-            console.log(`mutation observer, jumping ${this.jumping}`)
-            if(this.jumping) this.jumpToBottom()
+            if(this.isAtBottom() || !this.jumping) return
+            this.jumpToBottom()
         })
         this.mutationObserver.observe(this.chatElement, {
             childList: true
@@ -88,6 +88,17 @@ export class MessagesPage implements OnInit {
 
         this.initialMessageLoad()
         window['content'] = this.getContent()
+
+        // this.domMessagesUpdated$ = this.messagesForDisplay$.pipe(concatMap(ms => new Observable<Message[]>(sub => {
+        //     const mut = new MutationObserver(() => {
+        //         if(this.jumping) this.jumpToBottom()
+        //         sub.next(ms)
+        //         mut.disconnect()
+        //     })
+        //     mut.observe(this.chatElement, {
+        //         childList: true
+        //     })
+        // })))
     }  
 
     ngOnInit() {    
@@ -102,15 +113,14 @@ export class MessagesPage implements OnInit {
                 const { updatedNewest } = this.updateRenderedMessageBoundary(
                     messages.filter(server)
                 )
-
-                const atBottom = this.isAtBottom()
-                // if there's a new message and we're at the bottom, mutation observer should jump to the bottom
-                if(atBottom && updatedNewest) {
-                    console.log(`atbottom and updatednewest`)
+                
+                if(this.isAtBottom()) { 
                     this.jumping = true 
-                } else if (updatedNewest) {
-                    console.log(`not atbottom and updatednewest`)
-                    this.jumping = false
+                    return
+                }
+
+                this.jumping = false
+                if(updatedNewest) {
                     this.$unreads$.next(true)
                 }
             })
@@ -131,26 +141,26 @@ export class MessagesPage implements OnInit {
     }
 
     initialMessageLoad(){
-        App.emitCurrentContact$.pipe(take(1), concatMap(c => {
-            const lastMessage = c.lastMessages[0]
-            const justOneMessage = this.newestRendered === this.oldestRendered
-            let loader: Subject<boolean>
-            let options: ShowMessagesOptions
-            
-            if(lastMessage && justOneMessage){ //we have last message from contacts call, but have yet to make call for messages.
-                loader = this.$previousMessagesLoading$
-                options = { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
-            } else {
-                loader = this.$newMessagesLoading$
-                options = {}
-            }
-            return nonBlockingLoader(
-                this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom(0))), 
-                loader
-            )
-        })).subscribe( ({contact, messages}) => {
+        const c = this.contact
+        const lastMessage = c.lastMessages[0]
+        const justOneMessage = this.newestRendered === this.oldestRendered
+        let loader: Subject<boolean>
+        let options: ShowMessagesOptions
+        
+        if(lastMessage && justOneMessage){ //we have last message from contacts call, but have yet to make call for messages.
+            loader = this.$previousMessagesLoading$
+            options = { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
+        } else {
+            loader = this.$newMessagesLoading$
+            options = {}
+        }
+
+        nonBlockingLoader(
+            this.stateIngestion.refreshMessages(c, options), 
+            loader
+        ).subscribe( ({contact, messages}) => {
             this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
-            this.hasAllOldMessages = !this.shouldGetAllOldMessages
+            this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
         })
     }
@@ -167,7 +177,7 @@ export class MessagesPage implements OnInit {
             ).subscribe({
                 next: ({ messages }) => {
                     this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
-                    this.hasAllOldMessages = !this.shouldGetAllOldMessages
+                    this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
                 },
                 error: e => {
                     Log.error('Exception fetching older messages for ' + this.contact.torAddress, e, LogTopic.MESSAGES)
@@ -232,7 +242,7 @@ export class MessagesPage implements OnInit {
             filter(exists),
             tap(() => Log.info(`Message sent`, message.trackingId)),
             concatMap(() => this.stateIngestion.refreshMessages(contact))
-        ).subscribe()
+        ).subscribe(() => {})
     }
 
     /* Jumping logic */

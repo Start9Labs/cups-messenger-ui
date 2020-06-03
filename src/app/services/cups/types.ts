@@ -40,7 +40,7 @@ export type OutboundMessage = SentMessage | AttendingMessage | FailedMessage
 export function outbound(m : Message): m is OutboundMessage {
     return sent(m) || attending(m) || failed(m)
 }
-
+// torA = "someTorAddr2blahbalhfaosdfj.onion";  App.$ingestMessages.next({contact: {torAddress: torA}, messages: [{id:"1234", timestamp: new Date(), classification: 'Inbound', direction: 'Inbound', otherParty: {torAddress: torA}, text: "getFucked" }]})
 export interface InboundMessage extends MessageCore {
     id: string
     timestamp: Date

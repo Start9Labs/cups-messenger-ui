@@ -1,7 +1,20 @@
 import { LogBehaviorSubject } from 'src/rxjs/util'
-import { InboundMessage, SentMessage, AttendingMessage, FailedMessage, Message, failed, attending, inbound, outbound, local, server, OutboundMessage } from '../cups/types'
-import { Observable } from 'rxjs'
-import { map, take, distinctUntilChanged } from 'rxjs/operators'
+import { 
+    InboundMessage,
+    SentMessage,
+    AttendingMessage,
+    FailedMessage,
+    Message,
+    failed,
+    attending,
+    inbound,
+    outbound,
+    local,
+    server,
+    OutboundMessage 
+} from '../cups/types'
+import { Observable, Subject } from 'rxjs'
+import { map, take, distinctUntilChanged, multicast } from 'rxjs/operators'
 import { sortByTimestampDESC, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
 import * as uuid from 'uuid'
 import { LogLevel, LogTopic } from 'src/app/config'
@@ -16,11 +29,7 @@ export class MessageStore {
     }
 
     $ingestMessages(msgs: Message[]): void {
-        this.$messages$.pipe(take(1)).subscribe(ms => {
-            this.$messages$.next(
-                uniqueById(ms.concat(msgs))
-            )
-        })
+        this.$messages$.next(uniqueById([...this.$messages$.getValue(), ...msgs]))
     }
 
     toObservable() : Observable<Message[]>{
@@ -33,8 +42,7 @@ export class MessageStore {
 
                 // attending messages presented after all finalized messages.
                 return sortedAs.concat(sortedFs)
-            }),
-            distinctUntilChanged(eqByJSON)
+            })
         )
     }
 
