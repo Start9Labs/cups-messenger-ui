@@ -2,7 +2,7 @@ import { Component, OnInit, NgZone, ViewChild } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, concat } from 'rxjs'
+import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, concat, timer } from 'rxjs'
 import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
@@ -291,10 +291,9 @@ export class MessagesPage implements OnInit {
     }
 
     holdTheWebviewDown($event){
-        console.log('holding the webview!')
         $event.preventDefault()
         $event.stopPropagation()
-        window.scrollTo(0,0)
+        timer(100).pipe(take(1)).subscribe(() => window.scrollTo(0,0))
         document.body.scrollTop = 0
     }
 }
