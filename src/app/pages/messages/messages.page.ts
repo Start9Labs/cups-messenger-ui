@@ -212,9 +212,8 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.alterContactMessages$({contact, messages: [message]}).pipe(delay(100)).subscribe( () => {
-            this.jumpToBottom()
-        })
+        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.jumpNext = true)).subscribe()
+
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
                 console.error(`send message failure`, e.message)
@@ -225,11 +224,7 @@ export class MessagesPage implements OnInit {
             filter(exists),
             tap(() => Log.info(`Message sent`, message.trackingId)),
             concatMap(() => this.stateIngestion.refreshMessages(contact))
-        ).subscribe({
-            next: () => {
-                this.$unreads$.next(false); this.jumpToBottom()
-            },
-        })
+        ).subscribe()
     }
 
     /* Jumping logic */
@@ -245,14 +240,10 @@ export class MessagesPage implements OnInit {
     onScrollEnd(){
         console.log('We just ended scroll')
 
-        
-
         const top = this.isAtTop()
-        top && console.log('at top')
         if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
         
         const bottom = this.isAtBottom()
-        bottom && console.log('at bottom')
         this.$atBottom$.next(bottom)
         if(bottom) this.$unreads$.next(false)
     }
