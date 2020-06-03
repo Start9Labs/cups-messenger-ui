@@ -1,7 +1,7 @@
-import { Component, OnInit, NgZone } from '@angular/core'
+import { Component, OnInit, NgZone, ViewChild } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed } from '../../services/cups/types'
 import * as uuid from 'uuid'
-import { NavController } from '@ionic/angular'
+import { NavController, IonContent } from '@ionic/angular'
 import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent } from 'rxjs'
 import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
@@ -26,6 +26,8 @@ import { sortByTimestampDESC } from 'src/app/util'
   styleUrls: ['./messages.page.scss'],
 })
 export class MessagesPage implements OnInit {
+    @ViewChild('content') content: IonContent
+
     chatElement // listen for scroll events on this
     bottomOfChatElement // scroll to bottom with this
     topOfChatElement // scroll to bottom with this
@@ -90,6 +92,9 @@ export class MessagesPage implements OnInit {
         this.mutationObserver.observe(this.chatElement, {
             childList: true
         })
+
+        this.content.scrollToBottom(200)
+        window['content'] = this.content
     }  
 
     ngOnInit() {    
@@ -124,6 +129,11 @@ export class MessagesPage implements OnInit {
                 ms => Log.debug(`received new messages`, ms)
             )
         )
+
+        // console.log('ionViewDidLoad PersonalChatPage');
+        // let that = this;
+        // setTimeout(()=>{that.content.scrollToBottom();},200); 
+
     }
 
     initialMessageLoad(){

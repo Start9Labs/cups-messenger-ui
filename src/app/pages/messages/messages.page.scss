@@ -12,12 +12,10 @@
     background:  radial-gradient(#696c71 25%, var(--ion-color-primary-contrast));
 }
 
-.chat {
-    overflow: auto;
-    display: flex;
+ion-list {
     flex-direction: column-reverse;
-    justify-content: flex-start;
-    height: 100%;   
+    display: flex;
+    min-height: 100%;
 }
 
 .chat-message {
