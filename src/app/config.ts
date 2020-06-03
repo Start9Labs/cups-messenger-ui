@@ -61,7 +61,7 @@ export const config: Config = {
     loadMesageBatchSize: 15,
     defaultServerTimeout: 30000,
     logs: {
-        level: LogLevel.TRACE,
+        level: LogLevel.INFO,
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }

@@ -29,8 +29,8 @@ export class MessagesPage implements OnInit {
     @ViewChild('content') content: IonContent
 
     chatElement // listen for scroll events on this
-    bottomOfChatElement // scroll to bottom with this
-    topOfChatElement // scroll to bottom with this
+    bottomOfChatElement // detect at and scroll to bottom with this
+    topOfChatElement // detect at top with this
     mutationObserver: MutationObserver // notifies when chat list has changed
 
     app = App
@@ -44,11 +44,7 @@ export class MessagesPage implements OnInit {
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    jumpNext = false
-
-    // Used to determine whether we should present jump button
-    private $atBottom$ = new BehaviorSubject(true)
-    atBottom$ = this.$atBottom$.asObservable().pipe(distinctUntilChanged()) // only notify subs if things have changed
+    jumping = false
 
     // Used for green highlights
     private $unreads$ = new BehaviorSubject(false)
@@ -72,29 +68,26 @@ export class MessagesPage implements OnInit {
         private readonly stateIngestion: StateIngestionService,
     ){
     }
+    getContent() {
+        return document.querySelector('ion-content')
+    }
 
     ngAfterViewInit() {
         this.shouldGetAllOldMessages = false
         this.chatElement = document.getElementById('chat')
         this.bottomOfChatElement = document.getElementById('end-of-scroll')
         this.topOfChatElement = document.getElementById('start-of-scroll')
-        this.subsToTeardown.push(fromEvent(this.chatElement, 'scroll').pipe(debounceTime(200)).subscribe(e => {
-            console.log(`in the scrolling sub`, JSON.stringify(e))
-            this.onScrollEnd()
-        }))
-        this.initialMessageLoad()
 
-        this.mutationObserver = new MutationObserver((ms) => {
-            console.log('TODO: delete this log. Anyways, we\'re in the mutation obs and jumpNext is: ', this.jumpNext, ms)
-            if(this.jumpNext) this.jumpToBottom()
+        this.mutationObserver = new MutationObserver(ms => {
+            console.log(`mutation observer, jumping ${this.jumping}`)
+            if(this.jumping) this.jumpToBottom()
         })
-
         this.mutationObserver.observe(this.chatElement, {
             childList: true
         })
 
-        this.content.scrollToBottom(200)
-        window['content'] = this.content
+        this.initialMessageLoad()
+        window['content'] = this.getContent()
     }  
 
     ngOnInit() {    
@@ -113,12 +106,13 @@ export class MessagesPage implements OnInit {
                 const atBottom = this.isAtBottom()
                 // if there's a new message and we're at the bottom, mutation observer should jump to the bottom
                 if(atBottom && updatedNewest) {
-                    console.log('TODO: delete this log. Anyways, we\'re setting jump true')
-                    this.jumpNext = true 
+                    console.log(`atbottom and updatednewest`)
+                    this.jumping = true 
+                } else if (updatedNewest) {
+                    console.log(`not atbottom and updatednewest`)
+                    this.jumping = false
+                    this.$unreads$.next(true)
                 }
-                 
-                // if we updated the newest message, mark unread if we're not at the bottom
-                if(updatedNewest) this.$unreads$.next(!atBottom)
             })
         )
 
@@ -226,7 +220,7 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.jumpNext = true)).subscribe()
+        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.jumping = true)).subscribe()
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
@@ -242,12 +236,9 @@ export class MessagesPage implements OnInit {
     }
 
     /* Jumping logic */
-
-    async jumpToBottom(speed: number = 200) {
+    async jumpToBottom(speed: 0 | 100 | 200 = 200) {
         this.content.scrollToBottom(speed)
-        this.$atBottom$.next(true)
         this.$unreads$.next(false)
-        this.jumpNext = false
     }
 
     onScrollEnd(){
@@ -256,9 +247,7 @@ export class MessagesPage implements OnInit {
         const top = this.isAtTop()
         if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
         
-        const bottom = this.isAtBottom()
-        this.$atBottom$.next(bottom)
-        if(bottom) this.$unreads$.next(false)
+        if(this.isAtBottom()) this.$unreads$.next(false)
     }
 
     private updateRenderedMessageBoundary(
@@ -302,7 +291,7 @@ export class MessagesPage implements OnInit {
 
 
 function isElementInViewport (el) {
-    var rect = el.getBoundingClientRect();
+    var rect = el.getBoundingClientRect()
     return (
         rect.top >= 0 &&
         rect.left >= 0 &&

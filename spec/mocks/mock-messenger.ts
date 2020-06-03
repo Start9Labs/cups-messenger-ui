@@ -18,7 +18,7 @@ export class StandardMockCupsMessenger {
                 this.mocks[c.torAddress] = mockL(mockMessage, 0)
                 c.unreadMessages = 0
             } else if (index === 1) {
-                const message = mockMessage(100)
+                const message = mockMessage(1)
                 this.mocks[c.torAddress] = [message]
                 c.unreadMessages = 1
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
@@ -29,7 +29,7 @@ export class StandardMockCupsMessenger {
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
-        // this.kickoffMessages()
+        this.kickoffMessages()
     }
 
     kickoffMessages(){
