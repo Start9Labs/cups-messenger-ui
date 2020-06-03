@@ -83,6 +83,7 @@ export class MessagesPage implements OnInit {
         this.initialMessageLoad()
 
         this.mutationObserver = new MutationObserver((ms) => {
+            console.log('TODO: delete this log. Anyways, we\'re in the mutation obs and jumpNext is: ', this.jumpNext, ms)
             if(this.jumpNext) this.jumpToBottom()
         })
 
@@ -106,7 +107,10 @@ export class MessagesPage implements OnInit {
 
                 const atBottom = this.isAtBottom()
                 // if there's a new message and we're at the bottom, mutation observer should jump to the bottom
-                if(atBottom && updatedNewest) this.jumpNext = true 
+                if(atBottom && updatedNewest) {
+                    console.log('TODO: delete this log. Anyways, we\'re setting jump true')
+                    this.jumpNext = true 
+                }
                  
                 // if we updated the newest message, mark unread if we're not at the bottom
                 if(updatedNewest) this.$unreads$.next(!atBottom)
@@ -230,7 +234,6 @@ export class MessagesPage implements OnInit {
     /* Jumping logic */
 
     async jumpToBottom(speed: 'instant' | 'smooth' = 'smooth') {
-        console.log('jumping?')
         this.bottomOfChatElement && this.bottomOfChatElement.scrollIntoView({ behavior: speed })
         this.$atBottom$.next(true)
         this.$unreads$.next(false)
@@ -277,7 +280,14 @@ export class MessagesPage implements OnInit {
     isAtTop(): boolean {
         return this.topOfChatElement ? isElementInViewport(this.topOfChatElement) : true
     }
-    
+
+    holdTheWebviewDown($event){
+        console.log('holding the webview!')
+        $event.preventDefault()
+        $event.stopPropagation()
+        window.scrollTo(0,0)
+        document.body.scrollTop = 0
+    }
 }
 
 
