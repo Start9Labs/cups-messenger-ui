@@ -27,56 +27,53 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content>
-    <div  style="height:100%; overflow: scroll; display: flex; flex-flow: column; justify-content: flex-end;" *ngIf="(app.emitCurrentContact$ | async) as contact">
-        
-        <!-- Yeah, end-of-scroll is on the top because we are using flex-flow: column-reverse. smack. my. face.-->
-        <div id="chat" #chat class="chat">
-            <div id="end-of-scroll"></div> 
-            <div *ngFor="let message of (messagesForDisplay$ | async)" style="white-space: pre-line;">
-                <div class="left-bubble chat-message-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
-                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <span class="msg-date contact-coloring">{{message.timestamp | date:'short'}}</span>
-                    <!-- <ion-icon class="msg-status" color="light" name="checkmark-done-outline"></ion-icon> -->
-                </div>
-                <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'SENT'" lines="none">
-                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <div class="msg-date my-coloring">{{message.timestamp | date:'short'}}</div>
-                    <ion-icon class="msg-status" color="primary" name="checkmark-done-outline"></ion-icon>
-                </div>
-                <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble attending" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
-                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <div class="msg-date my-coloring">{{message.sentToServer | date:'short'}}</div>
-                    <ion-icon class="msg-status" color="primary" name="checkmark-outline"></ion-icon>
-                </div>
-                <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
-                    <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                    <div class="msg-date my-failed-coloring">{{message.sentToServer | date:'short'}}</div>
-                    <div style="display: flex; justify-content: flex-end; align-items: center;">
-                        <div (click)="cancel(contact, message)">
-                            <ion-icon class="msg-status cancel" name="close-outline"></ion-icon>
-                        </div>
-                        <div (click)="retry(contact, message)">
-                            <ion-icon class="msg-status retry" name="reload-outline"></ion-icon>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="start-of-scroll"></div>
-            <div style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
-                <ion-item lines="none">
-                    <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
-                    <ion-icon color="medium" *ngIf="hasAllOldMessages" name="stop-outline"></ion-icon>
-                </ion-item>
-            </div>
-        </div>
-        
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">        
+    <ion-list id="chat" class="chat">
         <div *ngIf="$newMessagesLoading$ | async" style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
             <ion-item lines="none">
                 <ion-spinner name="crescent"></ion-spinner>
             </ion-item>
         </div>
-    </div>
+        <div id="end-of-scroll"></div> 
+    
+        <div *ngFor="let message of (messagesForDisplay$ | async)">
+            <div class="left-bubble chat-message-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <span class="msg-date contact-coloring">{{message.timestamp | date:'short'}}</span>
+                <ion-icon class="msg-status" color="dark" name="checkmark-done-outline"></ion-icon>
+            </div>
+            <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'SENT'" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <div class="msg-date my-coloring">{{message.timestamp | date:'short'}}</div>
+                <ion-icon class="msg-status" color="primary" name="checkmark-done-outline"></ion-icon>
+            </div>
+            <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble attending" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <div class="msg-date my-coloring">{{message.sentToServer | date:'short'}}</div>
+                <ion-icon class="msg-status" color="primary" name="checkmark-outline"></ion-icon>
+            </div>
+            <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
+                <p class="chat-message ionic-text-wrap">{{message.text}}</p>
+                <div class="msg-date my-failed-coloring">{{message.sentToServer | date:'short'}}</div>
+                <div style="display: flex; justify-content: flex-end; align-items: center;">
+                    <div (click)="cancel(contact, message)">
+                        <ion-icon class="msg-status cancel" name="close-outline"></ion-icon>
+                    </div>
+                    <div (click)="retry(contact, message)">
+                        <ion-icon class="msg-status retry" name="reload-outline"></ion-icon>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="start-of-scroll"></div>
+        <div style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
+            <ion-item lines="none">
+                <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
+                <ion-icon color="medium" *ngIf="hasAllOldMessages" name="stop-outline"></ion-icon>
+            </ion-item>
+        </div>
+    </ion-list>    
 </ion-content>
 
 <ion-footer>

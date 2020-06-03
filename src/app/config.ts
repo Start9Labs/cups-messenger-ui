@@ -1,8 +1,8 @@
 export enum LogLevel {
-    TRACE = 0,
-    DEBUG = 1,
-    INFO = 2,
-    ERROR = 3
+    TRACE = 1,
+    DEBUG = 2,
+    INFO = 3,
+    ERROR = 4
 }
 
 export enum LogTopic {
@@ -61,7 +61,7 @@ export const config: Config = {
     loadMesageBatchSize: 15,
     defaultServerTimeout: 30000,
     logs: {
-        level: LogLevel.TRACE,
+        level: LogLevel.INFO,
     },
     myTorAddress: window.origin.split('//')[1] || window.origin
 }
