@@ -151,7 +151,7 @@ export class MessagesPage implements OnInit {
                 options = {}
             }
             return nonBlockingLoader(
-                this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom('instant'))), 
+                this.stateIngestion.refreshMessages(c, options).pipe(delay(200), tap(() => this.jumpToBottom(0))), 
                 loader
             )
         })).subscribe( ({contact, messages}) => {
@@ -243,8 +243,8 @@ export class MessagesPage implements OnInit {
 
     /* Jumping logic */
 
-    async jumpToBottom(speed: 'instant' | 'smooth' = 'smooth') {
-        this.bottomOfChatElement && this.bottomOfChatElement.scrollIntoView({ behavior: speed })
+    async jumpToBottom(speed: number = 200) {
+        this.content.scrollToBottom(speed)
         this.$atBottom$.next(true)
         this.$unreads$.next(false)
         this.jumpNext = false
