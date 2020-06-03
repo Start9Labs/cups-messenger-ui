@@ -1,8 +1,8 @@
 export enum LogLevel {
-    TRACE = 0,
-    DEBUG = 1,
-    INFO = 2,
-    ERROR = 3
+    TRACE = 1,
+    DEBUG = 2,
+    INFO = 3,
+    ERROR = 4
 }
 
 export enum LogTopic {
