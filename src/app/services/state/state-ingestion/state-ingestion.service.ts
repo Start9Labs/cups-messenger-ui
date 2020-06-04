@@ -85,11 +85,12 @@ export class StateIngestionService {
     private startContactsCooldownSub(){        
         if(subIsActive(this.contactsCooldown) || !config.contactsDaemon.on) return
         Log.info('starting contacts daemon', config.contactsDaemon, LogTopic.CONTACTS)
+        
         this.contactsCooldown =
             timer(0, config.contactsDaemon.frequency).pipe(
                 withLatestFrom(Auth.emitStatus$()),
                 filter(([_, s]) => s === AuthStatus.VERIFIED),
-                tap(i => console.log('running contacts', i, LogTopic.CONTACTS)),
+                tap(i => Log.debug('running contacts', i, LogTopic.CONTACTS)),
                 concatMap(
                     () => acquireContacts(this.cups)
                 ),
@@ -105,7 +106,7 @@ export class StateIngestionService {
 
         this.messagesCooldown = App.emitCurrentContact$.pipe(
             switchMap(contact => {
-                Log.trace(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
+                Log.debug(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
                 return timer(0, config.messagesDaemon.frequency).pipe(
                     filter(() => this.messagesPage()),
                     concatMap(

@@ -10,9 +10,7 @@ export class AuthMockCupsMessenger extends StandardMockCupsMessenger {
     }
 
     contactsShow(tp?: string) {
-        console.log(tp)
         if(tp && tp !== this.requiredPassword){
-            console.log(`waiting...`)
             return of({}).pipe(
                 delay(1000),
                 tap(() => { throw { status:401 }}),

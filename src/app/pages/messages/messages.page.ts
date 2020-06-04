@@ -19,18 +19,19 @@ import { sortByTimestampDESC } from 'src/app/util'
 2.) Messages load we should jump to the bottom
 3.) If we're at the bottom and new messages come in, we should jump to bottom
 */
-
+const wanydow = window as any
 @Component({
   selector: 'app-messages',
   templateUrl: './messages.page.html',
   styleUrls: ['./messages.page.scss'],
 })
 export class MessagesPage implements OnInit {
-    @ViewChild('content') content: IonContent
+    @ViewChild('content') contentComponent: IonContent
 
-    chatElement // listen for scroll events on this
-    bottomOfChatElement // detect at and scroll to bottom with this
-    topOfChatElement // detect at top with this
+    chatComponent: HTMLElement // listen for scroll events on this
+    textInputComponent: HTMLElement // fix ios keyboard pop up bug using this and the above
+    bottomOfChatElement: HTMLElement // detect at and scroll to bottom with this
+    topOfChatElement: HTMLElement // detect at top for loading old messages with this
     mutationObserver: MutationObserver // notifies when chat list has changed
 
     app = App
@@ -74,31 +75,24 @@ export class MessagesPage implements OnInit {
 
     ngAfterViewInit() {
         this.shouldGetAllOldMessages = false
-        this.chatElement = document.getElementById('chat')
+        this.chatComponent = document.getElementById('chat')
+        this.textInputComponent = document.getElementById('textInput')
         this.bottomOfChatElement = document.getElementById('end-of-scroll')
         this.topOfChatElement = document.getElementById('start-of-scroll')
 
         this.mutationObserver = new MutationObserver(ms => {
             if(this.isAtBottom() || !this.jumping) return
+            console.log('FILTER: mutatin precious')
             this.jumpToBottom()
         })
-        this.mutationObserver.observe(this.chatElement, {
+        this.mutationObserver.observe(this.chatComponent, {
             childList: true
         })
 
         this.initialMessageLoad()
         window['content'] = this.getContent()
 
-        // this.domMessagesUpdated$ = this.messagesForDisplay$.pipe(concatMap(ms => new Observable<Message[]>(sub => {
-        //     const mut = new MutationObserver(() => {
-        //         if(this.jumping) this.jumpToBottom()
-        //         sub.next(ms)
-        //         mut.disconnect()
-        //     })
-        //     mut.observe(this.chatElement, {
-        //         childList: true
-        //     })
-        // })))
+        this.jumpToBottom()
     }  
 
     ngOnInit() {    
@@ -133,11 +127,6 @@ export class MessagesPage implements OnInit {
                 ms => Log.debug(`received new messages`, ms)
             )
         )
-
-        // console.log('ionViewDidLoad PersonalChatPage');
-        // let that = this;
-        // setTimeout(()=>{that.content.scrollToBottom();},200); 
-
     }
 
     initialMessageLoad(){
@@ -167,7 +156,6 @@ export class MessagesPage implements OnInit {
     
     // Triggered by enabled infinite scroll
     oldMessageLoad() {
-        console.log('loading oldies yo')
         if(this.oldestRendered){
             nonBlockingLoader(
                 this.stateIngestion.refreshMessages(
@@ -247,7 +235,7 @@ export class MessagesPage implements OnInit {
 
     /* Jumping logic */
     async jumpToBottom(speed: 0 | 100 | 200 = 200) {
-        this.content.scrollToBottom(speed)
+        this.contentComponent.scrollToBottom(speed)
         this.$unreads$.next(false)
     }
 
@@ -289,13 +277,6 @@ export class MessagesPage implements OnInit {
     isAtTop(): boolean {
         return this.topOfChatElement ? isElementInViewport(this.topOfChatElement) : true
     }
-
-    holdTheWebviewDown($event){
-        $event.preventDefault()
-        $event.stopPropagation()
-        timer(100).pipe(take(1)).subscribe(() => window.scrollTo(0,0))
-        document.body.scrollTop = 0
-    }
 }
 
 
@@ -308,11 +289,6 @@ function isElementInViewport (el) {
         rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
     )
 }
-// // returns true if the TOP of the element is in the view port.
-// function isElementInViewport(el) {
-//     const rect = el.getBoundingClientRect()
-//     return rect.top < window.innerHeight && rect.bottom >= 0
-// }
 
 function isOlder(a: { timestamp: Date }, b?: { timestamp: Date }) {
     return !b || new Date(a.timestamp) < new Date(b.timestamp)
