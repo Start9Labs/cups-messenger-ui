@@ -23,18 +23,6 @@ export class AppComponent {
 
     async ngOnInit(){
         this.eagerLoad()
-        window['Auth'] = Auth
-        window['App'] = App
-        window['classification'] = {
-            inbound,
-            sent,
-            failed,
-            attending,
-            server,
-            outbound
-        }
-        window['context'] = getContext()
-
         this.stateIngestion.init()
         await Auth.retrievePassword()
         Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))

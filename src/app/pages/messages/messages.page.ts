@@ -92,7 +92,6 @@ export class MessagesPage implements OnInit {
         })
 
         this.initialMessageLoad()
-        window['content'] = this.getContent()
 
         this.jumpToBottom()
     }  

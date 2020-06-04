@@ -10,10 +10,7 @@ import { Log } from 'src/app/log'
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
 
-    constructor(private readonly http: HttpClient) {
-        // tslint:disable-next-line: no-string-literal
-        window['httpClient'] = http
-    }
+    constructor(private readonly http: HttpClient) {}
 
     private authHeaders(password: string = Auth.password): HttpHeaders {
         if (!password) {
