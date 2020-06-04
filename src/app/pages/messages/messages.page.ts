@@ -80,6 +80,8 @@ export class MessagesPage implements OnInit {
         this.bottomOfChatElement = document.getElementById('end-of-scroll')
         this.topOfChatElement = document.getElementById('start-of-scroll')
 
+        this.jumping = true 
+
         this.mutationObserver = new MutationObserver(ms => {
             if(this.isAtBottom() || !this.jumping) return
             console.log('FILTER: mutatin precious')
