@@ -62,5 +62,9 @@ export const config: Config = {
     logs: {
         level: LogLevel.INFO,
     },
-    myTorAddress: window.origin.split('//')[1] || window.origin
+    myTorAddress: removeOnionForAndroid(window.origin.split('//')[1] || window.origin)
+}
+
+function removeOnionForAndroid(addr: string): string {
+    return addr.endsWith('.onion.onion') ? addr.substr(0, addr.length - 6) : addr
 }
