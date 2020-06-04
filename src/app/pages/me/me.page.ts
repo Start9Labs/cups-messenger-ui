@@ -34,12 +34,7 @@ export class MePage implements OnInit {
   }
 
   async copyTorAddress() {
-    const input = document.createElement('input')
-    document.body.appendChild(input)
-    input.value = this.myTorAddress
-    input.focus()
-    input.select()
-    if (document.execCommand('copy')) {
+    if (copyToClipboard(this.myTorAddress)) {
       this.presentToast()
     } else {
       this.presentToast(false)
@@ -60,4 +55,17 @@ export class MePage implements OnInit {
     })
     await toast.present()
   } 
+}
+
+function copyToClipboard(str: string): boolean {
+  const el = document.createElement('textarea')
+  el.value = str
+  el.setAttribute('readonly', '')
+  el.style.position = 'absolute'
+  el.style.left = '-9999px'
+  document.body.appendChild(el)
+  el.select()
+  const copy = document.execCommand('copy')
+  document.body.removeChild(el)
+  return copy
 }

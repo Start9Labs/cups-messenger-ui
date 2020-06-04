@@ -11,8 +11,7 @@ export enum LogTopic {
     CURRENT_CONTACT = 'CURRENT_CONTACT',
     MESSAGES = 'MESSAGE',
     NO_TOPIC = 'NO_TOPIC',
-    AUTH = 'AUTH',
-    NO_LOGS = 'NO_LOGS' //config.ts: ```topics: [LogTopic.NO_LOGS]``` disables logs
+    AUTH = 'AUTH'
 }
 
 export enum CupsMessengerType {

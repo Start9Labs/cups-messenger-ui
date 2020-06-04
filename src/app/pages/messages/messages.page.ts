@@ -240,8 +240,6 @@ export class MessagesPage implements OnInit {
     }
 
     onScrollEnd(){
-        console.log('We just ended scroll')
-
         const top = this.isAtTop()
         if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
         
