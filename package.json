@@ -25,7 +25,6 @@
     "@types/uuid": "^8.0.0",
     "ambassador-sdk": "file:../ambassador-sdk",
     "base32.js": "^0.1.0",
-    "clipboard": "^2.0.6",
     "core-js": "^3.6.0",
     "js-sha3": "^0.8.0",
     "qrcode": "^1.4.4",

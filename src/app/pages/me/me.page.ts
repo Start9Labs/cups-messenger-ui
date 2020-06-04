@@ -34,12 +34,25 @@ export class MePage implements OnInit {
   }
 
   async copyTorAddress() {
-    await navigator.clipboard.writeText(this.myTorAddress)
-    this.showMsg()
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.value = this.myTorAddress
+    input.focus()
+    input.select()
+    if (document.execCommand('copy')) {
+      this.presentToast()
+    } else {
+      this.presentToast(false)
+    }
   }
 
-  async showMsg() {
-    const message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="success"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
+  async presentToast (success = true) {
+    let message: IonicSafeString
+    if (success) {
+      message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="success"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
+    } else {
+      message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="close-circle-outline" color="danger"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Failed to Copy</span>')
+    }
     const toast = await this.toastCtrl.create({
         message,
         duration: 2000,
