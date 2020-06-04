@@ -9,7 +9,7 @@ import { sortByTimestampDESC } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
-    contacts = mockL(mockContact, 3)
+    contacts = mockL(mockContact, 4)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {
@@ -23,9 +23,9 @@ export class StandardMockCupsMessenger {
                 c.unreadMessages = 1
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
             } else {
-                const ms = mockL(mockMessage, 100).sort(sortByTimestampDESC) //most recent message is first
+                const ms = mockL(mockMessage, 60).sort(sortByTimestampDESC) //most recent message is first
                 this.mocks[c.torAddress] = ms
-                c.unreadMessages = 100
+                c.unreadMessages = 60
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
             }
         })
@@ -34,7 +34,8 @@ export class StandardMockCupsMessenger {
 
     kickoffMessages(){
         interval(10000).subscribe(i => {
-            this.contacts.forEach( c => {
+            this.contacts.forEach( (c, index) => {
+                if(index === 2) return 
                 const m = mockMessage(i, new Date())
                 this.mocks[c.torAddress].unshift(m)
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = m
