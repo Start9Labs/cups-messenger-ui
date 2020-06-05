@@ -4,9 +4,6 @@
       <ion-back-button color="primary"></ion-back-button>
     </ion-buttons>
   <ion-title>Settings</ion-title>
-    <ion-buttons slot="end">
-      <ion-button color="primary" (click)="logout()">Logout</ion-button>
-    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -30,4 +27,7 @@
   <div style="display: flex; justify-content: center; padding: 25px;">
     <canvas id="qr-canvas"></canvas>
   </div>
+  <ion-button class="ion-margin-top" color="danger" expand="block" fill="outline" (click)="logout()">
+    Logout
+  </ion-button>
 </ion-content>
