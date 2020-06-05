@@ -103,7 +103,7 @@
         <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">
             <ion-icon slot="icon-only" name="chevron-up-outline"></ion-icon>
         </ion-button>
-        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!jumping" style="margin: 1px;" class="jump-fab" size="small" (click)="jumpToBottom()">
+        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($jumping$ | async)" style="margin: 1px;" class="jump-fab" size="small" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </div>

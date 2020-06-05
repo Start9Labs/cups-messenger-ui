@@ -23,12 +23,8 @@ export class AppComponent {
     ngOnInit(){
         this.stateIngestion.init()
         this.authState.retrievePassword().then(() => {
-          this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
+            this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
         })
-    }
-
-    ngAfterViewInit () {
-        getContext().childReady()
     }
 
     handleAuthChange(s: AuthStatus){

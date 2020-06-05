@@ -9,7 +9,7 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content fullscreen>
+<ion-content fullscreen ng-init="alertShell()">
     <ion-spinner *ngIf="$loading$ | async" class="center" name="crescent"></ion-spinner>
 
     <ion-item-group *ngIf="!($loading$ | async)">

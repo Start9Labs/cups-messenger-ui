@@ -10,6 +10,7 @@ import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, map, tap } from 'rxjs/operators'
 import { LiveCupsMessenger } from 'src/app/services/cups/live-messenger'
+import { getContext } from 'ambassador-sdk'
 
 @Component({
   selector: 'app-contacts',
@@ -65,6 +66,10 @@ export class ContactsPage implements OnInit {
         this.zone.run(() => {
             this.navController.navigateForward('new-contact')
         })
+    }
+
+    alertShell() {
+        getContext().childReady()
     }
 
     deleteContact(c: Contact){
