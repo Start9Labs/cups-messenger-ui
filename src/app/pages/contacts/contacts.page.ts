@@ -8,8 +8,9 @@ import { LogTopic } from 'src/app/config'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { concatMap, map } from 'rxjs/operators'
+import { concatMap, map, tap } from 'rxjs/operators'
 import { LiveCupsMessenger } from 'src/app/services/cups/live-messenger'
+import { getContext } from 'ambassador-sdk'
 
 @Component({
   selector: 'app-contacts',
@@ -67,10 +68,15 @@ export class ContactsPage implements OnInit {
         })
     }
 
+    alertShell() {
+        getContext().childReady()
+    }
+
     deleteContact(c: Contact){
         overlayLoader(
             this.cups.contactsDelete(c).pipe(
-                concatMap(() => this.stateIngestion.refreshContacts())
+                concatMap(() => this.stateIngestion.refreshContacts()),
+                tap(() => App.deleteContact(c)),
             ),
             this.loadingCtrl, `Deleting ${c.name || 'contact'}...`
         ).subscribe(() => Log.info(`Contact ${c.torAddress} deleted`))

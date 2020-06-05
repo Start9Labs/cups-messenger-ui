@@ -5,21 +5,26 @@ import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce } from '
 import { StandardMockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
 import { AuthState } from '../state/auth-state'
-import { map } from 'rxjs/operators'
+import { map, concatMap } from 'rxjs/operators'
 import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 import { NoMessagesMockCupsMessenger } from 'spec/mocks/empty-messages-mock-messenger'
 import { AuthMockCupsMessenger } from 'spec/mocks/auth-mock-messenger'
 import { FastMockMessenger } from 'spec/mocks/fast-mock-messenger'
+import { ParentNotReadyMessenger } from './parent-not-ready-messenger'
+import { Observable, from, of } from 'rxjs'
+import { getContext } from 'ambassador-sdk'
 
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
-    private readonly impl
-    constructor(
-      private readonly http: HttpClient,
-      private readonly authState: AuthState,
-    ) {
+    private readonly impl: CupsMessengerI
+    private readonly parentNotReadyImpl: CupsMessengerI
+
+    constructor(http: HttpClient, private readonly authState: AuthState) {
         switch(config.cupsMessenger.type){
-            case CupsMessengerType.LIVE:             this.impl = new LiveCupsMessenger(this.http, this.authState)       ; break
+            case CupsMessengerType.LIVE:          
+                this.impl = new LiveCupsMessenger(http, authState)
+                this.parentNotReadyImpl = new ParentNotReadyMessenger()
+                break
             case CupsMessengerType.STANDARD_MOCK:    this.impl = new StandardMockCupsMessenger()   ; break
             case CupsMessengerType.ERROR_MOCK:       this.impl = new ErrorMockCupsMessenger()      ; break
             case CupsMessengerType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
@@ -29,22 +34,38 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
-        return this.impl.contactsShow(loginTestPassword || this.authState.password)
+        return this.getImpl().pipe(concatMap(impl => impl.contactsShow(loginTestPassword || this.authState.password)))
     }
 
     contactsAdd(contact: Contact): ObservableOnce<Contact> {
-        return this.impl.contactsAdd(contact).pipe(map(() => contact))
+        return this.getImpl().pipe(concatMap(impl => impl.contactsAdd(contact).pipe(map(() => contact))))
     }
 
     contactsDelete(contact: Contact): ObservableOnce<void> {
-        return this.impl.contactsDelete(contact)
+        return this.getImpl().pipe(concatMap(impl => impl.contactsDelete(contact)))
     }
 
     messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
-        return this.impl.messagesShow(contact, options)
+        return this.getImpl().pipe(concatMap(impl => impl.messagesShow(contact, options)))
     }
 
     messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
-        return this.impl.messagesSend(contact, trackingId, message)
+        return this.getImpl().pipe(concatMap(impl => impl.messagesSend(contact, trackingId, message)))
     }
+
+    private getImpl(): Observable<CupsMessengerI>{
+        if(!this.parentNotReadyImpl || !(window as any).platform) return of(this.impl)
+        return from(getContext().parentReady()).pipe(map(ready =>
+            ready ? this.impl : this.parentNotReadyImpl
+        ))
+        
+    }
+}
+
+interface CupsMessengerI {
+    contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageMeta[]>
+    contactsAdd(contact: Contact): ObservableOnce<void>
+    contactsDelete(contact: Contact): ObservableOnce<void>
+    messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]>
+    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}>
 }

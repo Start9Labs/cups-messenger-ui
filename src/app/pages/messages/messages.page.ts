@@ -26,6 +26,8 @@ const wanydow = window as any
   styleUrls: ['./messages.page.scss'],
 })
 export class MessagesPage implements OnInit {
+    initting = true
+
     @ViewChild('content') contentComponent: IonContent
 
     chatComponent: HTMLElement // listen for scroll events on this
@@ -44,7 +46,7 @@ export class MessagesPage implements OnInit {
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    jumping = false
+    $jumping$ = new BehaviorSubject(true)
 
     // Used for green highlights
     private $unreads$ = new BehaviorSubject(false)
@@ -80,25 +82,24 @@ export class MessagesPage implements OnInit {
         this.textInputComponent = document.getElementById('textInput')
         this.bottomOfChatElement = document.getElementById('end-of-scroll')
         this.topOfChatElement = document.getElementById('start-of-scroll')
-        this.jumping = true 
 
         this.subsToTeardown.push(
             // for tracking the bottom of the screen with message updates
             this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
-                console.log(`FILTER: At bottom ${this.isAtBottom()}, Jumping ${this.jumping}`)
-                if(this.isAtBottom() || !this.jumping) return
+                if(this.isAtBottom() || !this.$jumping$.getValue()) return
                 this.jumpToBottom()
             })
         )
 
         this.initialMessageLoad().pipe(delay(250)).subscribe( ({contact, messages}) => {
+            this.initting = false
             this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
             this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
             // for jumping after initial page load completes
             this.jumpToBottom()
         })
-        
+
         // for jumping to the bottom on page load
         this.jumpToBottom()
     }  
@@ -120,11 +121,11 @@ export class MessagesPage implements OnInit {
                 )
                 
                 if(this.isAtBottom()) { 
-                    this.jumping = true 
+                    this.$jumping$.next(true)
                     return
                 }
                 
-                this.jumping = false
+                this.$jumping$.next(false)
                 if(updatedNewest) {
                     this.$unreads$.next(true)
                 }
@@ -225,7 +226,9 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.jumping = true)).subscribe()
+        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.$jumping$.next(true)), delay(150)).subscribe(() =>
+            this.jumpToBottom()
+        )
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
@@ -250,7 +253,12 @@ export class MessagesPage implements OnInit {
         const top = this.isAtTop()
         if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
         
-        if(this.isAtBottom()) this.$unreads$.next(false)
+        if(this.isAtBottom()) { 
+            this.$jumping$.next(true)
+            this.$unreads$.next(false) 
+        } else {
+            this.$jumping$.next(false)
+        }        
     }
 
     private updateRenderedMessageBoundary(

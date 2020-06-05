@@ -13,6 +13,8 @@ import * as QRCode from 'qrcode'
 export class MePage implements OnInit {
   public myTorAddress = config.myTorAddress
 
+  els = ['b', 'c', 'd']
+
   constructor(
     private readonly toastCtrl: ToastController,
     private readonly authState: AuthState,
@@ -56,6 +58,19 @@ export class MePage implements OnInit {
     })
     await toast.present()
   } 
+
+  push(){
+    this.els.push('e')
+  }
+
+  unshift(){
+    this.els.unshift('a')
+  }
+
+
+  swipeA(){ this.els = ['a', 'b', 'c', 'd']  }
+  swipeE(){ this.els = ['b', 'c', 'd', 'e']  }
+  reset(){ this.els = ['b', 'c', 'd']  }
 }
 
 function copyToClipboard(str: string): boolean {

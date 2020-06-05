@@ -27,6 +27,7 @@ export class LiveCupsMessenger {
     }
 
     contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageMeta[]> {
+        
         return withTimeout(this.http.get(this.hostUrl, {
             params: {
                 type: 'users',
@@ -120,9 +121,6 @@ export class LiveCupsMessenger {
     messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         const headers = this.authHeaders()
-        // headers = headers.set('Content-Type', 'application/octet-stream')
-        // headers = headers.set('Content-Length', toPost.byteLength.toString())
-        // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
 
         return new Observable(subscriber => {
             const xhr = new XMLHttpRequest()
@@ -148,6 +146,7 @@ export class LiveCupsMessenger {
         })
     }
 }
+
 
 export function hydrateCupsMessageResponse(c: Contact, m : CupsMessageShow): ServerMessage {
     if(m.direction === 'Inbound'){

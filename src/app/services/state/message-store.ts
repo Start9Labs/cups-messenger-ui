@@ -13,9 +13,9 @@ import {
     server,
     OutboundMessage 
 } from '../cups/types'
-import { Observable, Subject } from 'rxjs'
-import { map, take, distinctUntilChanged, multicast } from 'rxjs/operators'
-import { sortByTimestampDESC, uniqueBy, partitionBy, eqByJSON } from 'src/app/util'
+import { Observable } from 'rxjs'
+import { map, take } from 'rxjs/operators'
+import { sortByTimestampDESC, uniqueBy, partitionBy } from 'src/app/util'
 import * as uuid from 'uuid'
 import { LogLevel, LogTopic } from 'src/app/config'
 
@@ -60,6 +60,10 @@ export class MessageStore {
                 }
             }
         ))
+    }
+
+    complete(): void {
+        this.$messages$.complete()
     }
 }
 
