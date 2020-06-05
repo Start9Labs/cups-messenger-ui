@@ -45,7 +45,7 @@ export class MePage implements OnInit {
   async presentToast (success = true) {
     let message: IonicSafeString
     if (success) {
-      message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="success"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
+      message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="warning"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
     } else {
       message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="close-circle-outline" color="danger"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Failed to Copy</span>')
     }
