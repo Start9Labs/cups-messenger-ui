@@ -87,7 +87,7 @@ export class MessagesPage implements OnInit {
             this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
                 console.log(`FILTER: At bottom ${this.isAtBottom()}, Jumping ${this.jumping}`)
                 if(this.isAtBottom() || !this.jumping) return
-                this.jumpToBottom()
+                // this.jumpToBottom()
             })
         )
 
@@ -96,11 +96,11 @@ export class MessagesPage implements OnInit {
             this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
             // for jumping after initial page load completes
-            this.jumpToBottom()
+            // this.jumpToBottom()
         })
-        
+
         // for jumping to the bottom on page load
-        this.jumpToBottom()
+        // this.jumpToBottom()
     }  
 
     ngOnInit() {

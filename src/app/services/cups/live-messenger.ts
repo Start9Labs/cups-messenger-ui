@@ -2,10 +2,11 @@ import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent, mkInbound } from './types'
 import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
-import { Observable, from, interval, race } from 'rxjs'
-import { map, take, catchError } from 'rxjs/operators'
+import { Observable, from, interval, race, of } from 'rxjs'
+import { map, take, catchError, concatMap } from 'rxjs/operators'
 import { Auth } from '../state/auth-state'
 import { Log } from 'src/app/log'
+import { getContext } from 'ambassador-sdk'
 
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
@@ -24,6 +25,7 @@ export class LiveCupsMessenger {
     }
 
     contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageMeta[]> {
+        
         return withTimeout(this.http.get(this.hostUrl, {
             params: {
                 type: 'users',
@@ -117,9 +119,6 @@ export class LiveCupsMessenger {
     messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
         const headers = this.authHeaders()
-        // headers = headers.set('Content-Type', 'application/octet-stream')
-        // headers = headers.set('Content-Length', toPost.byteLength.toString())
-        // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
 
         return new Observable(subscriber => {
             const xhr = new XMLHttpRequest()
@@ -145,6 +144,7 @@ export class LiveCupsMessenger {
         })
     }
 }
+
 
 export function hydrateCupsMessageResponse(c: Contact, m : CupsMessageShow): ServerMessage {
     if(m.direction === 'Inbound'){
