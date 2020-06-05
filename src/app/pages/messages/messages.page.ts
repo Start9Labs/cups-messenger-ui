@@ -83,16 +83,24 @@ export class MessagesPage implements OnInit {
         this.jumping = true 
 
         this.subsToTeardown.push(
-            // the delay of 200 is an approximation for how long it takes for the dom to re-render.
-            this.messagesForDisplay$.pipe(delay(200)).subscribe(() => {
+            // for tracking the bottom of the screen with message updates
+            this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
                 console.log(`FILTER: At bottom ${this.isAtBottom()}, Jumping ${this.jumping}`)
                 if(this.isAtBottom() || !this.jumping) return
                 this.jumpToBottom()
             })
         )
 
-        this.initialMessageLoad()
-        timer(200).pipe(take(1)).subscribe(() => this.jumpToBottom()) //initial jump to bottom
+        this.initialMessageLoad().pipe(delay(250)).subscribe( ({contact, messages}) => {
+            this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
+            this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
+            Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
+            // for jumping after initial page load completes
+            this.jumpToBottom()
+        })
+        
+        // for jumping to the bottom on page load
+        this.jumpToBottom()
     }  
 
     ngOnInit() {
@@ -107,19 +115,15 @@ export class MessagesPage implements OnInit {
                 App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
             ),
             tap(messages => {
-                console.log(`FILTER: ${messages.length}`)
                 const { updatedNewest } = this.updateRenderedMessageBoundary(
                     messages.filter(server)
                 )
                 
-                console.log(`FILTER: ngOnInit At bottom ${this.isAtBottom()}, Jumping ${this.jumping}`)
                 if(this.isAtBottom()) { 
-                    console.log(`FILTER: setting jumping true`)
                     this.jumping = true 
                     return
                 }
                 
-                console.log(`FILTER: setting jumping false`)
                 this.jumping = false
                 if(updatedNewest) {
                     this.$unreads$.next(true)
@@ -131,8 +135,6 @@ export class MessagesPage implements OnInit {
     }
 
     handleResize(){
-        console.log(`FILTER: handle resize. oldHeight: ${this.oldHeight}, innerHigher: ${window.innerHeight}`)
-
         let diff = this.oldHeight - window.innerHeight
         this.oldHeight = window.innerHeight
 
@@ -154,14 +156,10 @@ export class MessagesPage implements OnInit {
             options = {}
         }
 
-        nonBlockingLoader(
+        return nonBlockingLoader(
             this.stateIngestion.refreshMessages(c, options), 
             loader
-        ).pipe(delay(150)).subscribe( ({contact, messages}) => {
-            this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
-            this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
-            Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
-        })
+        )
     }
     
     // Triggered by enabled infinite scroll
