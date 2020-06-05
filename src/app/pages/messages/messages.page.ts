@@ -3,7 +3,7 @@ import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, serve
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
 import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, concat, timer } from 'rxjs'
-import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime } from 'rxjs/operators'
+import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime, multicast, share } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
@@ -32,7 +32,6 @@ export class MessagesPage implements OnInit {
     textInputComponent: HTMLElement // fix ios keyboard pop up bug using this and the above
     bottomOfChatElement: HTMLElement // detect at and scroll to bottom with this
     topOfChatElement: HTMLElement // detect at top for loading old messages with this
-    mutationObserver: MutationObserver // notifies when chat list has changed
 
     app = App
     contact: ContactWithMessageMeta
@@ -62,6 +61,8 @@ export class MessagesPage implements OnInit {
     // These will be unsubbed on ngOnDestroy
     private subsToTeardown: Subscription[] = []
 
+    oldHeight: number
+
     constructor(
         private readonly nav: NavController,
         private readonly zone: NgZone,
@@ -73,61 +74,69 @@ export class MessagesPage implements OnInit {
         return document.querySelector('ion-content')
     }
 
-    ngAfterViewInit() {
+    ngAfterViewInit() {        
         this.shouldGetAllOldMessages = false
         this.chatComponent = document.getElementById('chat')
         this.textInputComponent = document.getElementById('textInput')
         this.bottomOfChatElement = document.getElementById('end-of-scroll')
         this.topOfChatElement = document.getElementById('start-of-scroll')
-
         this.jumping = true 
 
-        this.mutationObserver = new MutationObserver(ms => {
-            if(this.isAtBottom() || !this.jumping) return
-            console.log('FILTER: mutatin precious')
-            this.jumpToBottom()
-        })
-        this.mutationObserver.observe(this.chatComponent, {
-            childList: true
-        })
+        this.subsToTeardown.push(
+            // the delay of 200 is an approximation for how long it takes for the dom to re-render.
+            this.messagesForDisplay$.pipe(delay(200)).subscribe(() => {
+                console.log(`FILTER: At bottom ${this.isAtBottom()}, Jumping ${this.jumping}`)
+                if(this.isAtBottom() || !this.jumping) return
+                this.jumpToBottom()
+            })
+        )
 
         this.initialMessageLoad()
-
-        this.jumpToBottom()
+        timer(200).pipe(take(1)).subscribe(() => this.jumpToBottom()) //initial jump to bottom
     }  
 
-    ngOnInit() {    
+    ngOnInit() {
+        this.oldHeight = window.innerHeight
+
+        App.emitCurrentContact$.pipe(take(1)).subscribe(c => { this.contact = c })
         // html will subscribe to this to get message additions/updates
+
         this.messagesForDisplay$ = App.emitCurrentContact$.pipe(
             take(1), 
-            tap(c => this.contact = c), 
             concatMap(c => 
                 App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
             ),
             tap(messages => {
+                console.log(`FILTER: ${messages.length}`)
                 const { updatedNewest } = this.updateRenderedMessageBoundary(
                     messages.filter(server)
                 )
                 
+                console.log(`FILTER: ngOnInit At bottom ${this.isAtBottom()}, Jumping ${this.jumping}`)
                 if(this.isAtBottom()) { 
+                    console.log(`FILTER: setting jumping true`)
                     this.jumping = true 
                     return
                 }
-
+                
+                console.log(`FILTER: setting jumping false`)
                 this.jumping = false
                 if(updatedNewest) {
                     this.$unreads$.next(true)
                 }
-            })
+            }),
+            share()
         )
+    
+    }
 
-        // Every time new messages are received, we update the oldest and newest message that's been loaded.
-        // if we receive new inbound messages, and we're not at the bottom of the screen, then we have unreads
-        this.subsToTeardown.push(
-            this.messagesForDisplay$.subscribe(
-                ms => Log.debug(`received new messages`, ms)
-            )
-        )
+    handleResize(){
+        console.log(`FILTER: handle resize. oldHeight: ${this.oldHeight}, innerHigher: ${window.innerHeight}`)
+
+        let diff = this.oldHeight - window.innerHeight
+        this.oldHeight = window.innerHeight
+
+        this.contentComponent.scrollByPoint(0, diff, 100)
     }
 
     initialMessageLoad(){
@@ -148,7 +157,7 @@ export class MessagesPage implements OnInit {
         nonBlockingLoader(
             this.stateIngestion.refreshMessages(c, options), 
             loader
-        ).subscribe( ({contact, messages}) => {
+        ).pipe(delay(150)).subscribe( ({contact, messages}) => {
             this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
             this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
@@ -177,7 +186,6 @@ export class MessagesPage implements OnInit {
 
     ngOnDestroy(): void {
         this.subsToTeardown.forEach(s => s.unsubscribe())
-        this.mutationObserver.disconnect()
     }
 
     /* Navigation Buttons */

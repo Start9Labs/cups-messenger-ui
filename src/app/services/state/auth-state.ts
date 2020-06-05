@@ -46,7 +46,6 @@ export class AuthState {
             }
         }
 
-        this.password = "ppppp"
         this.$status$.next(AuthStatus.VERIFIED)
     }
 

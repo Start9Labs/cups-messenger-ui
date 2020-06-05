@@ -27,7 +27,7 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()">
+<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" (window:resize)="handleResize()">
     <ion-list id="chat"  *ngIf="(app.emitCurrentContact$ | async) as contact">
         <div *ngIf="$newMessagesLoading$ | async" style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
             <ion-item lines="none">

@@ -94,15 +94,16 @@ export class StandardMockCupsMessenger {
     messagesSend (contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         return timer(this.serverTimeToLoad).pipe(
             map(() => {
-                const m = mkSent({
-                    timestamp: new Date(),
-                    direction: 'Outbound' as 'Outbound',
-                    otherParty: contact,
-                    text: message,
-                    id: uuid.v4(),
-                    trackingId,
-                })
-                this.mocks[contact.torAddress].push(m)
+                this.mocks[contact.torAddress].unshift(
+                    mkSent({
+                        timestamp: new Date(),
+                        direction: 'Outbound' as 'Outbound',
+                        otherParty: contact,
+                        text: message,
+                        id: uuid.v4(),
+                        trackingId,
+                    })
+                )
                 return {}
             }),
             take(1)

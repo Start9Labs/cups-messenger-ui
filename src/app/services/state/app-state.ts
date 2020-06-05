@@ -1,6 +1,6 @@
 import { Observable, NextObserver, Observer, of, Subject, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageMeta, Message, Contact, ServerMessage, server, OutboundMessage } from '../cups/types'
-import { filter, map, concatMap, take } from 'rxjs/operators'
+import { filter, map, concatMap, take, distinctUntilChanged } from 'rxjs/operators'
 import { exists, LogBehaviorSubject, alterState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T } from 'src/app/config'
 import { Log } from 'src/app/log'
@@ -57,7 +57,7 @@ export class AppState{
 
         this.emitCurrentContact$   = Private.$currentContact$.asObservable().pipe(filter(exists))
         this.emitContacts$         = Private.$contacts$.asObservable()
-        this.emitMessages$ = (tor: string) => this.messagesFor(tor).toObservable()
+        this.emitMessages$ = (tor: string) => this.messagesFor(tor).toObservable().pipe(distinctUntilChanged(eqAsJSON))
 
         this.emitCurrentContact$.subscribe(c => this.currentContact = c)
     }
@@ -85,3 +85,4 @@ export class AppState{
 }
     
 export const App = new AppState()
+export const eqAsJSON = (a,b) => JSON.stringify(a) === JSON.stringify(b)
