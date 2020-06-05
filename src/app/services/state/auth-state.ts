@@ -34,10 +34,6 @@ export class AuthState {
             return
         }
 
-        Log.debug('We will pause for window.platform. Its presently:', (!!(window as any).platform).toString(), LogTopic.AUTH)
-        await pauseFor(500)
-        Log.debug('We will consult ambassador context for password?', (!!(window as any).platform).toString(), LogTopic.AUTH)
-
         if((window as any).platform) {
             const shellPassword = await getContext().getConfigValue(['password'], 5000)
 

@@ -45,6 +45,10 @@ export class ContactsPage implements OnInit {
         }
     }
 
+    ngAfterViewInit(){
+        if((window as any).platform) waitForContent()
+    }
+
     ionViewWillEnter() {
         this.$forceRerender$.next({})
     }
@@ -66,10 +70,6 @@ export class ContactsPage implements OnInit {
         this.zone.run(() => {
             this.navController.navigateForward('new-contact')
         })
-    }
-
-    alertShell() {
-        getContext().childReady()
     }
 
     deleteContact(c: Contact){
@@ -105,6 +105,16 @@ export class ContactsPage implements OnInit {
     }
 }
 
+function waitForContent() {
+    const a = document.getElementById('content')
+    const b = a && a.getBoundingClientRect()
+    const c = b && b.width + b.height
+    if(!c) {
+        window.requestAnimationFrame(waitForContent)
+    } else {
+        getContext().childReady()
+    }
+}
 
 
 function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {

@@ -12,6 +12,7 @@ import { Log } from '../../log'
 import { exists, nonBlockingLoader } from 'src/rxjs/util'
 import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { sortByTimestampDESC } from 'src/app/util'
+import { getContext } from 'ambassador-sdk'
 // import * as s from '@svgdotjs/svg.js'
 // const SVG = s.SVG
 /*
