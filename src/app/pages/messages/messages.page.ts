@@ -44,7 +44,7 @@ export class MessagesPage implements OnInit {
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    jumping = false
+    jumping = true
 
     // Used for green highlights
     private $unreads$ = new BehaviorSubject(false)
@@ -225,7 +225,9 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.jumping = true)).subscribe()
+        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.jumping = true), delay(150)).subscribe(() =>
+            this.jumpToBottom()
+        )
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
@@ -250,7 +252,12 @@ export class MessagesPage implements OnInit {
         const top = this.isAtTop()
         if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
         
-        if(this.isAtBottom()) this.$unreads$.next(false)
+        if(this.isAtBottom()) { 
+            this.jumping = true
+            this.$unreads$.next(false) 
+        } else {
+            this.jumping = false
+        }        
     }
 
     private updateRenderedMessageBoundary(

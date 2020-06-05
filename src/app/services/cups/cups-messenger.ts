@@ -54,7 +54,7 @@ export class CupsMessenger {
     }
 
     private getImpl(): Observable<CupsMessengerI>{
-        if(!this.parentNotReadyImpl) return of(this.impl)
+        if(!this.parentNotReadyImpl || !(window as any).platform) return of(this.impl)
         return from(getContext().parentReady()).pipe(map(ready =>
             ready ? this.impl : this.parentNotReadyImpl
         ))

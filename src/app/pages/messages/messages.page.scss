@@ -32,6 +32,7 @@ ion-list {
     border-style: double;
     border-color: var(--ion-color-primary-faded);
     display: flex;
+    align-items: center;
 }
 
 .submit form {
@@ -171,13 +172,15 @@ ion-list {
 
 
 .jump-fab {
-    position: absolute;
-    right: -3.7%;
-    bottom: 44%;
-    color: var(--ion-color-primary);
+    --background: clear;
+    --color: #568ce6;
+    --color-activated: #83acf1;
+    --background-activated: #1a1c22;
 }
 
 .jump-fab-unreads {
-    border-color: var(--ion-color-primary-contrast);
-    color       : var(--ion-color-primary-contrast);
+    --background: clear;
+    --color: var(--ion-color-warning);
+    --color-activated: #fafafa;
+    --background-activated: #1a1c22;
 }
