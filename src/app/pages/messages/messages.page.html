@@ -36,7 +36,7 @@
         </div>
 
         <div id="end-of-scroll"></div>         
-        <div style="--overflow: hidden" *ngFor="let message of (messagesForDisplay$ | async)">
+        <div *ngFor="let message of (messagesForDisplay$ | async)">
             <div id="{{message.id}}" class="left-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date contact-coloring">{{message.timestamp | date:'short'}}</span>

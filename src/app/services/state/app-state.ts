@@ -62,6 +62,12 @@ export class AppState{
         this.emitCurrentContact$.subscribe(c => this.currentContact = c)
     }
 
+    deleteContact(c: Contact): void {
+        const store = this.messagesFor(c.torAddress)
+        store.complete()
+        this.eraseMessagesFor(c.torAddress)
+    }
+
     alterContactMessages$(newState: {contact: Contact, messages: Message[]}): Observable<Message[]> {
         return of({}).pipe(
             concatMap(() => {
@@ -81,6 +87,10 @@ export class AppState{
             Private.messagesStore[tor] = new MessageStore()
         }
         return Private.messagesStore[tor]
+    }
+
+    private eraseMessagesFor(tor: string) {
+        delete Private.messagesStore[tor]
     }
 }
     
