@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http'
 import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce } from './types'
 import { StandardMockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
-import { Auth } from '../state/auth-state'
+import { AuthState } from '../state/auth-state'
 import { map, concatMap } from 'rxjs/operators'
 import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 import { NoMessagesMockCupsMessenger } from 'spec/mocks/empty-messages-mock-messenger'
@@ -19,10 +19,10 @@ export class CupsMessenger {
     private readonly impl: CupsMessengerI
     private readonly parentNotReadyImpl: CupsMessengerI
 
-    constructor(http: HttpClient) {
+    constructor(http: HttpClient, private readonly authState: AuthState) {
         switch(config.cupsMessenger.type){
             case CupsMessengerType.LIVE:          
-                this.impl = new LiveCupsMessenger(http)
+                this.impl = new LiveCupsMessenger(http, authState)
                 this.parentNotReadyImpl = new ParentNotReadyMessenger()
                 break
             case CupsMessengerType.STANDARD_MOCK:    this.impl = new StandardMockCupsMessenger()   ; break
@@ -34,7 +34,7 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
-        return this.getImpl().pipe(concatMap(impl => impl.contactsShow(loginTestPassword || Auth.password)))
+        return this.getImpl().pipe(concatMap(impl => impl.contactsShow(loginTestPassword || this.authState.password)))
     }
 
     contactsAdd(contact: Contact): ObservableOnce<Contact> {
