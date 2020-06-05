@@ -4,7 +4,7 @@ import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent,
 import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
 import { Observable, from, interval, race } from 'rxjs'
 import { map, take, catchError } from 'rxjs/operators'
-import { AuthService } from '../state/auth-state'
+import { AuthService } from '../state/auth-service'
 import { Log } from 'src/app/log'
 
 export class LiveCupsMessenger {

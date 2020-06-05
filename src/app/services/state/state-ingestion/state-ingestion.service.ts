@@ -9,7 +9,7 @@ import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
 import { suppressErrorOperator } from 'src/rxjs/util'
 import { Router, NavigationStart } from '@angular/router'
-import { AuthService, AuthStatus } from '../auth-state'
+import { AuthService, AuthStatus } from '../auth-service'
 
 enum Page {
     CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''

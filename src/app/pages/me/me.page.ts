@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { AuthService } from 'src/app/services/state/auth-state'
+import { AuthService } from 'src/app/services/state/auth-service'
 import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
 import { ToastController, IonicSafeString } from '@ionic/angular'

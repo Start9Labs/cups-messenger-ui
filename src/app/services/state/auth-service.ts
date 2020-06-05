@@ -12,7 +12,9 @@ export enum AuthStatus {
     UNVERIFED, VERIFIED
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class AuthService {
     password: string = undefined
     private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })

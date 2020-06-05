@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CanActivate, Router } from '@angular/router'
-import { AuthService, AuthStatus } from '../services/state/auth-state'
+import { AuthService, AuthStatus } from '../services/state/auth-service'
 import { Log } from '../log'
 import { LogTopic } from '../config'
 

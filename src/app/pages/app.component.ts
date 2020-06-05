@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core'
 
 import { NavController } from '@ionic/angular'
 import { StateIngestionService } from '../services/state/state-ingestion/state-ingestion.service'
-import { AuthService, AuthStatus } from '../services/state/auth-state'
+import { AuthService, AuthStatus } from '../services/state/auth-service'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
 import { LogTopic } from '../config'

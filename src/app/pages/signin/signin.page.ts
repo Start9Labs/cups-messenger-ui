@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 import { LoadingController } from '@ionic/angular'
 import { BehaviorSubject } from 'rxjs'
-import { AuthService } from '../../services/state/auth-state'
+import { AuthService } from '../../services/state/auth-service'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { overlayLoader } from 'src/rxjs/util'
 import { Log } from 'src/app/log'
