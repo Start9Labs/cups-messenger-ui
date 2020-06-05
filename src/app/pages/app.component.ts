@@ -20,10 +20,15 @@ export class AppComponent {
         private readonly authState: AuthState,
     ) {}
 
-    async ngOnInit(){
+    ngOnInit(){
         this.stateIngestion.init()
-        await this.authState.retrievePassword()
-        this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
+        this.authState.retrievePassword().then(() => {
+          this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
+        })
+    }
+
+    ngAfterViewInit () {
+        getContext().childReady()
     }
 
     handleAuthChange(s: AuthStatus){
