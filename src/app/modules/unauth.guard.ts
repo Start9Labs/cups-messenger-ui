@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CanActivate, Router } from '@angular/router'
-import { AuthService, AuthStatus } from '../services/state/auth-service'
+import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { Log } from '../log'
 import { LogTopic } from '../config'
 
@@ -12,9 +12,9 @@ export class UnauthGuard implements CanActivate {
 
   constructor (
     private readonly router: Router,
-    private readonly authService: AuthService,
+    private readonly authState: AuthState,
   ) {
-    this.authService.emitStatus$().subscribe(s => {
+    this.authState.emitStatus$().subscribe(s => {
         Log.trace('Auth subscriber: UnauthGurad', AuthStatus[s], LogTopic.AUTH)
         switch (s){
             case AuthStatus.UNVERIFED: this.enabled = true; return

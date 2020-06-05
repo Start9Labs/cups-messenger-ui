@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core'
 
 import { NavController } from '@ionic/angular'
 import { StateIngestionService } from '../services/state/state-ingestion/state-ingestion.service'
-import { AuthService, AuthStatus } from '../services/state/auth-service'
+import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
 import { LogTopic } from '../config'
@@ -17,13 +17,13 @@ export class AppComponent {
         private readonly navCtrl: NavController,
         private readonly stateIngestion: StateIngestionService,
         private readonly zone: NgZone,
-        private readonly authService: AuthService,
+        private readonly authState: AuthState,
     ) {}
 
     async ngOnInit(){
         this.stateIngestion.init()
-        await this.authService.retrievePassword()
-        this.authService.emitStatus$().subscribe(s => this.handleAuthChange(s))
+        await this.authState.retrievePassword()
+        this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
     }
 
     handleAuthChange(s: AuthStatus){

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { AuthService } from 'src/app/services/state/auth-service'
+import { AuthState } from 'src/app/services/state/auth-state'
 import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
 import { ToastController, IonicSafeString } from '@ionic/angular'
@@ -15,7 +15,7 @@ export class MePage implements OnInit {
 
   constructor(
     private readonly toastCtrl: ToastController,
-    private readonly authService: AuthService,
+    private readonly authState: AuthState,
   ) { }
   
   ngOnInit() {
@@ -24,7 +24,7 @@ export class MePage implements OnInit {
 
   logout(){
     Log.debug('Logging out', {}, LogTopic.AUTH)
-    this.authService.clearPassword()
+    this.authState.clearPassword()
   }
 
   renderQR(){

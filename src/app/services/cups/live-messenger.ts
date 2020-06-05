@@ -4,7 +4,7 @@ import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent,
 import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
 import { Observable, from, interval, race } from 'rxjs'
 import { map, take, catchError } from 'rxjs/operators'
-import { AuthService } from '../state/auth-service'
+import { AuthState } from '../state/auth-state'
 import { Log } from 'src/app/log'
 
 export class LiveCupsMessenger {
@@ -12,10 +12,10 @@ export class LiveCupsMessenger {
 
     constructor(
       private readonly http: HttpClient,
-      private readonly authService: AuthService,
+      private readonly authState: AuthState,
     ) {}
 
-    private authHeaders(password: string = this.authService.password): HttpHeaders {
+    private authHeaders(password: string = this.authState.password): HttpHeaders {
         if (!password) {
             throw new Error('Unauthenticated request to server attempted.')
         }
@@ -38,7 +38,7 @@ export class LiveCupsMessenger {
             catchError(e => {
                 console.error('We have ourselves an error here...', JSON.stringify(e))
                 console.error('We have ourselves an error here...', e.status)
-                if(e.status === 401){ this.authService.clearPassword() }
+                if(e.status === 401){ this.authState.clearPassword() }
                 throw e
             })
         )).pipe(
