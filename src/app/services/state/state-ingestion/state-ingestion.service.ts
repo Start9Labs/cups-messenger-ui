@@ -9,7 +9,7 @@ import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
 import { suppressErrorOperator } from 'src/rxjs/util'
 import { Router, NavigationStart } from '@angular/router'
-import { Auth, AuthStatus } from '../auth-state'
+import { AuthService, AuthStatus } from '../auth-state'
 
 enum Page {
     CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
@@ -21,7 +21,11 @@ export class StateIngestionService {
     private contactsCooldown: Subscription
     private messagesCooldown: Subscription
 
-    constructor(private readonly cups: CupsMessenger, private readonly router: Router){
+    constructor(
+      private readonly cups: CupsMessenger,
+      private readonly router: Router,
+      private readonly authService: AuthService,
+    ){
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
             Log.info(`navigated to`, e, LogTopic.NAV)
             this.page = e.url as Page
@@ -88,7 +92,7 @@ export class StateIngestionService {
         
         this.contactsCooldown =
             timer(0, config.contactsDaemon.frequency).pipe(
-                withLatestFrom(Auth.emitStatus$()),
+                withLatestFrom(this.authService.emitStatus$()),
                 filter(([_, s]) => s === AuthStatus.VERIFIED),
                 tap(i => Log.debug('running contacts', i, LogTopic.CONTACTS)),
                 concatMap(

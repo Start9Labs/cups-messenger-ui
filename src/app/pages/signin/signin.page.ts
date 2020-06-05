@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 import { LoadingController } from '@ionic/angular'
 import { BehaviorSubject } from 'rxjs'
-import { Auth } from '../../services/state/auth-state'
+import { AuthService } from '../../services/state/auth-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { overlayLoader } from 'src/rxjs/util'
 import { Log } from 'src/app/log'
@@ -11,18 +11,15 @@ import { Log } from 'src/app/log'
   templateUrl: './signin.page.html',
   styleUrls: ['./signin.page.scss'],
 })
-export class SigninPage implements OnInit {
+export class SigninPage {
   password = ''
   $error$ = new BehaviorSubject(undefined)
 
   constructor(
     private readonly loadingCtrl: LoadingController,
-    private readonly stateIngestion: StateIngestionService
+    private readonly stateIngestion: StateIngestionService,
+    private readonly authService: AuthService,
   ) { }
-
-  ngOnInit() {
-    
-  }
 
   async enterCupsMessengerPassword() {
     this.$error$.next(undefined)
@@ -38,7 +35,7 @@ export class SigninPage implements OnInit {
     overlayLoader(
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
     ).subscribe({
-      next: () => Auth.setPassword(pass),
+      next: () => this.authService.setPassword(pass),
       error: (e) => {
         Log.error(`Error on login`, e)
         this.$error$.next(`Invalid Password`)

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { Auth } from 'src/app/services/state/auth-state'
+import { AuthService } from 'src/app/services/state/auth-state'
 import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
 import { ToastController, IonicSafeString } from '@ionic/angular'
@@ -14,7 +14,8 @@ export class MePage implements OnInit {
   public myTorAddress = config.myTorAddress
 
   constructor(
-    public toastCtrl: ToastController
+    private readonly toastCtrl: ToastController,
+    private readonly authService: AuthService,
   ) { }
   
   ngOnInit() {
@@ -23,7 +24,7 @@ export class MePage implements OnInit {
 
   logout(){
     Log.debug('Logging out', {}, LogTopic.AUTH)
-    Auth.clearPassword()
+    this.authService.clearPassword()
   }
 
   renderQR(){

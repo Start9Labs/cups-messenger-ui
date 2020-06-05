@@ -1,4 +1,4 @@
-import { Observable, NextObserver } from 'rxjs'
+import { Observable } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
 import { LogBehaviorSubject } from 'src/rxjs/util'
 import { LogLevel, LogTopic } from 'src/app/config'
@@ -6,17 +6,19 @@ import { Log } from 'src/app/log'
 import { pauseFor } from '../cups/types'
 import { Storage } from '@ionic/storage'
 import { distinctUntilChanged } from 'rxjs/operators'
+import { Injectable } from '@angular/core'
 
 export enum AuthStatus {
     UNVERIFED, VERIFIED
 }
 
-export class AuthState {
+@Injectable()
+export class AuthService {
     password: string = undefined
     private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })
 
     constructor(
-        private readonly storage: Storage = new Storage({ }),
+        private readonly storage: Storage,
     ) {}
     
     async retrievePassword(): Promise<void> {
@@ -65,5 +67,3 @@ export class AuthState {
         this.$status$.next(AuthStatus.UNVERIFED)
     }
 }
-
-export const Auth = new AuthState()
