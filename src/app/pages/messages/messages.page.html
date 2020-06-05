@@ -54,15 +54,16 @@
             </div>
             <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <div class="msg-date my-failed-coloring">{{message.sentToServer | date:'short'}}</div>
+
                 <div style="display: flex; justify-content: flex-end; align-items: center;">
-                    <div (click)="cancel(contact, message)">
-                        <ion-icon class="msg-status cancel" name="close-outline"></ion-icon>
-                    </div>
-                    <div (click)="retry(contact, message)">
-                        <ion-icon class="msg-status retry" name="reload-outline"></ion-icon>
-                    </div>
+                    <ion-icon (click)="cancel(contact, message)" class="msg-status cancel" name="close-outline"></ion-icon>
+                    <div class="msg-date my-failed-coloring">{{message.sentToServer | date:'short'}}</div>
                 </div>
+                                    
+                <div style="font-size: 12px" (click)="retry(contact, message)">
+                    RETRY 
+                </div>
+
             </div>
         </div>
         <div id="start-of-scroll"></div>

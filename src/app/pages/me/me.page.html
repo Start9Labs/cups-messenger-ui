@@ -8,21 +8,6 @@
       <ion-button color="primary" (click)="logout()">Logout</ion-button>
     </ion-buttons>
   </ion-toolbar>
-  <ion-button (click)="push()">
-    PUSH
-  </ion-button>
-  <ion-button (click)="unshift()">
-    UNSHIFT
-  </ion-button>
-  <ion-button (click)="swipeA()">
-    SWIPE WITH A
-  </ion-button>
-  <ion-button (click)="swipeE()">
-    SWIPE WITH E
-  </ion-button>
-  <ion-button (click)="reset()">
-    RESET
-  </ion-button>
 </ion-header>
 
 <ion-content class="ion-padding">
@@ -45,20 +30,4 @@
   <div style="display: flex; justify-content: center; padding: 25px;">
     <canvas id="qr-canvas"></canvas>
   </div>
-
-
-
-  <div *ngFor="let el of els">
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-    <ion-item style="color: red">{{ el }}</ion-item>
-  </div>
-
-
 </ion-content>
