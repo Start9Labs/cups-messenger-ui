@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core'
 
 import { NavController } from '@ionic/angular'
 import { StateIngestionService } from '../services/state/state-ingestion/state-ingestion.service'
-import { Auth, AuthStatus } from '../services/state/auth-state'
+import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
 import { LogTopic } from '../config'
@@ -16,13 +16,19 @@ export class AppComponent {
     constructor(
         private readonly navCtrl: NavController,
         private readonly stateIngestion: StateIngestionService,
-        private readonly zone: NgZone
+        private readonly zone: NgZone,
+        private readonly authState: AuthState,
     ) {}
 
-    async ngOnInit(){
+    ngOnInit(){
         this.stateIngestion.init()
-        await Auth.retrievePassword()
-        Auth.emitStatus$().subscribe(s => this.handleAuthChange(s))
+        this.authState.retrievePassword().then(() => {
+          this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
+        })
+    }
+
+    ngAfterViewInit () {
+        getContext().childReady()
     }
 
     handleAuthChange(s: AuthStatus){

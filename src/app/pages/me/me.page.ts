@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { Auth } from 'src/app/services/state/auth-state'
+import { AuthState } from 'src/app/services/state/auth-state'
 import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
 import { ToastController, IonicSafeString } from '@ionic/angular'
@@ -14,7 +14,8 @@ export class MePage implements OnInit {
   public myTorAddress = config.myTorAddress
 
   constructor(
-    public toastCtrl: ToastController
+    private readonly toastCtrl: ToastController,
+    private readonly authState: AuthState,
   ) { }
   
   ngOnInit() {
@@ -23,7 +24,7 @@ export class MePage implements OnInit {
 
   logout(){
     Log.debug('Logging out', {}, LogTopic.AUTH)
-    Auth.clearPassword()
+    this.authState.clearPassword()
   }
 
   renderQR(){
@@ -44,7 +45,7 @@ export class MePage implements OnInit {
   async presentToast (success = true) {
     let message: IonicSafeString
     if (success) {
-      message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="success"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
+      message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="checkmark-circle-outline" color="warning"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Copied to Clipboard</span>')
     } else {
       message = new IonicSafeString('<ion-icon style="display: inline-block; vertical-align: middle;" name="close-circle-outline" color="danger"></ion-icon> <span style="display: inline-block; vertical-align: middle;">Failed to Copy</span>')
     }

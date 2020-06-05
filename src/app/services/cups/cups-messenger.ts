@@ -4,8 +4,7 @@ import { HttpClient } from '@angular/common/http'
 import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce } from './types'
 import { StandardMockCupsMessenger } from 'spec/mocks/mock-messenger'
 import { LiveCupsMessenger, ShowMessagesOptions } from './live-messenger'
-import { Auth } from '../state/auth-state'
-import { Log } from 'src/app/log'
+import { AuthState } from '../state/auth-state'
 import { map } from 'rxjs/operators'
 import { ErrorMockCupsMessenger } from 'spec/mocks/error-mock-messenger'
 import { NoMessagesMockCupsMessenger } from 'spec/mocks/empty-messages-mock-messenger'
@@ -15,9 +14,12 @@ import { FastMockMessenger } from 'spec/mocks/fast-mock-messenger'
 @Injectable({providedIn: 'root'})
 export class CupsMessenger {
     private readonly impl
-    constructor(http: HttpClient) {
+    constructor(
+      private readonly http: HttpClient,
+      private readonly authState: AuthState,
+    ) {
         switch(config.cupsMessenger.type){
-            case CupsMessengerType.LIVE:             this.impl = new LiveCupsMessenger(http)       ; break
+            case CupsMessengerType.LIVE:             this.impl = new LiveCupsMessenger(this.http, this.authState)       ; break
             case CupsMessengerType.STANDARD_MOCK:    this.impl = new StandardMockCupsMessenger()   ; break
             case CupsMessengerType.ERROR_MOCK:       this.impl = new ErrorMockCupsMessenger()      ; break
             case CupsMessengerType.NO_MESSAGES_MOCK: this.impl = new NoMessagesMockCupsMessenger() ; break
@@ -27,7 +29,7 @@ export class CupsMessenger {
     }
 
     contactsShow(loginTestPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
-        return this.impl.contactsShow(loginTestPassword || Auth.password)
+        return this.impl.contactsShow(loginTestPassword || this.authState.password)
     }
 
     contactsAdd(contact: Contact): ObservableOnce<Contact> {
