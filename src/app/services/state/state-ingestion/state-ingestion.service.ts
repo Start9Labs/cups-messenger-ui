@@ -8,8 +8,9 @@ import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types
 import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
 import { suppressErrorOperator } from 'src/rxjs/util'
-import { Router, NavigationStart } from '@angular/router'
+import { Router, NavigationStart, NavigationEnd } from '@angular/router'
 import { AuthState, AuthStatus } from '../auth-state'
+import { getContext } from 'ambassador-sdk'
 
 enum Page {
     CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
@@ -29,6 +30,11 @@ export class StateIngestionService {
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
             Log.info(`navigated to`, e, LogTopic.NAV)
             this.page = e.url as Page
+        })
+
+        this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((e: NavigationEnd) => {
+            console.log(`FILTER`, e)
+            if(e.url === Page.CONTACTS) getContext().childReady()
         })
     }
 

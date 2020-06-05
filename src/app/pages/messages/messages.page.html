@@ -99,11 +99,26 @@
 
 <ion-footer>
     <div id="textInput" class="submit" *ngIf="(app.emitCurrentContact$ | async) as contact">
-        <ion-textarea class="enter-text" autoGrow rows="1" [(ngModel)]="messageToSend" name="message" placeholder="Text message"></ion-textarea>
-        <ion-button [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">
-            <ion-icon slot="icon-only" name="chevron-up-outline"></ion-icon>
-        </ion-button>
-        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($jumping$ | async) && !initting" style="margin: 1px;" class="jump-fab" size="small" (click)="jumpToBottom()">
+        <div style="
+            width: 100%;
+            position: relative;
+            display: flex;
+        ">
+            <ion-textarea style="background: black; border-radius: 10px;" class="enter-text" autoGrow rows="1" [(ngModel)]="messageToSend" name="message" placeholder="Text message"></ion-textarea>
+            <ion-button 
+            style=
+                "position: absolute;
+                z-index: 999;
+                left: 86%;
+                bottom: -6px;
+                /* background: aqua; */
+                border-radius: 100px;"
+            [disabled]="!messageToSend" fill="clear" (click)="sendMessage(contact)">
+                <ion-icon slot="icon-only" name="chevron-up-circle"></ion-icon>
+            </ion-button>
+        </div>
+        
+        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($jumping$ | async) && !initting" style="margin: 1px; padding: 0 0 0 5px" class="jump-fab" size="small" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </div>

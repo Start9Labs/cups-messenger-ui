@@ -20,6 +20,9 @@ import { getContext } from 'ambassador-sdk'
 export class ContactsPage implements OnInit {
     @ViewChild('animation') animation: ElementRef<HTMLElement>
 
+
+    trigger$ = new BehaviorSubject(false)
+
     public contacts$: Observable<ContactWithMessageMeta[]>
     private $forceRerender$ = new BehaviorSubject({})
     $loading$ = new BehaviorSubject(false)
@@ -43,10 +46,6 @@ export class ContactsPage implements OnInit {
                 this.stateIngestion.refreshContacts(), this.$loading$,
             ).subscribe(() => {})
         }
-    }
-
-    ngAfterViewInit(){
-        if((window as any).platform) waitForContent()
     }
 
     ionViewWillEnter() {
@@ -104,18 +103,6 @@ export class ContactsPage implements OnInit {
         await alert.present()
     }
 }
-
-function waitForContent() {
-    const a = document.getElementById('content')
-    const b = a && a.getBoundingClientRect()
-    const c = b && b.width + b.height
-    if(!c) {
-        window.requestAnimationFrame(waitForContent)
-    } else {
-        getContext().childReady()
-    }
-}
-
 
 function byMostRecentMessage(a: ContactWithMessageMeta, b: ContactWithMessageMeta): number {
     if(!a.lastMessages[0]) return 1

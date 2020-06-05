@@ -19,6 +19,7 @@ ion-list {
 }
 
 .chat-message {
+    white-space: pre-line;
     background: none;
     text-align: left;
 }
@@ -176,6 +177,7 @@ ion-list {
     --color: #568ce6;
     --color-activated: #83acf1;
     --background-activated: #1a1c22;
+    --box-shadow: 0px;
 }
 
 .jump-fab-unreads {
