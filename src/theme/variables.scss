@@ -1,7 +1,56 @@
 // Ionic Variables and Theming. For more info, please see:
 // http://ionicframework.com/docs/theming/
 
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../assets/fonts/Montserrat-Thin.ttf');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../assets/fonts/Montserrat-Black.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../assets/fonts/Montserrat-Bold.ttf');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'OpenSans';
+  src: url('../assets/fonts/OpenSans-Light.ttf');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'OpenSans';
+  src: url('../assets/fonts/OpenSans-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'OpenSans';
+  src: url('../assets/fonts/OpenSans-Bold.ttf');
+  font-weight: 900;
+  font-style: normal;
+}
+
 /** Ionic CSS Variables **/
+
+:root[mode=ios],
+:root[mode=md] {
+  --ion-font-family: 'OpenSans' !important;
+  font-family: 'OpenSans' !important;
+}
+
 :root {
   /** primary **/
   --ion-color-primary: #568de6;
@@ -68,8 +117,6 @@
   --ion-color-medium-shade: rgb(134, 136, 143);
   --ion-color-medium-tint: #a2a4ab;
 
-  
-
   /** light **/
   --ion-color-light: #d0d0d0;
   --ion-color-light-rgb: 244, 244, 244;
@@ -78,13 +125,9 @@
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
 
-
+  // MISC
   --ion-background-color: var(--ion-color-dark);
-//   --ion-border-color: var(--ion-color-primary-faded);
-
   --ion-text-color: var(--ion-color-light);
-
-  --ion-font-family: 'OpenSans';
   // --ion-text-color-rgb 	Text color of the entire app, rgb format
   // --ion-backdrop-color 	Color of the Backdrop component
   // --ion-backdrop-opacity 	Opacity of the Backdrop component
@@ -96,7 +139,7 @@
   // --ion-tab-bar-border-color 	Border color of the Tab Bar
   // --ion-tab-bar-color 	Color of the Tab Bar
   // --ion-tab-bar-color-selected 	Color of the selected Tab Button
-  --ion-toolbar-background: var(--ion-color-dark); // 	Background of the Toolbar
+  --ion-toolbar-background: var(--ion-color-dark); // Background of the Toolbar
   --ion-toolbar-border-color: var(--ion-color-primary-faded);
   // --ion-toolbar-color 	Color of the components in the Toolbar
   // --ion-toolbar-segment-color 	Color of the Segment Buttons in the Toolbar
@@ -110,47 +153,4 @@
   // --ion-placeholder-color 	// Color of the placeholder in Inputs
   --ion-item-background-activated: var(--ion-color-red);
 }
-
-@font-face {
-    font-family: 'Montserrat';
-    src: url('../assets/Montserrat-Thin.ttf') format("truetype");
-    font-weight: 200;
-    font-style: normal;
-}
-  
-@font-face {
-    font-family: 'Montserrat';
-    src: url('../assets/Montserrat-Black.ttf') format("truetype");
-    font-weight: 400;
-    font-style: normal;
-}
-  
-@font-face {
-    font-family: 'Montserrat';
-    src: url('../assets/Montserrat-Bold.ttf') format("truetype");
-    font-weight: 900;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'OpenSans';
-    src: url('../assets/OpenSans-Light.ttf') format("truetype");
-    font-weight: 200;
-    font-style: normal;
-}
-  
-@font-face {
-    font-family: 'OpenSans';
-    src: url('../assets/OpenSans-Regular.ttf') format("truetype");
-    font-weight: 400;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'OpenSans';
-    src: url('../assets/OpenSans-Bold.ttf') format("truetype");
-    font-weight: 900;
-    font-style: normal;
-}
-
  
