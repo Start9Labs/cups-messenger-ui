@@ -40,17 +40,16 @@
             <div id="{{message.id}}" class="left-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <span class="msg-date contact-coloring">{{message.timestamp | date:'short'}}</span>
-                <ion-icon class="msg-status" color="dark" name="checkmark-done-outline"></ion-icon>
             </div>
             <div id="{{message.id}}" [attr.id]="message.trackingId" class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'SENT'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <div class="msg-date my-coloring">{{message.timestamp | date:'short'}}</div>
-                <ion-icon class="msg-status" color="primary" name="checkmark-done-outline"></ion-icon>
+                <ion-icon class="msg-status" color="primary" name="checkmark-outline"></ion-icon>
             </div>
             <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble attending" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
                 <div class="msg-date my-coloring">{{message.sentToServer | date:'short'}}</div>
-                <ion-icon class="msg-status" color="primary" name="checkmark-outline"></ion-icon>
+                <ion-icon class="msg-status" color="primary" name="timer-outline"></ion-icon>
             </div>
             <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>

@@ -34,7 +34,9 @@ export class StateIngestionService {
 
         this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((e: NavigationEnd) => {
             console.log(`FILTER`, e)
-            if(e.url === Page.CONTACTS) getContext().childReady()
+            if(e.url === Page.CONTACTS && (window as any).platform) {
+              getContext().childReady()
+            }
         })
     }
 
