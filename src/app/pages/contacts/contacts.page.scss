@@ -1,0 +1,42 @@
+.item-contact{
+    --min-height: 100px;
+}
+
+.item-avatar {
+    background: #696c71;
+}
+
+.item-avatar-unreads {
+    background:  radial-gradient(#696c71 25%, var(--ion-color-primary-contrast));
+}
+
+.contact-name {
+    font-weight: 900;
+    font-size: larger;
+    text-transform: capitalize;
+}
+
+.contacts-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0 7px 14px;
+    align-items: center;
+}
+
+
+.page-title{
+    font-size: xx-large;
+    font-weight: 900;
+    color: #686b71; 
+    font-family: Montserrat;
+    padding: 2px 0 0 2px;
+}
+
+.message-preview {
+    font-weight: 400;
+    font-size: smaller;
+    max-height: 40px;
+    color: var(--ion-color-medium-shade);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

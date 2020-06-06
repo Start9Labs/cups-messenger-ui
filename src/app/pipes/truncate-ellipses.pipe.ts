@@ -5,12 +5,11 @@ import { Contact } from '../services/cups/types'
   name: 'truncateEllipses'
 })
 export class TruncateEllipsesPipe implements PipeTransform {
-    transform(contact: Partial<Contact>, allowable: number, key): any {
+    transform(contact: Partial<Contact>, allowable: number): string {
         if(!contact) { return }
-        let displayName = contact.name || contact.torAddress
+        const displayName = contact.name || contact.torAddress
         if(!displayName) { return }
-        displayName = truncateEllipses(displayName, allowable)
-        return Object.assign(contact, { [key]: displayName })
+        return truncateEllipses(displayName, allowable)
     }
 }
 

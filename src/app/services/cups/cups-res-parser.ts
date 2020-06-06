@@ -1,15 +1,27 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
-import { ContactWithMessageCount, MessageDirection } from './types'
+import { MessageDirection, ServerMessage, mkInbound, mkSent, Contact } from './types'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
 
-interface CupsMessageShow { text: string, timestamp: Date, direction: MessageDirection, id: string, trackingId: string }
+export interface CupsMessageShow {
+    text: string,
+    timestamp: Date,
+    direction: MessageDirection,
+    id: string,
+    trackingId: string
+}
+export interface CupsContactShow {
+    contact: Contact,
+    unreadMessages: number,
+    lastMessages: CupsMessageShow[]
+}
+
 export class CupsResParser {
     constructor() {}
 
-    deserializeContactsShow(rawRes: ArrayBuffer): ContactWithMessageCount[] {
+    deserializeContactsShow(rawRes: ArrayBuffer): CupsContactShow[] {
         const p = new ArrayBufferParser(rawRes)
         if (p.isEmpty) { return [] }
         const toReturn = []
@@ -51,7 +63,6 @@ export class CupsResParser {
         const messageBytes = utf8Encoder.encode(message)
         return bufferArrayConcat([new Uint8Array([0]).buffer, hexToBytes(trackingId.split('-').join('')), torBytes, messageBytes])
     }
-
 }
 
 class ArrayBufferParser {
@@ -78,12 +89,19 @@ class ArrayBufferParser {
 const PKEY_LENGTH = 32
 const UNREADS_LENGTH = 8
 const NAME_LENGTH = 1
-function pullContact(p: ArrayBufferParser): ContactWithMessageCount {
-    const torAddress     = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
-    const unreadsCount   = p.chopNParse(UNREADS_LENGTH, bigEndian)
-    const nameSize       = p.chopNParse(NAME_LENGTH   , bigEndian)
-    const name           = p.chopNParse(nameSize      , a => utf8Decoder.decode(a))
-    return { torAddress, unreadMessages: unreadsCount, name }
+const MESSAGES_COUNT = 1
+function pullContact(p: ArrayBufferParser): CupsContactShow {
+    const torAddress          = p.chopNParse(PKEY_LENGTH   , pubkeyToOnion)
+    const unreadsCount        = p.chopNParse(UNREADS_LENGTH, bigEndian)
+    const nameSize            = p.chopNParse(NAME_LENGTH   , bigEndian)
+    const name                = p.chopNParse(nameSize      , a => utf8Decoder.decode(a))
+    const ensuingMessageCount = p.chopNParse(MESSAGES_COUNT, bigEndian)
+    const lastMessages = []
+    for(let i = 0; i < ensuingMessageCount; i ++) {
+        lastMessages.push(pullMessage(p))
+    }
+    const contact = { torAddress,  name }
+    return { contact, unreadMessages: unreadsCount, lastMessages }
 }
 
 function pullMessage(p: ArrayBufferParser): CupsMessageShow {
@@ -93,7 +111,14 @@ function pullMessage(p: ArrayBufferParser): CupsMessageShow {
     const epochTime      = p.chopNParse(8,  bigEndian)
     const messageLength  = p.chopNParse(8,  bigEndian)
     const text           = p.chopNParse(messageLength, a => utf8Decoder.decode(a))
-    return { direction, timestamp: new Date(epochTime * 1000), text, id: String(id), trackingId }
+
+    return {
+        direction,
+        timestamp: new Date(epochTime * 1000),
+        text,
+        id: String(id),
+        trackingId,
+     }
 }
 
 function pubkeyToOnion(pubkey: ArrayBuffer) {

@@ -1,39 +1,70 @@
-type LogLevel = 'Info' | 'Debug'
+export enum LogLevel {
+    TRACE = 1,
+    DEBUG = 2,
+    INFO = 3,
+    ERROR = 4
+}
+
+export enum LogTopic {
+    NAV = 'NAV',
+    CONTACTS = 'CONTACTS',
+    CURRENT_CONTACT = 'CURRENT_CONTACT',
+    MESSAGES = 'MESSAGE',
+    NO_TOPIC = 'NO_TOPIC',
+    AUTH = 'AUTH'
+}
+
+export enum CupsMessengerType {
+    LIVE,
+    STANDARD_MOCK,
+    ERROR_MOCK,
+    NO_MESSAGES_MOCK,
+    AUTH_MOCK,
+    FAST_MOCK
+}
 
 export interface Config {
     cupsMessenger: {
-        mock: boolean
+        type: CupsMessengerType
         url: string
     }
     contactsDaemon: {
         frequency: number
+        on: boolean
     }
-    contactMessagesDaemon: {
+    messagesDaemon: {
         frequency: number
+        on: boolean
     }
     loadMesageBatchSize: number
     defaultServerTimeout: number
-    loglevel: LogLevel
+    logs: {
+        level: LogLevel,
+    }
     myTorAddress: string
 }
 
 export const config: Config = {
     cupsMessenger: {
-        mock: false,
+        type: CupsMessengerType.LIVE,
         url: '/api'
     },
     contactsDaemon: {
-        frequency: 10000
+        frequency: 10000,
+        on: true
     },
-    contactMessagesDaemon: {
-        frequency: 2500
+    messagesDaemon: {
+        frequency: 3000,
+        on: true
     },
     loadMesageBatchSize: 15,
-    defaultServerTimeout: 180000,
-    loglevel: 'Info',
-    myTorAddress: window.origin.split('//')[1] || window.origin
+    defaultServerTimeout: 30000,
+    logs: {
+        level: LogLevel.TRACE,
+    },
+    myTorAddress: removeOnionForAndroid(window.origin.split('//')[1] || window.origin)
 }
 
-export function debugLog(s: string) {
-    if (config.loglevel === 'Debug') console.log(s)
+function removeOnionForAndroid(addr: string): string {
+    return addr.endsWith('.onion.onion') ? addr.substr(0, addr.length - 6) : addr
 }

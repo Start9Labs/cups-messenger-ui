@@ -1,0 +1,25 @@
+<ion-header>
+	<ion-toolbar>
+		<ion-buttons slot="start">
+		  	<ion-back-button color="primary" (click)="wipeCurrentContact()"></ion-back-button>
+		</ion-buttons>
+		<ion-title>New Contact</ion-title>
+		<ion-buttons slot="end">
+			<ion-button color="primary" (click)="save()">Save</ion-button>
+	  	</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+    <ion-item-group>
+		<ion-item>
+			<ion-input placeholder="Name" [(ngModel)]="name"></ion-input>
+		</ion-item>
+		<ion-item>
+			<ion-input placeholder="Cups tor address (.onion)" [(ngModel)]="torAddress"></ion-input>
+		</ion-item>
+	</ion-item-group>
+	<ion-item lines="none" *ngIf="($error$ | async) as error">
+		<ion-text  color="danger">{{ $error$ | async }}</ion-text>
+	</ion-item>
+</ion-content>

@@ -1,0 +1,188 @@
+
+.avatar-toolbar {
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.item-avatar{
+    background: #696c71;
+}
+
+.item-avatar-unreads {
+    background:  radial-gradient(#696c71 25%, var(--ion-color-primary-contrast));
+}
+
+ion-list {
+    flex-direction: column-reverse;
+    display: flex;
+    min-height: 100%;
+}
+
+.chat-message {
+    white-space: pre-line;
+    background: none;
+    text-align: left;
+}
+
+.submit{
+    background: var(--ion-color-dark);
+    padding: 10px;
+    color: #fafafa;
+    border-width: 0;
+    border-top: 1px;
+    border-style: double;
+    border-color: var(--ion-color-primary-faded);
+    display: flex;
+    align-items: center;
+}
+
+.submit form {
+    display: grid;
+    grid-template-columns: 5fr 1fr;
+    align-items: center;
+}
+
+.contact-coloring {
+    color: var(--ion-color-warning);
+    font-weight: bold;
+}
+
+.contact-name {
+    text-transform: capitalize;
+}    
+
+
+.my-coloring {
+    color: var(--ion-color-primary);
+    font-weight: bold;
+}
+
+.my-failed-coloring {
+    color: var(--ion-color-danger);
+    font-weight: bold;
+}
+
+
+.enter-text{
+    padding-left: 10px;
+}
+
+.native-textarea.sc-ion-textarea-ios {
+    padding-right: 0;
+}
+
+.enter-text textarea {
+    margin: 0;
+    padding: 0;
+    padding-right: 0;
+}
+
+.left-bubble {
+    border-width: 0em 0em 0em 0.3em;
+    border-style: solid;
+    border-radius: 0em;
+    padding: 10px 10px;
+    margin: 10px;
+    margin-left: 2%;
+    float: left;
+    font-family: 'OpenSans';
+    color: white;
+    max-width: 80%;
+    min-width: 20%;
+    text-align: right;
+    border-image-source: linear-gradient(var(--ion-background-color), var(--ion-color-warning), var(--ion-background-color));
+    border-image-slice: 2;
+    span.msg-date {
+        text-align: left;
+        font-size: 10px;
+        display: block;
+    }
+    div.msg-date {
+        text-align: left;
+        font-size: 10px;
+        display: block;
+    }
+}
+
+.right-bubble {
+    border-width: 0em 0.3em 0em 0em;
+    border-style: solid;
+    border-radius: 0em;
+    padding: 10px 10px;
+
+    float: right;
+    text-align: right;
+    margin-top: -12px;
+    margin: 10px;
+    color: white;
+    border-image-source: linear-gradient(var(--ion-background-color), var(--ion-color-primary), var(--ion-background-color));
+    border-image-slice: 2;
+    margin-right: 2%;
+    max-width: 80%;
+    min-width: 0%;
+
+    span.msg-date {
+        font-size: 10px;
+    }
+    div.msg-date {
+        // text-align: left;
+        font-size: 10px;
+        // display: block;
+    }
+}
+
+
+.msg-status {
+    --ionicon-stroke-width: 32px;
+    padding: 4px;
+}
+
+.retry {
+    color: #fafafa;
+    cursor: pointer;
+}
+
+.cancel {
+    color: #eb7b7b;
+    cursor: pointer;
+    padding: 0px 4px;
+}
+
+.failed {
+    border-image-source: linear-gradient(var(--ion-background-color), var(--ion-color-danger), var(--ion-background-color));
+    border-image-slice: 2;    
+}
+
+.error-bar {
+    text-align: center;
+    padding: 5px;
+}
+
+
+.attending-spinner{
+    margin-left: 50%;
+    margin-top: 5%;
+    color: #595959;
+}
+
+.message-icon {
+    margin-left: 1px;
+    margin-top: 1.5px;
+    font-weight: bold;
+}
+
+
+.jump-fab {
+    --background: clear;
+    --color: #568ce6;
+    --color-activated: #83acf1;
+    --background-activated: #1a1c22;
+    --box-shadow: 0px;
+}
+
+.jump-fab-unreads {
+    --background: clear;
+    --color: var(--ion-color-warning);
+    --color-activated: #fafafa;
+    --background-activated: #1a1c22;
+}

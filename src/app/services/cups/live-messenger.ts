@@ -1,19 +1,21 @@
 import { config } from '../../config'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { ContactWithMessageCount, Contact, ServerMessage } from './types'
-import { CupsResParser, onionToPubkeyString } from './cups-res-parser'
-import { globe } from '../global-state'
-import { Observable, merge, from, interval, race } from 'rxjs'
-import { map, take } from 'rxjs/operators'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent, mkInbound } from './types'
+import { CupsResParser, onionToPubkeyString, CupsMessageShow } from './cups-res-parser'
+import { Observable, from, interval, race } from 'rxjs'
+import { map, take, catchError } from 'rxjs/operators'
+import { AuthState } from '../state/auth-state'
+import { Log } from 'src/app/log'
 
 export class LiveCupsMessenger {
     private readonly parser: CupsResParser = new CupsResParser()
 
-    constructor(private readonly http: HttpClient) {
-        window['httpClient'] = http
-    }
+    constructor(
+      private readonly http: HttpClient,
+      private readonly authState: AuthState,
+    ) {}
 
-    private authHeaders(password: string = globe.password): HttpHeaders {
+    private authHeaders(password: string = this.authState.password): HttpHeaders {
         if (!password) {
             throw new Error('Unauthenticated request to server attempted.')
         }
@@ -24,123 +26,138 @@ export class LiveCupsMessenger {
         return config.cupsMessenger.url
     }
 
-    async contactsShow(loginTestPassword: string): Promise<ContactWithMessageCount[]> {
-        try {
-            return withTimeout(this.http.get(this.hostUrl, {
-                params: {
-                    type: 'users'
-                },
-                headers: this.authHeaders(loginTestPassword),
-                responseType: 'arraybuffer'
-            })).toPromise().then(arrayBuffer => this.parser.deserializeContactsShow(arrayBuffer))
-        }
-        catch (e) {
-            console.error('Contacts show', e)
-            throw e
-        }
+    contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageMeta[]> {
+        
+        return withTimeout(this.http.get(this.hostUrl, {
+            params: {
+                type: 'users',
+                includeRecentMessages: '1'
+            },
+            headers: this.authHeaders(loginTestPassword),
+            responseType: 'arraybuffer'
+        }).pipe(
+            catchError(e => {
+                console.error('We have ourselves an error here...', JSON.stringify(e))
+                console.error('We have ourselves an error here...', e.status)
+                if(e.status === 401){ this.authState.clearPassword() }
+                throw e
+            })
+        )).pipe(
+                map(arrayBuffer =>
+                    this.parser.deserializeContactsShow(arrayBuffer).map(
+                        ({ contact, unreadMessages, lastMessages }) => 
+                        ({...contact, unreadMessages, lastMessages: lastMessages.map(m => hydrateCupsMessageResponse(contact, m))})
+                    )
+                ),
+                catchError( e => {
+                    Log.error('Contacts show', e); throw e
+                })
+            )
     }
 
-    async contactsAdd(contact: Contact): Promise<void> {
+    contactsAdd(contact: Contact): ObservableOnce<void> {
         const toPost = this.parser.serializeContactsAdd(contact.torAddress, contact.name)
-        let headers = this.authHeaders()
-        // headers = headers.set('Content-Type', 'application/octet-stream')
-        // headers = headers.set('Content-Length', toPost.byteLength.toString())
-        // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
-        return new Promise((res, rej) => {
+        const headers = this.authHeaders()
+
+        return new Observable(subscriber => {
             const xhr = new XMLHttpRequest()
-            xhr.ontimeout = function () {
-                rej(new Error("TIMEOUT"));
-            };
-            xhr.onload = function () {
+            xhr.ontimeout = () => subscriber.error(new Error('TIMEOUT'))
+            xhr.onload = () => {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        res();
+                        subscriber.next()
                     } else {
-                        rej(new Error(xhr.statusText));
+                        subscriber.error(xhr)
                     }
                 }
-            };
+            }
+
             xhr.timeout = config.defaultServerTimeout
-            xhr.open('POST', this.hostUrl, true)
-            xhr.setRequestHeader("Authorization", headers.get("Authorization"))
-            xhr.send(toPost)
+            try{
+                xhr.open('POST', this.hostUrl, true)
+                xhr.setRequestHeader('Authorization', headers.get('Authorization'))
+                xhr.send(toPost)
+            } catch (e) {
+                subscriber.error(e)
+            }
         })
     }
 
-    async messagesShow(contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+    contactsDelete(contact: Contact): ObservableOnce<void> {
+        const params = {
+            type: 'user',
+            pubkey: onionToPubkeyString(contact.torAddress),
+        }
+
+        return withTimeout(this.http.delete(this.hostUrl, {
+            params,
+            headers: this.authHeaders(),
+            responseType: 'arraybuffer'
+        })).pipe(map(() => {}))
+    }
+
+    messagesShow(contact: Contact, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
         const params = Object.assign({
             type: 'messages',
             pubkey: onionToPubkeyString(contact.torAddress),
             limit: String(limit),
         }, offset ? { [offset.direction]: offset.id } : {})
-        try {
-            const arrayBuffer = await withTimeout(this.http.get(this.hostUrl, {
-                params,
-                headers: this.authHeaders(),
-                responseType: 'arraybuffer'
-            })).toPromise()
-            return this.parser.deserializeMessagesShow(arrayBuffer).map(m => ({ ...m, otherParty: contact }))
-        }
-        catch (e) {
-            console.error('Messages show', e)
-            console.error('Messages show', JSON.stringify(e))
-            throw e
-        }
+
+        return withTimeout(this.http.get(this.hostUrl, {
+            params,
+            headers: this.authHeaders(),
+            responseType: 'arraybuffer'
+        })).pipe(
+                map( arrayBuffer =>  this.parser.deserializeMessagesShow(arrayBuffer)
+                                                .map(m => hydrateCupsMessageResponse(contact, m))
+                ),
+                catchError(e => {
+                    console.error('New messages show', JSON.stringify(e)); throw e
+                })
+            )
     }
 
-    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
-        const params = {
-            type: 'new',
-            pubkey: onionToPubkeyString(contact.torAddress),
-        }
-        try {
-            const arrayBuffer = await withTimeout(this.http.get(this.hostUrl, {
-                params,
-                headers: this.authHeaders(),
-                responseType: 'arraybuffer'
-            })).toPromise()
-            return this.parser.deserializeMessagesShow(arrayBuffer).map(m => ({ ...m, otherParty: contact }))
-        }
-        catch (e) {
-            console.error('New messages show', e)
-            console.error('New messages show', JSON.stringify(e))
-            throw e
-        }
-    }
-
-    async messagesSend(contact: Contact, trackingId: string, message: string): Promise<void> {
+    messagesSend(contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
         const toPost = this.parser.serializeSendMessage(contact.torAddress, trackingId, message)
-        try {
-            let headers = this.authHeaders()
-            // headers = headers.set('Content-Type', 'application/octet-stream')
-            // headers = headers.set('Content-Length', toPost.byteLength.toString())
-            // return withTimeout(this.http.post<void>(this.hostUrl, new Blob([toPost]), { headers })).toPromise()
-            return new Promise((res, rej) => {
-                const xhr = new XMLHttpRequest()
-                xhr.ontimeout = function () {
-                    rej(new Error("TIMEOUT"));
-                };
-                xhr.onload = function () {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            res();
-                        } else {
-                            rej(new Error(xhr.statusText));
-                        }
+        const headers = this.authHeaders()
+
+        return new Observable(subscriber => {
+            const xhr = new XMLHttpRequest()
+            xhr.ontimeout = () => subscriber.error(new Error('TIMEOUT'))
+            xhr.onload = () => {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        subscriber.next({})
+                    } else {
+                        subscriber.error(xhr)
                     }
-                };
-                xhr.timeout = config.defaultServerTimeout
+                }
+            }
+
+            xhr.timeout = config.defaultServerTimeout
+            try{
                 xhr.open('POST', this.hostUrl, true)
-                xhr.setRequestHeader("Authorization", headers.get("Authorization"))
+                xhr.setRequestHeader('Authorization', headers.get('Authorization'))
                 xhr.send(toPost)
-            })
-        } catch (e) {
-            console.error('messages send', e)
-            throw e
-        }
+            } catch (e) {
+                subscriber.error(e)
+            }
+        })
     }
 }
+
+
+export function hydrateCupsMessageResponse(c: Contact, m : CupsMessageShow): ServerMessage {
+    if(m.direction === 'Inbound'){
+        return mkInbound({ ...m, direction: 'Inbound', otherParty: c})
+    } else if (m.direction === 'Outbound') {
+        return mkSent({ ...m, direction: 'Outbound', otherParty: c})
+    }
+
+    throw new Error(`Unexpected direction from server ${JSON.stringify(m)}`)
+}
+
 
 export function withTimeout<U>(req: Observable<U>, timeout: number = config.defaultServerTimeout): Observable<U> {
     return race(
@@ -149,7 +166,7 @@ export function withTimeout<U>(req: Observable<U>, timeout: number = config.defa
     ).pipe(take(1))
 }
 
-export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' } }
+export type ShowMessagesOptions = { limit?: number, offset?: { id: string, direction: 'before' | 'after' }}
 export function fillDefaultOptions(options: ShowMessagesOptions): ShowMessagesOptions {
     const limit = options.limit || config.loadMesageBatchSize
     return { ...options, limit }

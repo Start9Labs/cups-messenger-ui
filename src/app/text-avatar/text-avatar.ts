@@ -15,21 +15,18 @@ export class TextAvatarComponent {
   @Input() textColor: string
 
   public firstLetter = ''
-  public styles = {
-    'background-color': '#fff',
-    color: '#000'
-  }
+
+  public styles = {}
 
   constructor (private colorGenerator: ColorGenerator) {}
 
   ngOnChanges(changes: SimpleChanges) {
     const text = changes.text ? changes.text.currentValue : null
     const color = changes.color ? changes.color.currentValue : null
-    const textColor = changes.textColor ? changes.textColor.currentValue : this.styles.color
 
     this.firstLetter = this.extractFirstCharacter(text)
 
-    this.styles = { ...this.styles, 'background-color': '#e8e8e8', color: textColor }
+    this.styles = {  }
   }
 
   private extractFirstCharacter(text: string): string {

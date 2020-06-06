@@ -1,70 +1,115 @@
-import { ContactWithMessageCount, Contact, pauseFor, ServerMessage } from 'src/app/services/cups/types'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent, server } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
-import { interval } from 'rxjs'
-import { tap } from 'rxjs/operators'
+import { of, timer, interval } from 'rxjs'
+import { map, take } from 'rxjs/operators'
 import { fillDefaultOptions, ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
+import { Log } from 'src/app/log'
+import { mockL, mockContact, mockMessage } from './util'
+import { sortByTimestampDESC } from 'src/app/util'
 
-export class MockCupsMessenger {
+export class StandardMockCupsMessenger {
+    readonly serverTimeToLoad: number = 2000
+    contacts = mockL(mockContact, 4)
     mocks: {[tor: string]: ServerMessage[]} = {}
-    contacts = mockL(mockContact, 5)
     counter = 0
     constructor() {
-        this.contacts.forEach( c => {
-            this.mocks[c.torAddress] = mockL(mockMessage, 30)
+        this.contacts.forEach( (c, index) => {
+            if(index === 0){
+                this.mocks[c.torAddress] = mockL(mockMessage, 0)
+                c.unreadMessages = 0
+            } else if (index === 1) {
+                const message = mockMessage(1)
+                this.mocks[c.torAddress] = [message]
+                c.unreadMessages = 1
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
+            } else {
+                const ms = mockL(mockMessage, 60).sort(sortByTimestampDESC) //most recent message is first
+                this.mocks[c.torAddress] = ms
+                c.unreadMessages = 60
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = ms[0]
+            }
         })
+        this.kickoffMessages()
+    }
 
-        interval(5000).pipe(tap(() => {
-            this.contacts.forEach( c => {
-                const mockMessages = this.mocks[c.torAddress]
-                mockMessages.push(mockMessage(mockMessages.length))
+    kickoffMessages(){
+        interval(10000).subscribe(i => {
+            this.contacts.forEach( (c, index) => {
+                if(index === 2) return 
+                const m = mockMessage(i, new Date())
+                this.mocks[c.torAddress].unshift(m)
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = m
+                c.unreadMessages += 1
             })
-        })).subscribe()
+        })
     }
 
-    async contactsShow (): Promise<ContactWithMessageCount[]> {
-        return this.contacts
+    contactsShow (testPassword?: string): ObservableOnce<ContactWithMessageMeta[]> {
+        Log.trace('showing this.contacts', this.contacts)
+
+        return timer(this.serverTimeToLoad).pipe(map(() => this.contacts.map(clone)), take(1))
     }
 
-    async contactsAdd (contact: Contact): Promise<void> {
-        await pauseFor(2000)
-        const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
-        this.mocks[contact.torAddress] = []
-        this.contacts = []
-        this.contacts.push(...nonMatchingTors)
-        this.contacts.push(Object.assign({ unreadMessages: 0 }, contact))
+    contactsAdd (contact: Contact): ObservableOnce<void> {
+        return timer(this.serverTimeToLoad).pipe(map(() => {
+            const nonMatchingTors = this.contacts.filter(c => c.torAddress !== contact.torAddress)
+            this.mocks[contact.torAddress] = []
+            this.contacts = nonMatchingTors.concat(Object.assign({ unreadMessages: 0, lastMessages: [] }, contact))
+        }), take(1))
     }
 
-    async messagesShow (contact: Contact, options: ShowMessagesOptions): Promise<ServerMessage[]> {
+    contactsDelete(contact: Contact): ObservableOnce<void> {
+        return timer(this.serverTimeToLoad).pipe(
+            take(1),
+            map(() => {
+                const index = this.contacts.findIndex(c => c.torAddress === contact.torAddress)
+                if(index < 0) throw new Error('contact not found')
+                this.contacts.splice(index, 1)
+            })
+        )
+    }
+
+    messagesShow (contact: ContactWithMessageMeta, options: ShowMessagesOptions): ObservableOnce<ServerMessage[]> {
         const { limit, offset } = fillDefaultOptions(options)
-
         const messages = this.getMessageMocks(contact)
+        let toReturn: ServerMessage[]
         if(offset){
             const i = messages.findIndex(m => m.id && m.id === offset.id)
             switch(offset.direction){
-                case 'after' : return messages.slice(i + 1, i + 1 + limit)
-                case 'before' : return messages.slice(i - limit, i)
+                // most recent message is first
+                case 'before'  : toReturn = messages.slice(i + 1, i + limit + 1); break
+                case 'after' : toReturn = messages.slice(i - limit, i); break
             }
         } else {
-            return messages.slice(messages.length - limit + 1, messages.length)
+            toReturn = messages.slice(0, limit)
         }
-    }
-
-    async newMessagesShow(contact: Contact): Promise<ServerMessage[]> {
-        return []
-    }
-
-    async messagesSend (contact: Contact, trackingId, message: string): Promise<void> {
-        await pauseFor(2000)
-        this.getMessageMocks(contact).push({
-            timestamp: new Date(),
-            sentToServer: new Date(),
-            direction: 'Outbound',
-            otherParty: contact,
-            text: message,
-            id: uuid.v4(),
-            trackingId
+        this.contacts.forEach((c, i) => {
+            if(c.torAddress === contact.torAddress){
+                this.contacts.splice(i, 1, {...contact, unreadMessages: 0})
+            }
         })
+        return timer(this.serverTimeToLoad).pipe(map(() => toReturn), take(1))
     }
+
+    messagesSend (contact: Contact, trackingId: string, message: string): ObservableOnce<{}> {
+        return timer(this.serverTimeToLoad).pipe(
+            map(() => {
+                this.mocks[contact.torAddress].unshift(
+                    mkSent({
+                        timestamp: new Date(),
+                        direction: 'Outbound' as 'Outbound',
+                        otherParty: contact,
+                        text: message,
+                        id: uuid.v4(),
+                        trackingId,
+                    })
+                )
+                return {}
+            }),
+            take(1)
+        )
+    }
+
     private getMessageMocks (c: Contact): ServerMessage[] {
         return JSON.parse(
             JSON.stringify(
@@ -74,32 +119,6 @@ export class MockCupsMessenger {
     }
 }
 
-export function mockL<T>(mockF: (arg0: number) => T, i: number): T[] {
-    const toReturn = []
-    for (let j = 0; j < i; j++) {
-        toReturn.push(mockF(j))
-    }
-    return toReturn
-}
-export function mockContact(i: number): ContactWithMessageCount {
-    return {
-        torAddress: 'someTorAddr' + i + 'blahbalhfaosdfj.onion',
-        name: 'contact-' + i + 'dfoifd',
-        unreadMessages: 3
-    }
-}
-export function mockMessage(i: number): ServerMessage {
-    return {
-        direction: 'Inbound',
-        otherParty: mockContact(i),
-        text: i + '--' + mockL(mockWord, 3).join(' '),
-        sentToServer: new Date(i * 1000 * 60 * 60 * 24 * 365),
-        trackingId: uuid.v4(),
-        id: uuid.v4(),
-        timestamp: new Date(i * 1000 * 60 * 60 * 24 * 365),
-        failure: undefined
-    }
-}
-function mockWord(i: number): string {
-    return uuid.v4() + i
+function clone(a){
+    return JSON.parse(JSON.stringify(a))
 }
