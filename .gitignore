@@ -32,3 +32,5 @@ plugins
 www
 *.tar.gz
 *.s9pk
+
+postprocess.js
