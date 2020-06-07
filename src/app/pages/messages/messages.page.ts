@@ -12,15 +12,11 @@ import { Log } from '../../log'
 import { exists, nonBlockingLoader } from 'src/rxjs/util'
 import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { sortByTimestampDESC } from 'src/app/util'
-import { getContext } from 'ambassador-sdk'
-// import * as s from '@svgdotjs/svg.js'
-// const SVG = s.SVG
 /*
 1.) Entering message page needs loader for initial messages
 2.) Messages load we should jump to the bottom
 3.) If we're at the bottom and new messages come in, we should jump to bottom
 */
-const wanydow = window as any
 @Component({
   selector: 'app-messages',
   templateUrl: './messages.page.html',
