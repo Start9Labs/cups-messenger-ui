@@ -7,6 +7,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build-prod": "ng build --prod && tsc postprocess.ts && node postprocess.js",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
@@ -55,7 +56,8 @@
     "protractor": "^7.0.0",
     "ts-node": "^8.10.1",
     "tslint": "^6.0.0",
-    "typescript": "3.8.3"
+    "typescript": "3.8.3",
+    "node-html-parser": "1.2.19"
   },
   "description": "Self-hosted, trustles, P2P encryped messaging over Tor"
 }
