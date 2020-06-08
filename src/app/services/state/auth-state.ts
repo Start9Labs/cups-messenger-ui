@@ -46,7 +46,7 @@ export class AuthState {
             }
         }
 
-        this.$status$.next(AuthStatus.VERIFIED)
+        this.$status$.next(AuthStatus.UNVERIFED)
     }
 
     emitStatus$(): Observable<AuthStatus> {
