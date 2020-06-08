@@ -39,16 +39,16 @@
         <div *ngFor="let message of (messagesForDisplay$ | async)">
             <div id="{{message.id}}" class="left-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <span class="msg-date contact-coloring">{{message.timestamp | date:'short'}}</span>
+                <span class="msg-date contact-coloring">{{message.timestamp | dateDisplay}}</span>
             </div>
             <div id="{{message.id}}" [attr.id]="message.trackingId" class="right-bubble chat-message-bubble" *ngIf="(message | classify) === 'SENT'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <div class="msg-date my-coloring">{{message.timestamp | date:'short'}}</div>
+                <div class="msg-date my-coloring">{{message.timestamp | dateDisplay}}</div>
                 <ion-icon class="msg-status" color="primary" name="checkmark-outline"></ion-icon>
             </div>
             <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble attending" *ngIf="(message | classify) === 'ATTENDING'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
-                <div class="msg-date my-coloring">{{message.sentToServer | date:'short'}}</div>
+                <div class="msg-date my-coloring">{{message.sentToServer | dateDisplay}}</div>
                 <ion-icon class="msg-status" color="primary" name="timer-outline"></ion-icon>
             </div>
             <div [attr.id]="message.trackingId" class="right-bubble chat-message-bubble failed" *ngIf="(message | classify) === 'FAILED'" lines="none">
@@ -56,7 +56,7 @@
 
                 <div style="display: flex; justify-content: flex-end; align-items: center;">
                     <ion-icon (click)="cancel(contact, message)" class="msg-status cancel" name="close-outline"></ion-icon>
-                    <div class="msg-date my-failed-coloring">{{message.sentToServer | date:'short'}}</div>
+                    <div class="msg-date my-failed-coloring">{{message.sentToServer | dateDisplay}}</div>
                 </div>
                                     
                 <div style="font-size: 12px" (click)="retry(contact, message)">
@@ -71,20 +71,13 @@
             <ion-item lines="none">
                 <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
                 <div *ngIf="$hasAllOldMessages$ | async" style="display: flex; flex-flow: column;">
-                    <!-- <div style="display: flex; justify-content: center; align-items: center;">
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                    </div> -->
                     <div style="display: flex; justify-content: center; align-items: center;">
                         <ion-icon color="medium" name="stop-outline"></ion-icon>
                         <ion-icon color="medium" name="stop-outline"></ion-icon>
-                        <!-- <ion-icon color="medium" name="stop-outline"></ion-icon> -->
                     </div>
                     <div style="display: flex; justify-content: center; align-items: center;">
                         <ion-icon color="medium" name="stop-outline"></ion-icon>
                         <ion-icon color="medium" name="stop-outline"></ion-icon>
-                        <!-- <ion-icon color="medium" name="stop-outline"></ion-icon> -->
                     </div>
                     <ion-text color="success" style="padding: 10px">No Older Messages</ion-text>
                 </div>

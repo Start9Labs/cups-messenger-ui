@@ -9,7 +9,7 @@ import { sortByTimestampDESC } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
-    contacts = mockL(mockContact, 4)
+    contacts = mockL(mockContact, 5)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {
@@ -22,6 +22,19 @@ export class StandardMockCupsMessenger {
                 this.mocks[c.torAddress] = [message]
                 c.unreadMessages = 1
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message
+            } else if (index === 2) {
+                const yesterday = new Date()
+                yesterday.setDate(yesterday.getDate() - 1)
+                yesterday.setSeconds(yesterday.getSeconds() + 1)
+
+                const earlierInWeek = new Date()
+                earlierInWeek.setDate(earlierInWeek.getDate() - 3)
+                
+                const message1 = mockMessage(1, yesterday)
+                const message2 = mockMessage(1, earlierInWeek)
+                this.mocks[c.torAddress] = [message1, message2]
+                c.unreadMessages = 1
+                this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = message1
             } else {
                 const ms = mockL(mockMessage, 60).sort(sortByTimestampDESC) //most recent message is first
                 this.mocks[c.torAddress] = ms
@@ -35,7 +48,7 @@ export class StandardMockCupsMessenger {
     kickoffMessages(){
         interval(10000).subscribe(i => {
             this.contacts.forEach( (c, index) => {
-                if(index === 2) return 
+                if(index === 3) return 
                 const m = mockMessage(i, new Date())
                 this.mocks[c.torAddress].unshift(m)
                 this.contacts.find(cont => cont.torAddress === c.torAddress).lastMessages[0] = m
