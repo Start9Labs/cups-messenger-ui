@@ -22,6 +22,6 @@ export class DateDisplayPipe implements PipeTransform {
         const timeDiff = now.getTime() - toRender.getTime() 
         const dayDiff = timeDiff / (1000 * 3600 * 24)
         if(dayDiff < 1) return toRender.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric'})
-        return toRender.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' })
+        return toRender.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: '2-digit' })
     }
 }
