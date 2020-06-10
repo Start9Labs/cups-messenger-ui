@@ -135,7 +135,10 @@ export class MessagesPage implements OnInit {
         let diff = this.oldHeight - window.innerHeight
         this.oldHeight = window.innerHeight
 
-        this.contentComponent.scrollByPoint(0, diff, 100)
+        if(!this.isAtBottom()){
+            console.log(`Scrolling`)
+            this.contentComponent.scrollByPoint(0, diff, 100)
+        }
     }
 
     initialMessageLoad(){

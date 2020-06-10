@@ -35,14 +35,18 @@ export class AuthState {
         }
 
         if((window as any).platform) {
-            const shellPassword = await getContext().getConfigValue(['password'], 5000)
+            try{
+                const shellPassword = await getContext().getConfigValue(['password'], 5000)
 
-            Log.debug('Retreived shell password', shellPassword, LogTopic.AUTH)
-            if(shellPassword){
-                await this.storage.set('password', shellPassword)
-                this.password = shellPassword
-                this.$status$.next(AuthStatus.VERIFIED)
-                return
+                Log.debug('Retreived shell password', shellPassword, LogTopic.AUTH)
+                if(shellPassword){
+                    await this.storage.set('password', shellPassword)
+                    this.password = shellPassword
+                    this.$status$.next(AuthStatus.VERIFIED)
+                    return
+                }
+            } catch (e){
+                Log.error('Error in retrieving shell pw: ' + e)
             }
         }
 
