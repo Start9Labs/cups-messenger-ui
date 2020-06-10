@@ -106,7 +106,6 @@ export class MessagesPage implements OnInit {
 
         this.app.emitCurrentContact$.pipe(take(1)).subscribe(c => { 
             this.contact = c 
-            console.log(`in ngonit?`)
             this.app.dredgeMessageState(c).subscribe()
         })
         // html will subscribe to this to get message additions/updates

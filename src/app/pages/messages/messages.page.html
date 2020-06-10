@@ -1,6 +1,6 @@
 <ion-header translucent>
     <ion-toolbar>
-        <ion-buttons *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
+        <div *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
             <ion-back-button color="primary" (click)="toContacts()"></ion-back-button>
             <div style="
                 display: grid;
@@ -23,7 +23,7 @@
             <ion-button fill="clear" color="primary" (click)="toProfile()">
                 Edit
             </ion-button>
-        </ion-buttons>
+        </div>
     </ion-toolbar>
 </ion-header>
 

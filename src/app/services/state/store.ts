@@ -3,6 +3,7 @@ import { Observable, from, of } from 'rxjs'
 
 import { Storage } from '@ionic/storage'
 
+/* Pass through class to @ionic/storage in case we need to swap implementations or make uniform storage changes */
 @Injectable({
   providedIn: 'root',
 })
