@@ -27,7 +27,6 @@ export class LiveCupsMessenger {
     }
 
     contactsShow(loginTestPassword: string): ObservableOnce<ContactWithMessageMeta[]> {
-        
         return withTimeout(this.http.get(this.hostUrl, {
             params: {
                 type: 'users',
@@ -37,7 +36,7 @@ export class LiveCupsMessenger {
             responseType: 'arraybuffer'
         }).pipe(
             catchError(e => {
-                console.error('We have ourselves an error here...', JSON.stringify(e))
+                console.error('We have ourselves an error here...', e)
                 console.error('We have ourselves an error here...', e.status)
                 if(e.status === 401){ this.authState.logout$() }
                 throw e
