@@ -110,6 +110,7 @@ export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
     }
 }
 
+// dope
 export function fromAsyncFunction<T, S>( f: (s: S) => Promise<T>, s?: S): Observable<T>{
     return from(f(s))
 }

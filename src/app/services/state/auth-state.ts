@@ -1,4 +1,4 @@
-import { Observable, from, concat } from 'rxjs'
+import { Observable, from } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
 import { LogBehaviorSubject, fromAsyncFunction } from 'src/rxjs/util'
 import { LogLevel, LogTopic, runningOnNativeDevice } from 'src/app/config'
@@ -34,7 +34,7 @@ export class AuthState {
     
     attemptLogin$(): Observable<{}> {
         return fromAsyncFunction(async () => {
-            /* First check if password is in storage from previous login */
+            // First check if password is in storage from previous login
             const storagePassword = await this.storage.get('password')
             Log.debug('password retreive attempt from local storage', storagePassword, LogTopic.AUTH)
             
@@ -44,13 +44,13 @@ export class AuthState {
                 return
             }
 
-            /* If we're running on web, there must be a password in storage so... */
+            // If we're running on web, there must be a password in storage so...
             if(!runningOnNativeDevice()){
                 this.$status$.next(AuthStatus.UNVERIFED)
                 return
             }
             
-            /* On a mobile device, we might have come in from the shell */
+            // On a mobile device, we might have come in from the shell
             let shellPassword = undefined 
             try{
                 shellPassword = await getContext().getConfigValue(['password'], 5000)

@@ -31,13 +31,13 @@ export class ProfilePage {
         this.contactName = this.app.currentContact.name
     }
 
-    async save(c: Contact) {
+    async save(contact: Contact) {
         const sanitizedName = sanitizeName(this.contactName)
         overlayLoader(
-            of({...c, name: sanitizedName}).pipe(
-                map(c1 => {if (c1.name === c.name) throw new Error('Name unchanged.'); return c1}),
-                concatMap(c2 => this.cups.contactsAdd(c2)),
-                concatMap(c3 => this.app.replaceCurrentContact$(c3)),
+            of({...contact, name: sanitizedName}).pipe(
+                map(c => {if (c.name === contact.name) throw new Error('Name unchanged.'); return c}),
+                concatMap(c => this.cups.contactsAdd(c)),
+                concatMap(c => this.app.replaceCurrentContact$(c)),
                 concatMap(() => this.stateIngestion.refreshContacts()),
             ), this.loadingCtrl, 'Updating name...'
         ).subscribe({

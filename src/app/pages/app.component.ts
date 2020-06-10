@@ -40,9 +40,11 @@ export class AppComponent {
                     } else {
                         this.navCtrl.navigateRoot('signin')
                     }
-                } break
+                    break
+                } 
                 case AuthStatus.VERIFIED: {
                     this.navCtrl.navigateRoot('contacts')
+                    break
                 }
             }
         })

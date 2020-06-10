@@ -58,7 +58,7 @@ export class MessagesPage implements OnInit {
 
     // These will be unsubbed on ngOnDestroy
     private subsToTeardown: Subscription[] = []
-
+    private renderedMessageCount = 0
     oldHeight: number
 
     constructor(
@@ -103,7 +103,7 @@ export class MessagesPage implements OnInit {
 
         this.app.emitCurrentContact$.pipe(take(1)).subscribe(c => { 
             this.contact = c 
-            this.app.dredgeMessageState(c).subscribe()
+            this.app.pullMessageStateFromStore(c).subscribe()
         })
         // html will subscribe to this to get message additions/updates
 
@@ -113,6 +113,8 @@ export class MessagesPage implements OnInit {
                 this.app.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
             ),
             tap(messages => {
+                this.renderedMessageCount = messages.length
+
                 const { updatedNewest } = this.updateRenderedMessageBoundary(
                     messages.filter(server)
                 )
@@ -136,7 +138,6 @@ export class MessagesPage implements OnInit {
         this.oldHeight = window.innerHeight
 
         if(!this.isAtBottom()){
-            console.log(`Scrolling`)
             this.contentComponent.scrollByPoint(0, diff, 100)
         }
     }
@@ -144,23 +145,21 @@ export class MessagesPage implements OnInit {
     initialMessageLoad(){
         const c = this.contact
         const lastMessage = c.lastMessages[0]
-        const justOneMessage = this.newestRendered === this.oldestRendered
-        let loader: Subject<boolean>
-        let options: ShowMessagesOptions
-        
-        //we have last message from contacts call, but have yet to make call for messages.
-        if(lastMessage && justOneMessage){ 
-            loader = this.$previousMessagesLoading$
-            options = { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
+    
+        /* 
+            If we have fewer than loadMesageBatchSize messages on the screen, but we know there's nothing more recent, 
+            we attempt to get up to loadMesageBatchSize messages from the past. Otherwise we fetch newer messages.
+        */
+        if(c.unreadMessages === 0 && lastMessage && this.renderedMessageCount < config.loadMesageBatchSize){ 
+            return nonBlockingLoader(
+                this.stateIngestion.refreshMessages(c, 
+                    { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
+                ), 
+                this.$previousMessagesLoading$
+            )
         } else {
-            loader = this.$newMessagesLoading$
-            options = {}
+            return this.stateIngestion.refreshMessages(c, {})
         }
-
-        return nonBlockingLoader(
-            this.stateIngestion.refreshMessages(c, options), 
-            loader
-        )
     }
     
     // Triggered by enabled infinite scroll
@@ -218,7 +217,7 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        this.app.replaceContactMessages$({contact, messages: [message]}).pipe(
+        this.app.forceMessagesUpdate$({contact, messages: [message]}).pipe(
             tap(() => this.$jumping$.next(true)), 
             delay(150)
         ).subscribe(() => this.jumpToBottom())

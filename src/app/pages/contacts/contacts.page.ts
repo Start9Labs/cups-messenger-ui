@@ -29,13 +29,14 @@ export class ContactsPage implements OnInit {
         private readonly alertCtrl: AlertController,
         readonly app: AppState
     ) {
+        // By calling $forceRerender$.next, we force app.emitContacts$ to emit again getting most up to date info
         this.contacts$ = combineLatest([this.$forceRerender$, this.app.emitContacts$]).pipe(
             map(([_,cs]) => cs.sort(byMostRecentMessage))
         )
     }
 
     ngOnInit(){
-        this.app.dredgeContactState().subscribe()
+        this.app.pullContactStateFromStore().subscribe()
         const alreadyHasContacts = this.app.hasLoadedContactsFromBrowserLogin 
         if(!alreadyHasContacts){
             nonBlockingLoader(
@@ -44,6 +45,7 @@ export class ContactsPage implements OnInit {
         }
     }
 
+    // We want to get up to date contacts immediately even if navigating back to this page from messages
     ionViewWillEnter() {
         this.$forceRerender$.next({})
     }
@@ -62,9 +64,7 @@ export class ContactsPage implements OnInit {
     }
 
     toNewContactPage(){
-        this.zone.run(() => {
-            this.navController.navigateForward('new-contact')
-        })
+        this.navController.navigateForward('new-contact')
     }
 
     deleteContact(c: Contact){

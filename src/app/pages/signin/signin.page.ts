@@ -38,8 +38,7 @@ export class SigninPage {
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
     ).subscribe({
       next: () => { 
-        console.log('passsss ' + pass)
-        this.authState.login$(pass).subscribe(console.log)
+        this.authState.login$(pass).subscribe(() => Log.info(`Logged in.`))
         this.app.hasLoadedContactsFromBrowserLogin = false
       },
       error: (e) => {

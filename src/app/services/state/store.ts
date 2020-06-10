@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core'
 import { Observable, from } from 'rxjs'
 import { Storage } from '@ionic/storage'
+import { map } from 'rxjs/operators'
 
 /* Pass through class to @ionic/storage in case we need to swap implementations or make uniform storage changes */
 @Injectable({
@@ -11,8 +12,8 @@ export class Store {
       private readonly storage: Storage
   ) {}
 
-  getValue$(key: string): Observable<any> {
-    return from(this.storage.get(key))
+  getValue$<T>(key: string, fallback?: T): Observable<T> {
+    return from(this.storage.get(key)).pipe(map(v => v || fallback))
   }
 
   deleteValue$(key: string): Observable<any> {

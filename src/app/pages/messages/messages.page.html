@@ -1,6 +1,6 @@
 <ion-header translucent>
     <ion-toolbar>
-        <ion-buttons *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
+        <div *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
             <ion-back-button color="primary" [defaultHref]="['/contacts']"></ion-back-button>
             <div style="
                 display: grid;

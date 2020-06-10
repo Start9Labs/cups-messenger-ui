@@ -30,12 +30,10 @@ export class StateIngestionService {
     ){
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
             Log.info(`navigated to`, e, LogTopic.NAV)
-            console.log(`Filter2`, e + (new Date()).toLocaleTimeString())
             this.page = e.url as Page
         })
 
         this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((e: NavigationEnd) => {
-            console.log(`FILTER`, e)
             if(e.url === Page.CONTACTS && runningOnNativeDevice()) {
               getContext().childReady()
             }

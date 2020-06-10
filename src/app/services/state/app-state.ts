@@ -1,6 +1,6 @@
 import { Observable, NextObserver, of } from 'rxjs'
 import { ContactWithMessageMeta, Message, Contact, OutboundMessage } from '../cups/types'
-import { filter, take, distinctUntilChanged, map, concatMap, tap } from 'rxjs/operators'
+import { filter, take, distinctUntilChanged, map, concatMap, tap, mapTo } from 'rxjs/operators'
 import { exists, LogBehaviorSubject, alterState as replaceState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T } from 'src/app/config'
 import { MessageStore } from './message-store'
@@ -40,8 +40,8 @@ export class AppState {
     emitMessages$: (tor: string) => Observable<Message[]>
 
     // tslint:disable-next-line: member-ordering
-    static readonly CONTACTS_KEY = 'contacts'
-    static readonly MESSAGES_KEY = (tor: string) => `${tor}-messages`
+    static readonly CONTACTS_STORE_KEY = 'contacts'
+    static readonly MESSAGES_STORE_KEY = (tor: string) => `${tor}-messages`
 
     constructor(
         private readonly store: Store,
@@ -55,7 +55,7 @@ export class AppState {
         this.$ingestCurrentContact = Private.$currentContact$
         this.$ingestContacts = {
             next: cs => { 
-                this.store.setValue$(AppState.CONTACTS_KEY, cs).subscribe()
+                this.store.setValue$(AppState.CONTACTS_STORE_KEY, cs).subscribe()
                 Private.$contacts$.next(cs)
                 cs.filter(c => c.lastMessages[0]).forEach(c => {
                     this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
@@ -66,7 +66,7 @@ export class AppState {
         }
         this.$ingestMessages = {
             next: ({contact, messages}) => {
-                this.store.setValue$(AppState.MESSAGES_KEY(contact.torAddress), messages).subscribe()
+                this.store.setValue$(AppState.MESSAGES_STORE_KEY(contact.torAddress), messages).subscribe()
                 this.messagesFor(contact.torAddress).$ingestMessages(messages)
             },
             complete: () => console.error(`Critical: message observer completed`),
@@ -74,19 +74,18 @@ export class AppState {
         }
     }
 
-    dredgeContactState(): Observable<ContactWithMessageMeta[]> {
-        return this.store.getValue$(AppState.CONTACTS_KEY).pipe(concatMap(cs => {
+    pullContactStateFromStore(): Observable<{}> {
+        return this.store.getValue$(AppState.CONTACTS_STORE_KEY, []).pipe(tap(cs => {
             Log.debug(`dredging contacts`, cs)
-            this.$ingestContacts.next(cs || [])
-            return this.emitContacts$.pipe(take(1))
-        }))
+            this.$ingestContacts.next(cs)
+        }), mapTo({}))
     }
 
-    dredgeMessageState(c: Contact): Observable<{}> {
-        return this.store.getValue$(AppState.MESSAGES_KEY(c.torAddress)).pipe(tap(ms => {
+    pullMessageStateFromStore(c: Contact): Observable<{}> {
+        return this.store.getValue$(AppState.MESSAGES_STORE_KEY(c.torAddress), []).pipe(tap(ms => {
             Log.debug(`dredging messages for ${c.name || c.torAddress}`, ms)
             this.$ingestMessages.next({contact: c, messages: ms})
-        }))
+        }), mapTo({}))
     }
 
     // clears in memory state
@@ -110,7 +109,7 @@ export class AppState {
     }
 
     //Replace current contact with c, emits when complete
-    replaceContactMessages$(newState: {contact: Contact, messages: Message[]}): Observable<Message[]> {
+    forceMessagesUpdate$(newState: {contact: Contact, messages: Message[]}): Observable<Message[]> {
         this.$ingestMessages.next(newState)
         return this.emitMessages$(newState.contact.torAddress).pipe(take(1))
     }
