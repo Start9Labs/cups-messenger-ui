@@ -1,7 +1,7 @@
 <ion-header translucent>
     <ion-toolbar>
         <ion-buttons *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
-            <ion-back-button color="primary" (click)="toContacts()"></ion-back-button>
+            <ion-back-button color="primary" [defaultHref]="['/contacts']"></ion-back-button>
             <div style="
                 display: grid;
                 justify-items: center;
@@ -9,7 +9,7 @@
                 padding: 0 10px;"
             >
             <ion-avatar style="width: 36px; height: 36px" [class.item-avatar]="!(unreads$ | async)" [class.item-avatar-unreads]="(unreads$ | async)">
-                <text-avatar [text]='contact | truncateEllipses:12'></text-avatar>
+                <text-avatar [text]='contact.name || contact.torAddress'></text-avatar>
             </ion-avatar>
             <ion-title style="
                 position: unset; 
@@ -17,7 +17,7 @@
                 overflow: hidden;
                 font-size: 12px;
             ">
-                {{contact.name || contact.torAddress}}
+                {{contact | truncateEllipses:12}}
             </ion-title>
             </div>
             <ion-button fill="clear" color="primary" (click)="toProfile()">
