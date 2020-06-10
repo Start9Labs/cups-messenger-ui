@@ -1,6 +1,6 @@
 <ion-header translucent>
     <ion-toolbar>
-        <ion-buttons *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
+        <div *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
             <ion-back-button color="primary" [defaultHref]="['/contacts']"></ion-back-button>
             <div style="
                 display: grid;
@@ -23,18 +23,12 @@
             <ion-button fill="clear" color="primary" (click)="toProfile()">
                 Edit
             </ion-button>
-        </ion-buttons>
+        </div>
     </ion-toolbar>
 </ion-header>
 
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" (window:resize)="handleResize()">
     <ion-list id="chat"  *ngIf="(app.emitCurrentContact$ | async) as contact">
-        <div *ngIf="$newMessagesLoading$ | async" style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
-            <ion-item lines="none">
-                <ion-spinner name="crescent"></ion-spinner>
-            </ion-item>
-        </div>
-
         <div id="end-of-scroll"></div>         
         <div *ngFor="let message of (messagesForDisplay$ | async)">
             <div id="{{message.id}}" class="left-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
@@ -62,7 +56,6 @@
                 <div style="font-size: 12px" (click)="retry(contact, message)">
                     RETRY 
                 </div>
-
             </div>
         </div>
         <div id="start-of-scroll"></div>
@@ -70,16 +63,8 @@
         <div style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
             <ion-item lines="none">
                 <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
-                <div *ngIf="$hasAllOldMessages$ | async" style="display: flex; flex-flow: column;">
-                    <div style="display: flex; justify-content: center; align-items: center;">
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                    </div>
-                    <div style="display: flex; justify-content: center; align-items: center;">
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                        <ion-icon color="medium" name="stop-outline"></ion-icon>
-                    </div>
-                    <ion-text color="success" style="padding: 10px">No Older Messages</ion-text>
+                <div *ngIf="$hasAllOldMessages$ | async">
+                    <ion-text color="success" style="padding: 10px; font-size: small">No Older Messages</ion-text>
                 </div>
             </ion-item>
         </div>

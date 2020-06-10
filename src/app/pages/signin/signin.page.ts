@@ -5,6 +5,7 @@ import { AuthState } from '../../services/state/auth-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { overlayLoader } from 'src/rxjs/util'
 import { Log } from 'src/app/log'
+import { AppState } from 'src/app/services/state/app-state'
 
 @Component({
   selector: 'app-signin',
@@ -19,6 +20,7 @@ export class SigninPage {
     private readonly loadingCtrl: LoadingController,
     private readonly stateIngestion: StateIngestionService,
     private readonly authState: AuthState,
+    readonly app: AppState,
   ) { }
 
   async enterCupsMessengerPassword() {
@@ -35,7 +37,10 @@ export class SigninPage {
     overlayLoader(
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
     ).subscribe({
-      next: () => this.authState.setPassword(pass),
+      next: () => { 
+        this.authState.login$(pass).subscribe(() => Log.info(`Logged in.`))
+        this.app.hasLoadedContactsFromBrowserLogin = false
+      },
       error: (e) => {
         Log.error(`Error on login`, e)
         this.$error$.next(`Invalid Password`)

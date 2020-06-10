@@ -1,12 +1,12 @@
-import { Observable } from 'rxjs'
+import { Observable, from } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
-import { LogBehaviorSubject } from 'src/rxjs/util'
-import { LogLevel, LogTopic } from 'src/app/config'
+import { LogBehaviorSubject, fromAsyncFunction } from 'src/rxjs/util'
+import { LogLevel, LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { Log } from 'src/app/log'
-import { pauseFor } from '../cups/types'
 import { Storage } from '@ionic/storage'
-import { distinctUntilChanged } from 'rxjs/operators'
+import { distinctUntilChanged, concatMap, take } from 'rxjs/operators'
 import { Injectable } from '@angular/core'
+import { AppState } from './app-state'
 
 export enum AuthStatus {
     UNVERIFED, VERIFIED
@@ -16,56 +16,66 @@ export enum AuthStatus {
   providedIn: 'root',
 })
 export class AuthState {
+    readonly emitStatus$: Observable<AuthStatus>
     password: string = undefined
     private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })
 
     constructor(
         private readonly storage: Storage,
-    ) {}
-    
-    async retrievePassword(): Promise<void> {
-        const p = await this.storage.get('password')
-        
-        Log.debug('password retreived from local storage', p, LogTopic.AUTH)
-
-        if(p){
-            this.password = p
-            this.$status$.next(AuthStatus.VERIFIED)
-            return
-        }
-
-        if((window as any).platform) {
-            try{
-                const shellPassword = await getContext().getConfigValue(['password'], 5000)
-
-                Log.debug('Retreived shell password', shellPassword, LogTopic.AUTH)
-                if(shellPassword){
-                    await this.storage.set('password', shellPassword)
-                    this.password = shellPassword
-                    this.$status$.next(AuthStatus.VERIFIED)
-                    return
-                }
-            } catch (e){
-                Log.error('Error in retrieving shell pw: ' + e)
-            }
-        }
-
-        this.$status$.next(AuthStatus.UNVERIFED)
-    }
-
-    emitStatus$(): Observable<AuthStatus> {
-        return this.$status$.asObservable().pipe(distinctUntilChanged())
+        readonly app: AppState
+    ) {
+        this.emitStatus$ = this.$status$.asObservable().pipe(distinctUntilChanged())
     }
 
     // called from signin page via tor browser after validating against the backend
-    async setPassword(p: string): Promise<void> {
-        await this.storage.set('password', p)
-        this.retrievePassword()
+    login$(p: string): Observable<{}> {
+        return from(this.storage.set('password', p)).pipe(concatMap(() => this.attemptLogin$()))
+    }
+    
+    attemptLogin$(): Observable<{}> {
+        return fromAsyncFunction(async () => {
+            // First check if password is in storage from previous login
+            const storagePassword = await this.storage.get('password')
+            Log.debug('password retreive attempt from local storage', storagePassword, LogTopic.AUTH)
+            
+            if(storagePassword){
+                this.password = storagePassword
+                this.$status$.next(AuthStatus.VERIFIED)
+                return
+            }
+
+            // If we're running on web, there must be a password in storage so...
+            if(!runningOnNativeDevice()){
+                this.$status$.next(AuthStatus.UNVERIFED)
+                return
+            }
+            
+            // On a mobile device, we might have come in from the shell
+            let shellPassword = undefined 
+            try{
+                shellPassword = await getContext().getConfigValue(['password'], 5000)
+            } catch (e) {
+                Log.error('getConfigValue password exception: ', e)
+            }
+            
+            Log.debug('password retrieve attempt from shell', shellPassword, LogTopic.AUTH)
+
+            if(!shellPassword){
+                this.$status$.next(AuthStatus.UNVERIFED)
+                return
+            }
+
+            await this.storage.set('password', shellPassword)
+            this.password = shellPassword
+            this.$status$.next(AuthStatus.VERIFIED)
+            return {}
+        })
     }
 
-    async clearPassword(): Promise<void> {
-        await this.storage.remove('password')
+    logout$(): Observable<{}> {
         this.password = undefined
         this.$status$.next(AuthStatus.UNVERIFED)
+        this.app.wipeState()
+        return from(this.storage.remove('password'))
     }
 }

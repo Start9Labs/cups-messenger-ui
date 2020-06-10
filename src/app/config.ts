@@ -68,3 +68,7 @@ export const config: Config = {
 function removeOnionForAndroid(addr: string): string {
     return addr.endsWith('.onion.onion') ? addr.substr(0, addr.length - 6) : addr
 }
+
+export function runningOnNativeDevice(): boolean {
+    return !!(window as any).platform
+}

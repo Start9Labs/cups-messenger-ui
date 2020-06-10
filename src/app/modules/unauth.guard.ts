@@ -14,7 +14,7 @@ export class UnauthGuard implements CanActivate {
     private readonly router: Router,
     private readonly authState: AuthState,
   ) {
-    this.authState.emitStatus$().subscribe(s => {
+    this.authState.emitStatus$.subscribe(s => {
         Log.trace('Auth subscriber: UnauthGurad', AuthStatus[s], LogTopic.AUTH)
         switch (s){
             case AuthStatus.UNVERIFED: this.enabled = true; return

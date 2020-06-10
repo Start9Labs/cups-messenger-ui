@@ -4,10 +4,10 @@ import { LoadingController, NavController } from '@ionic/angular'
 import { of, BehaviorSubject } from 'rxjs'
 import { map, concatMap, tap } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
-import { App } from '../../services/state/app-state'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { sanitizeName } from 'src/app/update-contact-util'
 import { overlayLoader } from 'src/rxjs/util'
+import { AppState } from 'src/app/services/state/app-state'
 
 @Component({
   selector: 'profile',
@@ -15,7 +15,6 @@ import { overlayLoader } from 'src/rxjs/util'
   styleUrls: ['profile.page.scss'],
 })
 export class ProfilePage {
-    app = App
     contactName = ''
     $error$ = new BehaviorSubject<string>(undefined)
 
@@ -24,20 +23,21 @@ export class ProfilePage {
         private readonly nav: NavController,
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
-        private readonly stateIngestion: StateIngestionService
+        private readonly stateIngestion: StateIngestionService,
+        readonly app: AppState
     ) { }
 
     ngOnInit () {
-        this.contactName = App.currentContact.name
+        this.contactName = this.app.currentContact.name
     }
 
-    async save(c: Contact) {
+    async save(contact: Contact) {
         const sanitizedName = sanitizeName(this.contactName)
         overlayLoader(
-            of({...c, name: sanitizedName}).pipe(
-                map(c2 => {if (c2.name === c.name) throw new Error('Name unchanged.'); return c2}),
-                concatMap(c2 => this.cups.contactsAdd(c2)),
-                concatMap(c2 => App.alterCurrentContact$(c2)),
+            of({...contact, name: sanitizedName}).pipe(
+                map(c => {if (c.name === contact.name) throw new Error('Name unchanged.'); return c}),
+                concatMap(c => this.cups.contactsAdd(c)),
+                concatMap(c => this.app.replaceCurrentContact$(c)),
                 concatMap(() => this.stateIngestion.refreshContacts()),
             ), this.loadingCtrl, 'Updating name...'
         ).subscribe({
