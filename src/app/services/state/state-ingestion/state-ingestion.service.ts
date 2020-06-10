@@ -7,10 +7,12 @@ import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
 import { ShowMessagesOptions } from '../../cups/live-messenger'
-import { suppressErrorOperator } from 'src/rxjs/util'
+import { suppressErrorOperator, LogBehaviorSubject } from 'src/rxjs/util'
 import { Router, NavigationStart, NavigationEnd } from '@angular/router'
 import { AuthState, AuthStatus } from '../auth-state'
 import { getContext } from 'ambassador-sdk'
+import { Platform } from '@ionic/angular'
+import { BackgroundingService } from '../../backgrounding-service'
 
 enum Page {
     CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
@@ -19,13 +21,14 @@ enum Page {
 @Injectable({providedIn: 'root'})
 export class StateIngestionService {
     private page: Page
-    private contactsCooldown: Subscription
-    private messagesCooldown: Subscription
+    private contactsCooldown: Subscription = undefined
+    private messagesCooldown: Subscription = undefined
 
     constructor(
       private readonly cups: CupsMessenger,
       private readonly router: Router,
       private readonly authState: AuthState,
+      private readonly backgroundingService: BackgroundingService,
       readonly appState: AppState,
     ){
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
@@ -37,6 +40,16 @@ export class StateIngestionService {
             if(e.url === Page.CONTACTS && runningOnNativeDevice()) {
               getContext().childReady()
             }
+        })
+
+        this.backgroundingService.onPause(() => {
+            console.log('FILTER: paused')
+            this.shutdown()
+        })
+
+        this.backgroundingService.onResume(() => {
+            console.log('FILTER: resumed')
+            this.init()
         })
     }
 
@@ -90,8 +103,12 @@ export class StateIngestionService {
     }
 
     shutdown(){
-        if(this.contactsCooldown) this.contactsCooldown.unsubscribe()
-        if(this.messagesCooldown) this.messagesCooldown.unsubscribe()
+        if(this.contactsCooldown) { 
+            this.contactsCooldown.unsubscribe()
+        }
+        if(this.messagesCooldown) { 
+            this.messagesCooldown.unsubscribe()
+        }
     }
 
     private startContactsCooldownSub(){        
@@ -106,8 +123,11 @@ export class StateIngestionService {
                 concatMap(
                     () => acquireContacts(this.cups)
                 ),
-                suppressErrorOperator('acquire contacts')
-            ).subscribe(this.appState.$ingestContacts)
+            ).subscribe({ 
+                next: cs => this.appState.$ingestContacts.next(cs),
+                complete: () => { Log.error(`Critical: contacts observer completed`, {}, LogTopic.CONTACTS); this.init() },
+                error: e => { Log.error('Critical: contacts observer errored', e, LogTopic.CONTACTS); this.init() }
+            })
     }
 
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
@@ -126,11 +146,12 @@ export class StateIngestionService {
                         concatMap(
                             () => acquireMessages(this.cups, contact)
                         ),
-                        suppressErrorOperator('acquire messages')
                     )
                 }),
-            ).subscribe(ms =>{
-                this.appState.$ingestMessages.next(ms)
+            ).subscribe({
+                next: ms => this.appState.$ingestMessages.next(ms),
+                complete: () => { Log.error(`Critical: messages observer completed`, {}, LogTopic.MESSAGES); this.init() },
+                error: e => { Log.error('Critical: messages observer errored', e, LogTopic.MESSAGES); this.init() }
             })
     }
 

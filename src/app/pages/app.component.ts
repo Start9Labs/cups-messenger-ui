@@ -35,11 +35,14 @@ export class AppComponent {
         this.zone.run(() => {
             switch (s) {
                 case AuthStatus.UNVERIFED: {
-                    if(runningOnNativeDevice()){
-                        getContext().close()
-                    } else {
-                        this.navCtrl.navigateRoot('signin')
-                    }
+                    this.store.clear$().subscribe(() => {
+                        if(runningOnNativeDevice()){
+                            getContext().close()
+                        } else {
+                            this.navCtrl.navigateRoot('signin')
+                        }
+                    })
+                    
                     break
                 } 
                 case AuthStatus.VERIFIED: {

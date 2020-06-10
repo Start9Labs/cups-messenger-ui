@@ -61,16 +61,12 @@ export class AppState {
                     this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
                 })
             },
-            complete: () => console.error(`Critical: contacts observer completed`),
-            error: e => console.error('Critical: contacts observer errored', e)
         }
         this.$ingestMessages = {
             next: ({contact, messages}) => {
                 this.store.setValue$(AppState.MESSAGES_STORE_KEY(contact.torAddress), messages).subscribe()
                 this.messagesFor(contact.torAddress).$ingestMessages(messages)
             },
-            complete: () => console.error(`Critical: message observer completed`),
-            error: e => console.error('Critical: message observer errored', e)
         }
     }
 
