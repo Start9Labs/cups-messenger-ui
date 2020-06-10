@@ -223,7 +223,7 @@ export class MessagesPage implements OnInit {
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.alterContactMessages$({contact, messages: [message]}).pipe(tap(() => this.$jumping$.next(true)), delay(150)).subscribe(() =>
+        App.replaceContactMessages$({contact, messages: [message]}).pipe(tap(() => this.$jumping$.next(true)), delay(150)).subscribe(() =>
             this.jumpToBottom()
         )
 

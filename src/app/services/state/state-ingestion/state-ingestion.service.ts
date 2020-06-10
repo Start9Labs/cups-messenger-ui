@@ -1,4 +1,4 @@
-import { config, LogTopic } from 'src/app/config'
+import { config, LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
 import { Subscription, Observable, timer } from 'rxjs'
 import { concatMap, switchMap, map, tap, filter, withLatestFrom } from 'rxjs/operators'
@@ -34,7 +34,7 @@ export class StateIngestionService {
 
         this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((e: NavigationEnd) => {
             console.log(`FILTER`, e)
-            if(e.url === Page.CONTACTS && (window as any).platform) {
+            if(e.url === Page.CONTACTS && runningOnNativeDevice()) {
               getContext().childReady()
             }
         })
@@ -100,7 +100,7 @@ export class StateIngestionService {
         
         this.contactsCooldown =
             timer(0, config.contactsDaemon.frequency).pipe(
-                withLatestFrom(this.authState.emitStatus$()),
+                withLatestFrom(this.authState.emitStatus$),
                 filter(([_, s]) => s === AuthStatus.VERIFIED),
                 tap(i => Log.debug('running contacts', i, LogTopic.CONTACTS)),
                 concatMap(

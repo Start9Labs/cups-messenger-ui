@@ -37,7 +37,7 @@ export class ProfilePage {
             of({...c, name: sanitizedName}).pipe(
                 map(c2 => {if (c2.name === c.name) throw new Error('Name unchanged.'); return c2}),
                 concatMap(c2 => this.cups.contactsAdd(c2)),
-                concatMap(c2 => App.alterCurrentContact$(c2)),
+                concatMap(c2 => App.replaceCurrentContact$(c2)),
                 concatMap(() => this.stateIngestion.refreshContacts()),
             ), this.loadingCtrl, 'Updating name...'
         ).subscribe({

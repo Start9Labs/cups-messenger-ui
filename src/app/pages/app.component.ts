@@ -5,7 +5,7 @@ import { StateIngestionService } from '../services/state/state-ingestion/state-i
 import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
-import { LogTopic } from '../config'
+import { LogTopic, runningOnNativeDevice } from '../config'
 
 @Component({
   selector: 'app-root',
@@ -22,16 +22,14 @@ export class AppComponent {
 
     ngOnInit(){
         this.stateIngestion.init()
-        this.authState.retrievePassword().then(() => {
-            this.authState.emitStatus$().subscribe(s => this.handleAuthChange(s))
-        })
+        this.authState.attemptLogin$().subscribe(s => this.handleAuthChange(s))
     }
 
     handleAuthChange(s: AuthStatus){
         this.zone.run(() => {
             switch (s) {
                 case AuthStatus.UNVERIFED: {
-                    if((window as any).platform){
+                    if(runningOnNativeDevice()){
                         Log.debug('Unverified: Popping out to shell', getContext(), LogTopic.AUTH)
                         getContext().close()
                     } else {

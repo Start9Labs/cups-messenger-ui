@@ -35,7 +35,7 @@ export class SigninPage {
     overlayLoader(
       this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
     ).subscribe({
-      next: () => this.authState.setPassword(pass),
+      next: () => this.authState.login$(pass),
       error: (e) => {
         Log.error(`Error on login`, e)
         this.$error$.next(`Invalid Password`)

@@ -39,7 +39,7 @@ export class LiveCupsMessenger {
             catchError(e => {
                 console.error('We have ourselves an error here...', JSON.stringify(e))
                 console.error('We have ourselves an error here...', e.status)
-                if(e.status === 401){ this.authState.clearPassword() }
+                if(e.status === 401){ this.authState.logout$() }
                 throw e
             })
         )).pipe(

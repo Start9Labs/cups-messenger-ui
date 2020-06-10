@@ -35,7 +35,7 @@ export class NewContactPage implements OnInit {
   }
 
   wipeCurrentContact(){
-    App.alterCurrentContact$(undefined)
+    App.replaceCurrentContact$(undefined)
   }
 
   async save() {
