@@ -43,12 +43,12 @@ export class StateIngestionService {
         })
 
         this.backgroundingService.onPause(() => {
-            console.log('FILTER: paused')
+            Log.debug('Shutting down daemons due to pause')
             this.shutdown()
         })
 
         this.backgroundingService.onResume(() => {
-            console.log('FILTER: resumed')
+            Log.debug('Restarting daemons due to resume')
             this.init()
         })
     }

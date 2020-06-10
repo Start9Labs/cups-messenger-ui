@@ -1,6 +1,11 @@
 import { Log } from '../log'
 import { Injectable } from '@angular/core'
 
+/* 
+    platform.ready + pause events do not fire for web apps in a mobile browser (when e.g. the browser is backgrounded).
+    We achieve the same functionality here by relying on the page visibility api: 
+    https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API 
+*/
 @Injectable({
     providedIn: 'root',
 })
@@ -12,7 +17,7 @@ export class BackgroundingService {
     pauseCallbacks = []
     resumeCallbacks = []
 
-    constructor() {
+    constructor() {    
         // Set the name of the hidden property and the change event for visibility
         if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support 
             this.hiddenKey = 'hidden'
@@ -25,24 +30,21 @@ export class BackgroundingService {
             this.visibilityChangeKey = 'webkitvisibilitychange'
         }
     
-
         // Handle page visibility change   
         document.addEventListener(this.visibilityChangeKey, () => this.handleVisibilityChange(), false)
     }
 
 
     handleVisibilityChange() {
-        console.log('FILTER: visibility change')
+        Log.debug('Visibility changed. [previously hidden, now hidden]', [this.hidden, document[this.hiddenKey]] )
         if(document[this.hiddenKey] === this.hidden) return
-
         this.hidden = document[this.hiddenKey]
-        console.log('FILTER: this.hidden', this.hidden)
-
-        if (this.hidden) {
-            console.log('FILTER: hidden')
+        
+        if (document[this.hiddenKey]) {
+            Log.debug('Executing pause callbacks')
             this.pauseCallbacks.forEach(pc => pc())
         } else {
-            console.log('FILTER: visibile')
+            Log.debug('Executing resume callbacks')
             this.resumeCallbacks.forEach(rc => rc())
         }
     }
@@ -60,7 +62,7 @@ export class BackgroundingService {
     }
 
     onResume(rc: () => void){
-        this.pauseCallbacks.push(
+        this.resumeCallbacks.push(
             () => {
                 try{
                     rc()
