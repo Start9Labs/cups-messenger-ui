@@ -23,6 +23,11 @@ ion-list {
     white-space: pre-line;
     background: none;
     text-align: left;
+    // enable copy to clipboard
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
 
 .submit {

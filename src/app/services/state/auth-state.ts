@@ -51,7 +51,13 @@ export class AuthState {
             }
             
             /* On a mobile device, we might have come in from the shell */
-            const shellPassword = await getContext().getConfigValue(['password'], 5000)
+            let shellPassword = undefined 
+            try{
+                shellPassword = await getContext().getConfigValue(['password'], 5000)
+            } catch (e) {
+                Log.error('getConfigValue password exception: ', e)
+            }
+            
             Log.debug('password retrieve attempt from shell', shellPassword, LogTopic.AUTH)
 
             if(!shellPassword){

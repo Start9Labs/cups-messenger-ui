@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ViewChild } from '@angular/core'
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
@@ -63,7 +63,6 @@ export class MessagesPage implements OnInit {
 
     constructor(
         private readonly nav: NavController,
-        private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
         readonly app: AppState,
@@ -136,7 +135,10 @@ export class MessagesPage implements OnInit {
         let diff = this.oldHeight - window.innerHeight
         this.oldHeight = window.innerHeight
 
-        this.contentComponent.scrollByPoint(0, diff, 100)
+        if(!this.isAtBottom()){
+            console.log(`Scrolling`)
+            this.contentComponent.scrollByPoint(0, diff, 100)
+        }
     }
 
     initialMessageLoad(){
@@ -187,15 +189,7 @@ export class MessagesPage implements OnInit {
 
     /* Navigation Buttons */
     toProfile(){
-        this.zone.run(() => {
-            this.nav.navigateForward('profile')
-        })
-    }
-
-    toContacts(){
-        this.zone.run(() => {
-            this.nav.navigateBack('contacts')
-        })
+        this.nav.navigateForward('profile')
     }
 
     /* Sending + Retrying Message */
