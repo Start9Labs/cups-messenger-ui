@@ -1,9 +1,9 @@
-import { Component, OnInit, NgZone, ViewChild } from '@angular/core'
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, concat, timer } from 'rxjs'
-import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime, multicast, share } from 'rxjs/operators'
+import { Observable, of, Subscription, BehaviorSubject, Subject } from 'rxjs'
+import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { App } from '../../services/state/app-state'
@@ -64,7 +64,6 @@ export class MessagesPage implements OnInit {
 
     constructor(
         private readonly nav: NavController,
-        private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
     ){
@@ -186,15 +185,7 @@ export class MessagesPage implements OnInit {
 
     /* Navigation Buttons */
     toProfile(){
-        this.zone.run(() => {
-            this.nav.navigateForward('profile')
-        })
-    }
-
-    toContacts(){
-        this.zone.run(() => {
-            this.nav.navigateBack('contacts')
-        })
+        this.nav.navigateForward('profile')
     }
 
     /* Sending + Retrying Message */
