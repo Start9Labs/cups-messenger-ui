@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core'
 import { Observable, from, of } from 'rxjs'
 
 import { Storage } from '@ionic/storage'
-import { catchError } from 'rxjs/operators'
 
 @Injectable({
   providedIn: 'root',
