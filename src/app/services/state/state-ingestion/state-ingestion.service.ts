@@ -1,7 +1,7 @@
 import { config, LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
-import { Subscription, Observable, timer } from 'rxjs'
-import { concatMap, switchMap, map, tap, filter, withLatestFrom } from 'rxjs/operators'
+import { Subscription, Observable, timer, EMPTY } from 'rxjs'
+import { concatMap, switchMap, map, tap, filter, withLatestFrom, catchError } from 'rxjs/operators'
 import { AppState } from '../app-state'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types'
@@ -121,13 +121,14 @@ export class StateIngestionService {
                 filter(([_, s]) => s === AuthStatus.VERIFIED),
                 tap(i => Log.debug('running contacts', i, LogTopic.CONTACTS)),
                 concatMap(
-                    () => acquireContacts(this.cups)
+                    () => acquireContacts(this.cups).pipe(suppressErrorOperator('contacts daemon'))
                 ),
             ).subscribe({ 
                 next: cs => this.appState.$ingestContacts.next(cs),
                 complete: () => { Log.error(`Critical: contacts observer completed`, {}, LogTopic.CONTACTS); this.init() },
                 error: e => { Log.error('Critical: contacts observer errored', e, LogTopic.CONTACTS); this.init() }
             })
+
     }
 
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
@@ -144,7 +145,7 @@ export class StateIngestionService {
                         filter(([_, s]) => s === AuthStatus.VERIFIED),    
                         filter(() => this.messagesPage()),
                         concatMap(
-                            () => acquireMessages(this.cups, contact)
+                            () => acquireMessages(this.cups, contact).pipe(suppressErrorOperator('messages daemon'))
                         ),
                     )
                 }),
