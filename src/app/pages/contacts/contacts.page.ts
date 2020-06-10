@@ -1,7 +1,6 @@
 import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
-import { App } from '../../services/state/app-state'
 import { NavController, LoadingController, AlertController } from '@ionic/angular'
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
@@ -9,8 +8,7 @@ import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, map, tap } from 'rxjs/operators'
-import { LiveCupsMessenger } from 'src/app/services/cups/live-messenger'
-import { getContext } from 'ambassador-sdk'
+import { AppState } from 'src/app/services/state/app-state'
 
 @Component({
   selector: 'app-contacts',
@@ -33,15 +31,18 @@ export class ContactsPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly loadingCtrl: LoadingController,
         private readonly stateIngestion: StateIngestionService,
-        private readonly alertCtrl: AlertController
+        private readonly alertCtrl: AlertController,
+        private readonly app: AppState
     ) {
-        this.contacts$ = combineLatest([this.$forceRerender$, App.emitContacts$]).pipe(
+        this.contacts$ = combineLatest([this.$forceRerender$, this.app.emitContacts$]).pipe(
             map(([_,cs]) => cs.sort(byMostRecentMessage))
         )
     }
 
     ngOnInit(){
-        if(!App.hasLoadedContacts){
+        this.app.dredgeContactState().subscribe()
+        const alreadyHasContacts = this.app.hasLoadedContactsFromBrowserLogin 
+        if(!alreadyHasContacts){
             nonBlockingLoader(
                 this.stateIngestion.refreshContacts(), this.$loading$,
             ).subscribe(() => {})
@@ -57,7 +58,7 @@ export class ContactsPage implements OnInit {
 
     jumpToChat(c: Contact) {
         Log.trace('jumping to contact', c, LogTopic.NAV)
-        App.$ingestCurrentContact.next(c)
+        this.app.$ingestCurrentContact.next(c)
         this.navController.navigateForward('messages')
     }
 
@@ -75,7 +76,7 @@ export class ContactsPage implements OnInit {
         overlayLoader(
             this.cups.contactsDelete(c).pipe(
                 concatMap(() => this.stateIngestion.refreshContacts()),
-                tap(() => App.deleteContact(c)),
+                tap(() => this.app.deleteContact(c)),
             ),
             this.loadingCtrl, `Deleting ${c.name || 'contact'}...`
         ).subscribe(() => Log.info(`Contact ${c.torAddress} deleted`))

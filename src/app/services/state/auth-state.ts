@@ -6,6 +6,7 @@ import { Log } from 'src/app/log'
 import { Storage } from '@ionic/storage'
 import { distinctUntilChanged, concatMap } from 'rxjs/operators'
 import { Injectable } from '@angular/core'
+import { AppState } from './app-state'
 
 export enum AuthStatus {
     UNVERIFED, VERIFIED
@@ -21,20 +22,23 @@ export class AuthState {
 
     constructor(
         private readonly storage: Storage,
+        private readonly app: AppState
     ) {
         this.emitStatus$ = this.$status$.asObservable().pipe(distinctUntilChanged())
     }
 
     // called from signin page via tor browser after validating against the backend
     login$(p: string): Observable<{}> {
-        return concat(this.storage.set('password', p), this.attemptLogin$())
+        return from(this.storage.set('password', p)).pipe(concatMap(() => this.attemptLogin$()))
     }
     
     attemptLogin$(): Observable<AuthStatus> {
         return fromAsyncFunction(async () => {
+            console.log('attemping login...')
             /* First check if password is in storage from previous login */
             const storagePassword = await this.storage.get('password')
             Log.debug('password retreive attempt from local storage', storagePassword, LogTopic.AUTH)
+            console.log('password retreive attempt from local storage ', storagePassword)
             
             if(storagePassword){
                 this.password = storagePassword
@@ -67,6 +71,7 @@ export class AuthState {
     logout$(): Observable<{}> {
         this.password = undefined
         this.$status$.next(AuthStatus.UNVERIFED)
+        this.app.wipeState()
         return from(this.storage.remove('password'))
     }
 }

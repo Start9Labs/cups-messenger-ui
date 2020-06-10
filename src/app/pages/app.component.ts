@@ -6,6 +6,9 @@ import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
 import { LogTopic, runningOnNativeDevice } from '../config'
+import { AppState } from '../services/state/app-state'
+import { Store } from '../services/state/store'
+import { concat } from 'rxjs'
 
 @Component({
   selector: 'app-root',
@@ -18,11 +21,15 @@ export class AppComponent {
         private readonly stateIngestion: StateIngestionService,
         private readonly zone: NgZone,
         private readonly authState: AuthState,
+        private readonly app: AppState,
+        private readonly store: Store,
     ) {}
 
     ngOnInit(){
-        this.stateIngestion.init()
-        this.authState.attemptLogin$().subscribe(s => this.handleAuthChange(s))
+        this.stateIngestion.init() 
+        this.store.ready$().subscribe(Log.info)
+        this.authState.emitStatus$.subscribe(s => this.handleAuthChange(s))
+        this.authState.attemptLogin$().subscribe()
     }
 
     handleAuthChange(s: AuthStatus){
@@ -30,13 +37,14 @@ export class AppComponent {
             switch (s) {
                 case AuthStatus.UNVERIFED: {
                     if(runningOnNativeDevice()){
-                        Log.debug('Unverified: Popping out to shell', getContext(), LogTopic.AUTH)
                         getContext().close()
                     } else {
                         this.navCtrl.navigateRoot('signin')
                     }
                 } break
-                case AuthStatus.VERIFIED: this.navCtrl.navigateRoot('contacts'); break
+                case AuthStatus.VERIFIED: {
+                    this.navCtrl.navigateRoot('contacts')
+                }
             }
         })
     }

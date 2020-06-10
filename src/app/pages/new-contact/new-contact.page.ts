@@ -1,13 +1,12 @@
 import { Component, OnInit, NgZone } from '@angular/core'
-import { onionToPubkeyString } from 'src/app/services/cups/cups-res-parser'
-import { Subject, BehaviorSubject } from 'rxjs'
-import { concatMap, take, tap, map } from 'rxjs/operators'
+import { BehaviorSubject } from 'rxjs'
+import { concatMap, take, map } from 'rxjs/operators'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { NavController, LoadingController } from '@ionic/angular'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
-import { App } from 'src/app/services/state/app-state'
 import { sanitizeOnion, ensureNewTor as ensureNewTorAddress, sanitizeName } from 'src/app/update-contact-util'
 import { overlayLoader } from 'src/rxjs/util'
+import { AppState } from 'src/app/services/state/app-state'
 
 @Component({
   selector: 'app-new-contact',
@@ -24,7 +23,8 @@ export class NewContactPage implements OnInit {
     private readonly stateIngestion: StateIngestionService,
     private readonly nav: NavController,
     private readonly zone: NgZone,
-    private readonly loadingCtrl: LoadingController
+    private readonly loadingCtrl: LoadingController,
+    private readonly app: AppState
   ) { }
 
   ngOnInit() {
@@ -35,13 +35,13 @@ export class NewContactPage implements OnInit {
   }
 
   wipeCurrentContact(){
-    App.replaceCurrentContact$(undefined)
+    this.app.replaceCurrentContact$(undefined)
   }
 
   async save() {
     this.$error$.next(undefined)
 
-    App.emitContacts$.pipe(take(1)).pipe(
+    this.app.emitContacts$.pipe(take(1)).pipe(
       map(cs => {
         const sanitizedTorOnion = ensureNewTorAddress(
           cs, sanitizeOnion(this.torAddress)

@@ -6,12 +6,12 @@ import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, conc
 import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime, multicast, share } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
-import { App } from '../../services/state/app-state'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
 import { exists, nonBlockingLoader } from 'src/rxjs/util'
 import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { sortByTimestampDESC } from 'src/app/util'
+import { AppState } from 'src/app/services/state/app-state'
 /*
 1.) Entering message page needs loader for initial messages
 2.) Messages load we should jump to the bottom
@@ -32,7 +32,6 @@ export class MessagesPage implements OnInit {
     bottomOfChatElement: HTMLElement // detect at and scroll to bottom with this
     topOfChatElement: HTMLElement // detect at top for loading old messages with this
 
-    app = App
     contact: ContactWithMessageMeta
     shouldGetAllOldMessages = false
     $hasAllOldMessages$ = new BehaviorSubject(false)
@@ -67,6 +66,7 @@ export class MessagesPage implements OnInit {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
+        private readonly app: AppState,
     ){
     }
     getContent() {
@@ -104,13 +104,17 @@ export class MessagesPage implements OnInit {
     ngOnInit() {
         this.oldHeight = window.innerHeight
 
-        App.emitCurrentContact$.pipe(take(1)).subscribe(c => { this.contact = c })
+        this.app.emitCurrentContact$.pipe(take(1)).subscribe(c => { 
+            this.contact = c 
+            console.log(`in ngonit?`)
+            this.app.dredgeMessageState(c).subscribe()
+        })
         // html will subscribe to this to get message additions/updates
 
-        this.messagesForDisplay$ = App.emitCurrentContact$.pipe(
+        this.messagesForDisplay$ = this.app.emitCurrentContact$.pipe(
             take(1), 
             concatMap(c => 
-                App.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
+                this.app.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
             ),
             tap(messages => {
                 const { updatedNewest } = this.updateRenderedMessageBoundary(
@@ -129,7 +133,6 @@ export class MessagesPage implements OnInit {
             }),
             share()
         )
-    
     }
 
     handleResize(){
@@ -217,21 +220,22 @@ export class MessagesPage implements OnInit {
     }
 
     cancel(contact: Contact, message: FailedMessage) {
-        App.removeMessage$(contact, message).subscribe(b => {
+        this.app.removeMessage$(contact, message).subscribe(b => {
             Log.info(`Message trackingId ${message.trackingId} removed: `, b, LogTopic.MESSAGES)
         })
     }
 
     send(contact: Contact, message: AttendingMessage) {
-        App.replaceContactMessages$({contact, messages: [message]}).pipe(tap(() => this.$jumping$.next(true)), delay(150)).subscribe(() =>
-            this.jumpToBottom()
-        )
+        this.app.replaceContactMessages$({contact, messages: [message]}).pipe(
+            tap(() => this.$jumping$.next(true)), 
+            delay(150)
+        ).subscribe(() => this.jumpToBottom())
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
                 console.error(`send message failure`, e.message)
                 const failedMessage = mkFailed({...message, failure: e.message})
-                App.$ingestMessages.next( { contact, messages: [failedMessage] } )
+                this.app.$ingestMessages.next( { contact, messages: [failedMessage] } )
                 return of(null)
             }),
             filter(exists),

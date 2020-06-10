@@ -2,7 +2,7 @@ import { config, LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { CupsMessenger } from '../../cups/cups-messenger'
 import { Subscription, Observable, timer } from 'rxjs'
 import { concatMap, switchMap, map, tap, filter, withLatestFrom } from 'rxjs/operators'
-import { App } from '../app-state'
+import { AppState } from '../app-state'
 import { Injectable } from '@angular/core'
 import { Contact, ContactWithMessageMeta, ServerMessage } from '../../cups/types'
 import { Log } from 'src/app/log'
@@ -26,9 +26,11 @@ export class StateIngestionService {
       private readonly cups: CupsMessenger,
       private readonly router: Router,
       private readonly authState: AuthState,
+      private readonly appState: AppState,
     ){
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
             Log.info(`navigated to`, e, LogTopic.NAV)
+            console.log(`Filter2`, e + (new Date()).toLocaleTimeString())
             this.page = e.url as Page
         })
 
@@ -48,7 +50,7 @@ export class StateIngestionService {
                 acquireContacts(this.cups, testPassword).subscribe(
                     {
                         next: cs => {
-                            App.$ingestContacts.next(cs)
+                            this.appState.$ingestContacts.next(cs)
                             subscriber.next(cs)
                         },
                         complete: () => {
@@ -69,7 +71,7 @@ export class StateIngestionService {
                 acquireMessages(this.cups, contact, options).subscribe(
                     {
                         next: ms => {
-                            App.$ingestMessages.next(ms)
+                            this.appState.$ingestMessages.next(ms)
                             subscriber.next(ms)
                         },
                         complete: () => {
@@ -107,8 +109,7 @@ export class StateIngestionService {
                     () => acquireContacts(this.cups)
                 ),
                 suppressErrorOperator('acquire contacts')
-            )
-            .subscribe(App.$ingestContacts)
+            ).subscribe(this.appState.$ingestContacts)
     }
 
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
@@ -116,20 +117,23 @@ export class StateIngestionService {
         if(subIsActive(this.messagesCooldown) || !config.messagesDaemon.on) return
         Log.info('starting messages daemon', config.messagesDaemon, LogTopic.MESSAGES)
 
-        this.messagesCooldown = App.emitCurrentContact$.pipe(
-            switchMap(contact => {
-                Log.debug(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
-                return timer(0, config.messagesDaemon.frequency).pipe(
-                    filter(() => this.messagesPage()),
-                    concatMap(
-                        () => acquireMessages(this.cups, contact)
-                    ),
-                    suppressErrorOperator('acquire messages')
-                )
-            }),
-        ).subscribe(ms =>{
-            App.$ingestMessages.next(ms)
-        })
+        this.messagesCooldown = 
+            this.appState.emitCurrentContact$.pipe(
+                switchMap(contact => {
+                    Log.debug(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
+                    return timer(0, config.messagesDaemon.frequency).pipe(
+                        withLatestFrom(this.authState.emitStatus$),
+                        filter(([_, s]) => s === AuthStatus.VERIFIED),    
+                        filter(() => this.messagesPage()),
+                        concatMap(
+                            () => acquireMessages(this.cups, contact)
+                        ),
+                        suppressErrorOperator('acquire messages')
+                    )
+                }),
+            ).subscribe(ms =>{
+                this.appState.$ingestMessages.next(ms)
+            })
     }
 
     contactsPage(): boolean {

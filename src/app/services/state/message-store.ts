@@ -62,8 +62,8 @@ export class MessageStore {
         ))
     }
 
-    complete(): void {
-        this.$messages$.complete()
+    clear(): void {
+        this.$messages$.next([])
     }
 }
 
