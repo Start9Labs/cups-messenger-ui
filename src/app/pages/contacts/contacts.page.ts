@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
+import { Component, OnInit, NgZone } from '@angular/core'
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { NavController, LoadingController, AlertController } from '@ionic/angular'
@@ -16,11 +16,6 @@ import { AppState } from 'src/app/services/state/app-state'
   styleUrls: ['./contacts.page.scss'],
 })
 export class ContactsPage implements OnInit {
-    @ViewChild('animation') animation: ElementRef<HTMLElement>
-
-
-    trigger$ = new BehaviorSubject(false)
-
     public contacts$: Observable<ContactWithMessageMeta[]>
     private $forceRerender$ = new BehaviorSubject({})
     $loading$ = new BehaviorSubject(false)
@@ -32,7 +27,7 @@ export class ContactsPage implements OnInit {
         private readonly loadingCtrl: LoadingController,
         private readonly stateIngestion: StateIngestionService,
         private readonly alertCtrl: AlertController,
-        private readonly app: AppState
+        readonly app: AppState
     ) {
         this.contacts$ = combineLatest([this.$forceRerender$, this.app.emitContacts$]).pipe(
             map(([_,cs]) => cs.sort(byMostRecentMessage))

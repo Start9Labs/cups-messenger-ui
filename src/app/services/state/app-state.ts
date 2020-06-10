@@ -98,7 +98,7 @@ export class AppState {
         this.hasLoadedContactsFromBrowserLogin = false
     }
 
-    /* Replace current contact with c, emits when complete */
+    //Replace current contact with c, emits when complete
     replaceCurrentContact$(c: Contact): Observable<Contact> {
         return replaceState(Private.$currentContact$, c)
     }
@@ -108,7 +108,7 @@ export class AppState {
         this.eraseMessagesFor(c.torAddress)
     }
 
-    /* Replace current contact with c, emits when complete */
+    //Replace current contact with c, emits when complete
     replaceContactMessages$(newState: {contact: Contact, messages: Message[]}): Observable<Message[]> {
         this.$ingestMessages.next(newState)
         return this.emitMessages$(newState.contact.torAddress).pipe(take(1))

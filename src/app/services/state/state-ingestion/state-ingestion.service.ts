@@ -26,7 +26,7 @@ export class StateIngestionService {
       private readonly cups: CupsMessenger,
       private readonly router: Router,
       private readonly authState: AuthState,
-      private readonly appState: AppState,
+      readonly appState: AppState,
     ){
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
             Log.info(`navigated to`, e, LogTopic.NAV)

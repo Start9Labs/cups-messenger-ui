@@ -24,7 +24,7 @@ export class NewContactPage implements OnInit {
     private readonly nav: NavController,
     private readonly zone: NgZone,
     private readonly loadingCtrl: LoadingController,
-    private readonly app: AppState
+    readonly app: AppState
   ) { }
 
   ngOnInit() {

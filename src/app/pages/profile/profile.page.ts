@@ -24,7 +24,7 @@ export class ProfilePage {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
-        private readonly app: AppState
+        readonly app: AppState
     ) { }
 
     ngOnInit () {

@@ -2,8 +2,8 @@ import { Component, OnInit, NgZone, ViewChild } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject, Subject, fromEvent, concat, timer } from 'rxjs'
-import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, debounceTime, multicast, share } from 'rxjs/operators'
+import { Observable, of, Subscription, BehaviorSubject, Subject } from 'rxjs'
+import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
@@ -66,7 +66,7 @@ export class MessagesPage implements OnInit {
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
-        private readonly app: AppState,
+        readonly app: AppState,
     ){
     }
     getContent() {

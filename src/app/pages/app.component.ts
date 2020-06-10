@@ -5,10 +5,9 @@ import { StateIngestionService } from '../services/state/state-ingestion/state-i
 import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
-import { LogTopic, runningOnNativeDevice } from '../config'
-import { AppState } from '../services/state/app-state'
+import { runningOnNativeDevice } from '../config'
 import { Store } from '../services/state/store'
-import { concat } from 'rxjs'
+import { concatMap } from 'rxjs/operators'
 
 @Component({
   selector: 'app-root',
@@ -21,15 +20,15 @@ export class AppComponent {
         private readonly stateIngestion: StateIngestionService,
         private readonly zone: NgZone,
         private readonly authState: AuthState,
-        private readonly app: AppState,
         private readonly store: Store,
     ) {}
 
     ngOnInit(){
         this.stateIngestion.init() 
         this.store.ready$().subscribe(Log.info)
-        this.authState.emitStatus$.subscribe(s => this.handleAuthChange(s))
-        this.authState.attemptLogin$().subscribe()
+        this.authState.attemptLogin$().pipe(
+            concatMap(() => this.authState.emitStatus$)
+        ).subscribe( s => this.handleAuthChange(s) )
     }
 
     handleAuthChange(s: AuthStatus){

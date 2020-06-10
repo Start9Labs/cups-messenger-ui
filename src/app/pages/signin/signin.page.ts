@@ -20,7 +20,7 @@ export class SigninPage {
     private readonly loadingCtrl: LoadingController,
     private readonly stateIngestion: StateIngestionService,
     private readonly authState: AuthState,
-    private readonly app: AppState,
+    readonly app: AppState,
   ) { }
 
   async enterCupsMessengerPassword() {
