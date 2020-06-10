@@ -93,8 +93,6 @@ export class MessagesPage implements OnInit {
             this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
             this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
             Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
-            // for jumping after initial page load completes
-            this.jumpToBottom()
         })
 
         // for jumping to the bottom on page load
@@ -148,7 +146,8 @@ export class MessagesPage implements OnInit {
         let loader: Subject<boolean>
         let options: ShowMessagesOptions
         
-        if(lastMessage && justOneMessage){ //we have last message from contacts call, but have yet to make call for messages.
+        //we have last message from contacts call, but have yet to make call for messages.
+        if(lastMessage && justOneMessage){ 
             loader = this.$previousMessagesLoading$
             options = { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
         } else {

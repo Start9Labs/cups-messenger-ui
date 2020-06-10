@@ -56,7 +56,6 @@
                 <div style="font-size: 12px" (click)="retry(contact, message)">
                     RETRY 
                 </div>
-
             </div>
         </div>
         <div id="start-of-scroll"></div>
@@ -64,7 +63,7 @@
         <div style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
             <ion-item lines="none">
                 <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
-                <div *ngIf="$hasAllOldMessages$ | async" style="display: flex; flex-flow: column;">
+                <div *ngIf="$hasAllOldMessages$ | async">
                     <ion-text color="success" style="padding: 10px; font-size: small">No Older Messages</ion-text>
                 </div>
             </ion-item>

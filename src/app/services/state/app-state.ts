@@ -6,6 +6,7 @@ import { LogLevel as L, LogTopic as T } from 'src/app/config'
 import { MessageStore } from './message-store'
 import { Injectable } from '@angular/core'
 import { Store } from './store'
+import { Log } from 'src/app/log'
 
 /* 
     Raw private app state. Shouldn't be accessed directly except by the below. 
@@ -54,7 +55,7 @@ export class AppState {
         this.$ingestCurrentContact = Private.$currentContact$
         this.$ingestContacts = {
             next: cs => { 
-                this.store.setValue$(AppState.CONTACTS_KEY, cs).subscribe() // kicks off async
+                this.store.setValue$(AppState.CONTACTS_KEY, cs).subscribe()
                 Private.$contacts$.next(cs)
                 cs.filter(c => c.lastMessages[0]).forEach(c => {
                     this.messagesFor(c.torAddress).$ingestMessages(c.lastMessages)
@@ -65,8 +66,7 @@ export class AppState {
         }
         this.$ingestMessages = {
             next: ({contact, messages}) => {
-                console.log('ingest ms', messages)
-                this.store.setValue$(AppState.MESSAGES_KEY(contact.torAddress), messages)
+                this.store.setValue$(AppState.MESSAGES_KEY(contact.torAddress), messages).subscribe()
                 this.messagesFor(contact.torAddress).$ingestMessages(messages)
             },
             complete: () => console.error(`Critical: message observer completed`),
@@ -76,6 +76,7 @@ export class AppState {
 
     dredgeContactState(): Observable<ContactWithMessageMeta[]> {
         return this.store.getValue$(AppState.CONTACTS_KEY).pipe(concatMap(cs => {
+            Log.debug(`dredging contacts`, cs)
             this.$ingestContacts.next(cs || [])
             return this.emitContacts$.pipe(take(1))
         }))
@@ -83,7 +84,7 @@ export class AppState {
 
     dredgeMessageState(c: Contact): Observable<{}> {
         return this.store.getValue$(AppState.MESSAGES_KEY(c.torAddress)).pipe(tap(ms => {
-            console.log(`dredge ms`, ms)
+            Log.debug(`dredging messages for ${c.name || c.torAddress}`, ms)
             this.$ingestMessages.next({contact: c, messages: ms})
         }))
     }
