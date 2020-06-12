@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core'
+import { Component, OnInit } from '@angular/core'
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { ContactWithMessageMeta, Contact } from '../../services/cups/types'
 import { NavController, LoadingController, AlertController } from '@ionic/angular'
@@ -22,7 +22,6 @@ export class ContactsPage implements OnInit {
 
     constructor(
         private readonly navController: NavController,
-        private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly loadingCtrl: LoadingController,
         private readonly stateIngestion: StateIngestionService,
@@ -53,15 +52,13 @@ export class ContactsPage implements OnInit {
     ionViewWillLeave() {
     }
 
-    jumpToChat(c: Contact) {
+    jumpToChat(c: ContactWithMessageMeta) {
         Log.trace('jumping to contact', c, LogTopic.NAV)
         this.app.$ingestCurrentContact.next(c)
         this.navController.navigateForward('messages')
     }
 
-    me(){
-        this.navController.navigateForward('me')
-    }
+    me(){ this.navController.navigateForward('me') }
 
     toNewContactPage(){
         this.navController.navigateForward('new-contact')

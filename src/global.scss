@@ -46,3 +46,11 @@
     box-shadow: 4px 4px #000000d1;
     overflow: hidden;
 }
+
+.item-avatar {
+    background:  radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
+}
+
+.item-avatar-unreads {
+    background: radial-gradient(#1a1c22 -20%, var(--ion-color-primary-contrast));
+}

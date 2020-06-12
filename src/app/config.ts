@@ -46,12 +46,12 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.LIVE,
+        type: CupsMessengerType.STANDARD_MOCK,
         url: '/api'
     },
     contactsDaemon: {
         frequency: 10000,
-        on: true
+        on: false
     },
     messagesDaemon: {
         frequency: 3000,

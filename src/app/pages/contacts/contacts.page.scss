@@ -1,13 +1,8 @@
 .item-contact{
     --min-height: 100px;
-}
-
-.item-avatar {
-    background: #696c71;
-}
-
-.item-avatar-unreads {
-    background:  radial-gradient(#696c71 25%, var(--ion-color-primary-contrast));
+    :active.item-avatar-unreads {
+        background:  radial-gradient(#1a1c22 43%, var(--ion-color-primary-contrast));
+    }
 }
 
 .contact-name {
