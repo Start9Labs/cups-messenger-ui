@@ -116,7 +116,7 @@ export class StateIngestionService {
         Log.info('starting contacts daemon', config.contactsDaemon, LogTopic.CONTACTS)
         
         this.contactsCooldown =
-            timer(0, config.contactsDaemon.frequency).pipe(
+            timer(config.contactsDaemon.frequency, config.contactsDaemon.frequency).pipe(
                 withLatestFrom(this.authState.emitStatus$),
                 filter(([_, s]) => s === AuthStatus.VERIFIED),
                 tap(i => Log.debug('running contacts', i, LogTopic.CONTACTS)),
@@ -140,7 +140,7 @@ export class StateIngestionService {
             this.appState.emitCurrentContact$.pipe(
                 switchMap(contact => {
                     Log.debug(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
-                    return timer(0, config.messagesDaemon.frequency).pipe(
+                    return timer(config.messagesDaemon.frequency, config.messagesDaemon.frequency).pipe(
                         withLatestFrom(this.authState.emitStatus$),
                         filter(([_, s]) => s === AuthStatus.VERIFIED),    
                         filter(() => this.messagesPage()),

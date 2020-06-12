@@ -14,7 +14,7 @@
     <ion-item-group *ngIf="(app.emitCurrentContact$ | async) as contact">
 		<ion-item>
 			<ion-label position="stacked">Name</ion-label>
-			<ion-input [(ngModel)]="contactName"></ion-input>
+			<ion-input autocapitalize="on" [(ngModel)]="contactName"></ion-input>
 		</ion-item>
 		<ion-item>
 			<ion-label position="stacked">Cups Tor Address</ion-label>
