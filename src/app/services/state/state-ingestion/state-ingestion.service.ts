@@ -15,31 +15,25 @@ import { Platform } from '@ionic/angular'
 import { BackgroundingService } from '../../backgrounding-service'
 
 enum Page {
-    CONTACTS='/contacts', MESSAGES='/messages', OTHER = ''
+    CONTACTS = '/contacts', MESSAGES = '/messages', OTHER = ''
 }
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class StateIngestionService {
     private page: Page
     private contactsCooldown: Subscription = undefined
     private messagesCooldown: Subscription = undefined
 
     constructor(
-      private readonly cups: CupsMessenger,
-      private readonly router: Router,
-      private readonly authState: AuthState,
-      private readonly backgroundingService: BackgroundingService,
-      readonly appState: AppState,
-    ){
+        private readonly cups: CupsMessenger,
+        private readonly router: Router,
+        private readonly authState: AuthState,
+        private readonly backgroundingService: BackgroundingService,
+        readonly appState: AppState,
+    ) {
         this.router.events.pipe(filter(event => event instanceof NavigationStart)).subscribe((e: NavigationStart) => {
             Log.info(`navigated to`, e, LogTopic.NAV)
             this.page = e.url as Page
-        })
-
-        this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((e: NavigationEnd) => {
-            if(e.url === Page.CONTACTS && runningOnNativeDevice()) {
-              getContext().childReady()
-            }
         })
 
         this.backgroundingService.onPause(() => {
@@ -55,7 +49,7 @@ export class StateIngestionService {
 
     // subscribe to this to get new contacts + automatically update state. Subscription callback
     // triggered on completion of both tasks.
-    refreshContacts(testPassword?: string): Observable<ContactWithMessageMeta[]>{
+    refreshContacts(testPassword?: string): Observable<ContactWithMessageMeta[]> {
         return new Observable(
             subscriber => {
                 acquireContacts(this.cups, testPassword).subscribe(
@@ -76,7 +70,7 @@ export class StateIngestionService {
 
     // subscribe to this to get new messages for contact + automatically update state. Subscription callback
     // triggered on completion of both tasks.
-    refreshMessages(contact: Contact, options?: ShowMessagesOptions): Observable<{ contact: Contact, messages: ServerMessage[] }>{
+    refreshMessages(contact: Contact, options?: ShowMessagesOptions): Observable<{ contact: Contact, messages: ServerMessage[] }> {
         return new Observable(
             subscriber => {
                 acquireMessages(this.cups, contact, options).subscribe(
@@ -97,24 +91,24 @@ export class StateIngestionService {
 
     // idempotent
     // can be used to restart any dead subs.
-    init(){
+    init() {
         this.startContactsCooldownSub()
         this.startMessagesCooldownSub()
     }
 
-    shutdown(){
-        if(this.contactsCooldown) { 
+    shutdown() {
+        if (this.contactsCooldown) {
             this.contactsCooldown.unsubscribe()
         }
-        if(this.messagesCooldown) { 
+        if (this.messagesCooldown) {
             this.messagesCooldown.unsubscribe()
         }
     }
 
-    private startContactsCooldownSub(){        
-        if(subIsActive(this.contactsCooldown) || !config.contactsDaemon.on) return
+    private startContactsCooldownSub() {
+        if (subIsActive(this.contactsCooldown) || !config.contactsDaemon.on) return
         Log.info('starting contacts daemon', config.contactsDaemon, LogTopic.CONTACTS)
-        
+
         this.contactsCooldown =
             timer(0, config.contactsDaemon.frequency).pipe(
                 withLatestFrom(this.authState.emitStatus$),
@@ -123,7 +117,7 @@ export class StateIngestionService {
                 concatMap(
                     () => acquireContacts(this.cups).pipe(suppressErrorOperator('contacts daemon'))
                 ),
-            ).subscribe({ 
+            ).subscribe({
                 next: cs => this.appState.$ingestContacts.next(cs),
                 complete: () => { Log.error(`Critical: contacts observer completed`, {}, LogTopic.CONTACTS); this.init() },
                 error: e => { Log.error('Critical: contacts observer errored', e, LogTopic.CONTACTS); this.init() }
@@ -132,17 +126,17 @@ export class StateIngestionService {
     }
 
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
-    private startMessagesCooldownSub(){
-        if(subIsActive(this.messagesCooldown) || !config.messagesDaemon.on) return
+    private startMessagesCooldownSub() {
+        if (subIsActive(this.messagesCooldown) || !config.messagesDaemon.on) return
         Log.info('starting messages daemon', config.messagesDaemon, LogTopic.MESSAGES)
 
-        this.messagesCooldown = 
+        this.messagesCooldown =
             this.appState.emitCurrentContact$.pipe(
                 switchMap(contact => {
                     Log.debug(`switching contacts for messages`, contact, LogTopic.CURRENT_CONTACT)
                     return timer(0, config.messagesDaemon.frequency).pipe(
                         withLatestFrom(this.authState.emitStatus$),
-                        filter(([_, s]) => s === AuthStatus.VERIFIED),    
+                        filter(([_, s]) => s === AuthStatus.VERIFIED),
                         filter(() => this.messagesPage()),
                         concatMap(
                             () => acquireMessages(this.cups, contact).pipe(suppressErrorOperator('messages daemon'))
@@ -177,7 +171,7 @@ function acquireMessages(
 
 function acquireContacts(
     cups: CupsMessenger, testPassword?: string
-) : Observable<ContactWithMessageMeta[]> {
+): Observable<ContactWithMessageMeta[]> {
     return cups.contactsShow(testPassword).pipe(
         tap(cs => Log.trace(`contacts daemon returning`, cs, LogTopic.CONTACTS))
     )
