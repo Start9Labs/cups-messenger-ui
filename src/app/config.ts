@@ -51,7 +51,7 @@ export const config: Config = {
     },
     contactsDaemon: {
         frequency: 10000,
-        on: false
+        on: true
     },
     messagesDaemon: {
         frequency: 3000,
