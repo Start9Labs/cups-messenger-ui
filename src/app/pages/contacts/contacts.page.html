@@ -22,8 +22,8 @@
                     </ion-avatar>
                     <ion-grid>
                         <ion-row style="display: flex; align-items: center; justify-content: space-between;">
-                            <div class="contact-name">{{ (contact | truncateEllipses:18) }}</div>
-                            <div class="ion-align-self-end" style="font-size: small;" *ngIf="contact.lastMessages[0]">{{contact.lastMessages[0].timestamp | dateDisplay:true}}</div>
+                            <div style="flex-shrink: 1" class="contact-name">{{ (contact | truncateEllipses:15) }}</div>
+                            <div style="font-size: small; flex-grow: 0; flex-shrink: 0" *ngIf="contact.lastMessages[0]">{{contact.lastMessages[0].timestamp | dateDisplay:true}}</div>
                         </ion-row>
                         <ion-row >
                             <div class="message-preview" *ngIf="contact.lastMessages[0]">{{ contact.lastMessages[0].text }}</div>
