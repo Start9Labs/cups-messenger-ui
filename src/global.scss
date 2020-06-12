@@ -48,9 +48,17 @@
 }
 
 .item-avatar {
-    background:  radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
+    // background:  radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
+    border-style: solid;
+    border-color: #baceefb3;
+    border-width: 1px;
 }
 
 .item-avatar-unreads {
-    background: radial-gradient(#1a1c22 -20%, var(--ion-color-primary-contrast));
+    background: linear-gradient(0.9turn, #1a1c22 17%, #b6cdf1 83%, var(--ion-color-primary-contrast));
+    color: white;
+    border-style: solid;
+    border-color: #baceefb3;
+    border-width: 1px;
+    // background: radial-gradient(#1a1c22 10%, var(--ion-color-primary-contrast));
 }
