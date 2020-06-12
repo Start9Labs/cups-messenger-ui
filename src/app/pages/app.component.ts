@@ -10,9 +10,9 @@ import { Store } from '../services/state/store'
 import { concatMap } from 'rxjs/operators'
 
 @Component({
-  selector: 'app-root',
-  templateUrl: 'app.component.html',
-  styleUrls: ['app.component.scss']
+    selector: 'app-root',
+    templateUrl: 'app.component.html',
+    styleUrls: ['app.component.scss']
 })
 export class AppComponent {
     constructor(
@@ -21,30 +21,34 @@ export class AppComponent {
         private readonly zone: NgZone,
         private readonly authState: AuthState,
         private readonly store: Store,
-    ) {}
+    ) { }
 
-    ngOnInit(){
-        this.stateIngestion.init() 
+    ngOnInit() {
+        this.stateIngestion.init()
         this.store.ready$().subscribe(Log.info)
         this.authState.attemptLogin$().pipe(
             concatMap(() => this.authState.emitStatus$)
-        ).subscribe( s => this.handleAuthChange(s) )
+        ).subscribe(s => this.handleAuthChange(s))
     }
 
-    handleAuthChange(s: AuthStatus){
+    ngAfterViewInit() {
+        fetch('/close.svg').then(() => setTimeout(() => getContext().childReady(), 200)) // HERE BE DRAGONS
+    }
+
+    handleAuthChange(s: AuthStatus) {
         this.zone.run(() => {
             switch (s) {
                 case AuthStatus.UNVERIFED: {
                     this.store.clear$().subscribe(() => {
-                        if(runningOnNativeDevice()){
+                        if (runningOnNativeDevice()) {
                             getContext().close()
                         } else {
                             this.navCtrl.navigateRoot('signin')
                         }
                     })
-                    
+
                     break
-                } 
+                }
                 case AuthStatus.VERIFIED: {
                     this.navCtrl.navigateRoot('contacts')
                     break
