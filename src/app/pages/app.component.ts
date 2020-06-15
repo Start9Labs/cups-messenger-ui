@@ -5,7 +5,7 @@ import { StateIngestionService } from '../services/state/state-ingestion/state-i
 import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from 'ambassador-sdk'
 import { Log } from '../log'
-import { runningOnNativeDevice } from '../config'
+import { runningOnNativeDevice, config, CupsMessengerType } from '../config'
 import { Store } from '../services/state/store'
 import { concatMap } from 'rxjs/operators'
 
@@ -32,7 +32,9 @@ export class AppComponent {
     }
 
     ngAfterViewInit() {
-        fetch('/close.svg').then(() => setTimeout(() => getContext().childReady(), 200)) // HERE BE DRAGONS
+        if(config.cupsMessenger.type === CupsMessengerType.LIVE){
+            fetch('/close.svg').then(() => setTimeout(() => getContext().childReady(), 200)) // HERE BE DRAGONS
+        }
     }
 
     handleAuthChange(s: AuthStatus) {
