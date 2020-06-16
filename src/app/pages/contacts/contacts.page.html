@@ -10,35 +10,40 @@
 </ion-header>
 
 <ion-content id="content" fullscreen>
-    <ion-item-group>
-        <div *ngFor="let contact of (contacts$ | async); index as i" >
-            <ion-item-sliding>
-                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">
-                    <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                    </ion-avatar>
-                    <ion-avatar *ngIf="contact.unreadMessages > 0" class="item-avatar-unreads" slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                    </ion-avatar>
-                    <ion-grid>
-                        <ion-row style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="flex-shrink: 1" class="contact-name">{{ (contact | truncateEllipses:15) }}</div>
-                            <div style="font-size: small; flex-grow: 0; flex-shrink: 0" *ngIf="contact.lastMessages[0]">{{contact.lastMessages[0].timestamp | dateDisplay:true}}</div>
-                        </ion-row>
-                        <ion-row >
-                            <div class="message-preview" *ngIf="contact.lastMessages[0]">{{ contact.lastMessages[0].text }}</div>
-                            <div class="message-preview" *ngIf="!contact.lastMessages[0]">{{ "\t" }}</div>
-                        </ion-row>
-                    </ion-grid>
-                </ion-item>
-                <ion-item-options side="end" lines="full">
-                    <ion-item-option color="medium" (click)="presentAlertDelete(contact)">Delete</ion-item-option>
-                </ion-item-options>
-            </ion-item-sliding>
-        </div>
-    </ion-item-group>
-    <ion-spinner *ngIf="$loading$ | async" class="center" name="crescent"></ion-spinner>
-
+    <div style="display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: 100%;"
+    >
+        <ion-item-group>
+            <div *ngFor="let contact of (contacts$ | async); index as i" >
+                <ion-item-sliding>
+                    <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">
+                        <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
+                            <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                        </ion-avatar>
+                        <ion-avatar *ngIf="contact.unreadMessages > 0" class="item-avatar-unreads" slot="start">
+                            <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
+                        </ion-avatar>
+                        <ion-grid>
+                            <ion-row style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="flex-shrink: 1" class="contact-name">{{ (contact | truncateEllipses:15) }}</div>
+                                <div style="font-size: small; flex-grow: 0; flex-shrink: 0" *ngIf="contact.lastMessages[0]">{{contact.lastMessages[0].timestamp | dateDisplay:true}}</div>
+                            </ion-row>
+                            <ion-row >
+                                <div class="message-preview" *ngIf="contact.lastMessages[0]">{{ contact.lastMessages[0].text }}</div>
+                                <div class="message-preview" *ngIf="!contact.lastMessages[0]">{{ "\t" }}</div>
+                            </ion-row>
+                        </ion-grid>
+                    </ion-item>
+                    <ion-item-options side="end" lines="full">
+                        <ion-item-option color="medium" (click)="presentAlertDelete(contact)">Delete</ion-item-option>
+                    </ion-item-options>
+                </ion-item-sliding>
+            </div>  
+        </ion-item-group>
+        <ion-spinner *ngIf="$loading$ | async" style="flex-grow: 1;" name="crescent"></ion-spinner>
+    </div>
     <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button class="new-contact-button" size="medium" fill="clear" color="primary" (click)="toNewContactPage()">
             <ion-icon name="add-outline"></ion-icon>
