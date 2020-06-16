@@ -2,7 +2,7 @@
     <ion-toolbar>
         <div class="contacts-header">
             <ion-text class="page-title">Cups Messenger</ion-text>               
-            <ion-button color="primary" fill="clear" (click)="me()">
+            <ion-button color="primary" fill="clear" (click)="toMe()">
                 <ion-icon name="settings-outline"></ion-icon>
             </ion-button>
         </div>   
@@ -14,10 +14,7 @@
         <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
                 <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">
-                    <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                    </ion-avatar>
-                    <ion-avatar *ngIf="contact.unreadMessages > 0" class="item-avatar-unreads" slot="start">
+                    <ion-avatar [class.item-avatar-unreads]="(unreadsCache[contact.torAddress] | async).unreads > 0" class="item-avatar" slot="start">
                         <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
                     </ion-avatar>
                     <ion-grid>
@@ -46,11 +43,11 @@
 </ion-content>
 
 <ion-footer *ngIf="$loading$ | async" style ="
-    padding: 10px;
+    padding: 25px;
     justify-content: center;
     display: flex;
     border-style: solid;
-    border-width: 1px;
+    border-width: 1px 0px 0px 0px;
     border-color: var(--ion-toolbar-border-color);
     align-items: center;
     background: var(--ion-background-color);

@@ -29,7 +29,6 @@ const Private = {
     providedIn: 'root',
 })
 export class AppState {    
-    hasLoadedContactsFromBrowserLogin: boolean
     currentContact: Contact = undefined
     $ingestCurrentContact:  NextObserver<Contact>
     $ingestContacts:  NextObserver<ContactWithMessageMeta[]>
@@ -91,7 +90,6 @@ export class AppState {
         Object.keys(Private.messagesStore).forEach( tor => {
             this.eraseMessagesFor(tor)
         })
-        this.hasLoadedContactsFromBrowserLogin = false
     }
 
     //Replace current contact with c, emits when complete

@@ -39,7 +39,6 @@ export class SigninPage {
     ).subscribe({
       next: () => { 
         this.authState.login$(pass).subscribe(() => Log.info(`Logged in.`))
-        this.app.hasLoadedContactsFromBrowserLogin = false
       },
       error: (e) => {
         Log.error(`Error on login`, e)

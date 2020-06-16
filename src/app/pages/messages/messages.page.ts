@@ -224,7 +224,7 @@ export class MessagesPage implements OnInit {
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
                 console.error(`send message failure`, e.message)
-                const failedMessage = mkFailed({...message, failure: e.message})
+                const failedMessage = mkFailed({...message, failure: e.message || `${e}`})
                 this.app.$ingestMessages.next( { contact, messages: [failedMessage] } )
                 return of(null)
             }),

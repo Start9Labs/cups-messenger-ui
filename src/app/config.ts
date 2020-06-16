@@ -11,7 +11,8 @@ export enum LogTopic {
     CURRENT_CONTACT = 'CURRENT_CONTACT',
     MESSAGES = 'MESSAGE',
     NO_TOPIC = 'NO_TOPIC',
-    AUTH = 'AUTH'
+    AUTH = 'AUTH',
+    BACKGROUNDING = 'BACKGROUNDING'
 }
 
 export enum CupsMessengerType {
@@ -46,7 +47,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.ERROR_MOCK,
+        type: CupsMessengerType.LIVE,
         url: '/api'
     },
     contactsDaemon: {
@@ -60,7 +61,7 @@ export const config: Config = {
     loadMesageBatchSize: 15,
     defaultServerTimeout: 30000,
     logs: {
-        level: LogLevel.ERROR,
+        level: LogLevel.DEBUG,
     },
     myTorAddress: removeOnionForAndroid(window.origin.split('//')[1] || window.origin)
 }
