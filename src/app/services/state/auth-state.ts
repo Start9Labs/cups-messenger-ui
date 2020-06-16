@@ -4,7 +4,7 @@ import { fromAsyncFunction } from 'src/rxjs/util'
 import { LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { Log } from 'src/app/log'
 import { Storage } from '@ionic/storage'
-import { distinctUntilChanged, concatMap, take } from 'rxjs/operators'
+import { distinctUntilChanged, concatMap } from 'rxjs/operators'
 import { Injectable } from '@angular/core'
 import { AppState } from './app-state'
 
