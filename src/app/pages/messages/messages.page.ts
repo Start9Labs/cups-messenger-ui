@@ -252,6 +252,15 @@ export class MessagesPage implements OnInit {
         }        
     }
 
+    onKeyPress(e){
+        if(e.key === 'Enter' && !e.shiftKey){
+            e.preventDefault()
+            if(this.messageToSend && this.messageToSend.length){
+                this.sendMessage(this.contact)
+            }
+        }
+    }
+
     private updateRenderedMessageBoundary(
         serverMessages: ServerMessage[]
     ): { updatedOldest: boolean, updatedNewest: boolean }{
