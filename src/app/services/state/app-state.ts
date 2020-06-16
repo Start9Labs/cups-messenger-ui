@@ -2,7 +2,7 @@ import { Observable, NextObserver, of } from 'rxjs'
 import { ContactWithMessageMeta, Message, Contact, OutboundMessage } from '../cups/types'
 import { filter, take, distinctUntilChanged, map, concatMap, tap, mapTo } from 'rxjs/operators'
 import { exists, LogBehaviorSubject, alterState as replaceState } from '../../../rxjs/util'
-import { LogLevel as L, LogTopic as T } from 'src/app/config'
+import { LogLevel as L, LogTopic as T, LogTopic } from 'src/app/config'
 import { MessageStore } from './message-store'
 import { Injectable } from '@angular/core'
 import { Store } from './store'
@@ -72,14 +72,14 @@ export class AppState {
 
     pullContactStateFromStore(): Observable<{}> {
         return this.store.getValue$(AppState.CONTACTS_STORE_KEY, []).pipe(tap(cs => {
-            Log.debug(`dredging contacts`, cs)
+            Log.debug(`dredging contacts`, cs, LogTopic.CONTACTS)
             this.$ingestContacts.next(cs)
         }), mapTo({}))
     }
 
     pullMessageStateFromStore(c: Contact): Observable<{}> {
         return this.store.getValue$(AppState.MESSAGES_STORE_KEY(c.torAddress), []).pipe(tap(ms => {
-            Log.debug(`dredging messages for ${c.name || c.torAddress}`, ms)
+            Log.debug(`dredging messages for ${c.name || c.torAddress}`, ms, LogTopic.MESSAGES)
             this.$ingestMessages.next({contact: c, messages: ms})
         }), mapTo({}))
     }

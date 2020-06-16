@@ -49,12 +49,17 @@ export class ContactsPage implements OnInit {
         this.$forceRerender$.next({})
     }
 
-    ionViewWillLeave() {
-    }
+    ionViewWillLeave() {}
 
-    jumpToChat(c: ContactWithMessageMeta) {
-        Log.trace('jumping to contact', c, LogTopic.NAV)
-        this.app.$ingestCurrentContact.next(c)
+    jumpToChat(contact: ContactWithMessageMeta) {
+        Log.trace('jumping to contact', contact, LogTopic.NAV)
+        contact.unreadMessages = 0
+        this.app.$ingestCurrentContact.next(contact)
+        this.app.emitContacts$.subscribe(cs => {
+            const i = cs.findIndex(c => c.torAddress === contact.torAddress)
+            cs.splice(i, 1, contact)
+            this.app.$ingestContacts.next(cs)
+        })
         this.navController.navigateForward('messages')
     }
 
