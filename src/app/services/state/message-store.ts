@@ -1,4 +1,3 @@
-import { LogBehaviorSubject } from 'src/rxjs/util'
 import { 
     InboundMessage,
     SentMessage,
@@ -13,7 +12,7 @@ import {
     server,
     OutboundMessage 
 } from '../cups/types'
-import { Observable } from 'rxjs'
+import { Observable, BehaviorSubject } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 import { sortByTimestampDESC, uniqueBy, partitionBy } from 'src/app/util'
 import * as uuid from 'uuid'
@@ -21,9 +20,7 @@ import { LogLevel, LogTopic } from 'src/app/config'
 
 // This is our in memory db for all messages loaded into the app from the server, or initiated by the user
 export class MessageStore {
-    private readonly $messages$: LogBehaviorSubject<Message[]> = new LogBehaviorSubject([], {
-        level: LogLevel.TRACE, topic: LogTopic.MESSAGES, desc: 'messages'
-    })
+    private readonly $messages$: BehaviorSubject<Message[]> = new BehaviorSubject([])
 
     constructor(){
     }

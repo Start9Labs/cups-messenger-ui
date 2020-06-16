@@ -7,7 +7,7 @@ import { LogTopic } from 'src/app/config'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
 import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { concatMap, map, tap } from 'rxjs/operators'
+import { concatMap, map, tap, take } from 'rxjs/operators'
 import { AppState } from 'src/app/services/state/app-state'
 
 @Component({
@@ -55,7 +55,7 @@ export class ContactsPage implements OnInit {
         Log.trace('jumping to contact', contact, LogTopic.NAV)
         contact.unreadMessages = 0
         this.app.$ingestCurrentContact.next(contact)
-        this.app.emitContacts$.subscribe(cs => {
+        this.app.emitContacts$.pipe(take(1)).subscribe(cs => {
             const i = cs.findIndex(c => c.torAddress === contact.torAddress)
             cs.splice(i, 1, contact)
             this.app.$ingestContacts.next(cs)

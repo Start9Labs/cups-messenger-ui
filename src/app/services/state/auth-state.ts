@@ -1,7 +1,7 @@
-import { Observable, from } from 'rxjs'
+import { Observable, from, BehaviorSubject } from 'rxjs'
 import { getContext } from 'ambassador-sdk'
-import { LogBehaviorSubject, fromAsyncFunction } from 'src/rxjs/util'
-import { LogLevel, LogTopic, runningOnNativeDevice } from 'src/app/config'
+import { fromAsyncFunction } from 'src/rxjs/util'
+import { LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { Log } from 'src/app/log'
 import { Storage } from '@ionic/storage'
 import { distinctUntilChanged, concatMap, take } from 'rxjs/operators'
@@ -18,7 +18,7 @@ export enum AuthStatus {
 export class AuthState {
     readonly emitStatus$: Observable<AuthStatus>
     password: string = undefined
-    private readonly $status$: LogBehaviorSubject<AuthStatus> = new LogBehaviorSubject(AuthStatus.UNVERIFED, { level: LogLevel.INFO, desc: 'auth' })
+    private readonly $status$: BehaviorSubject<AuthStatus> = new BehaviorSubject(AuthStatus.UNVERIFED)
 
     constructor(
         private readonly storage: Storage,

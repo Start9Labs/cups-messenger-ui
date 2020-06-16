@@ -71,6 +71,45 @@ export class MessagesPage implements OnInit {
         return document.querySelector('ion-content')
     }
 
+    ngOnInit() {
+        this.oldHeight = window.innerHeight
+
+        this.app.emitCurrentContact$.pipe(take(1)).subscribe(c => { 
+            this.contact = c 
+            this.app.pullMessageStateFromStore(c).subscribe()
+        })
+
+        // html will subscribe to this to get message additions/updates
+        this.messagesForDisplay$ = this.app.emitCurrentContact$.pipe(
+            take(1), 
+            tap(c => {
+                this.contact = c 
+                this.app.pullMessageStateFromStore(c).subscribe()
+            }),
+            concatMap(c => 
+                this.app.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
+            ),
+            tap(messages => {
+                this.renderedMessageCount = messages.length
+
+                const { updatedNewest } = this.updateRenderedMessageBoundary(
+                    messages.filter(server)
+                )
+                
+                if(this.isAtBottom()) { 
+                    this.$jumping$.next(true)
+                    return
+                }
+                
+                this.$jumping$.next(false)
+                if(updatedNewest) {
+                    this.$unreads$.next(true)
+                }
+            }),
+            share()
+        )
+    }
+
     ngAfterViewInit() {        
         this.shouldGetAllOldMessages = false
         this.chatComponent = document.getElementById('chat')
@@ -97,40 +136,6 @@ export class MessagesPage implements OnInit {
         this.jumpToBottom()
     }  
 
-    ngOnInit() {
-        this.oldHeight = window.innerHeight
-
-        this.app.emitCurrentContact$.pipe(take(1)).subscribe(c => { 
-            this.contact = c 
-            this.app.pullMessageStateFromStore(c).subscribe()
-        })
-        // html will subscribe to this to get message additions/updates
-
-        this.messagesForDisplay$ = this.app.emitCurrentContact$.pipe(
-            take(1), 
-            concatMap(c => 
-                this.app.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
-            ),
-            tap(messages => {
-                this.renderedMessageCount = messages.length
-
-                const { updatedNewest } = this.updateRenderedMessageBoundary(
-                    messages.filter(server)
-                )
-                
-                if(this.isAtBottom()) { 
-                    this.$jumping$.next(true)
-                    return
-                }
-                
-                this.$jumping$.next(false)
-                if(updatedNewest) {
-                    this.$unreads$.next(true)
-                }
-            }),
-            share()
-        )
-    }
 
     handleResize(){
         let diff = this.oldHeight - window.innerHeight

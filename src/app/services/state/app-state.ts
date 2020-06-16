@@ -1,7 +1,7 @@
-import { Observable, NextObserver, of } from 'rxjs'
+import { Observable, NextObserver, of, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageMeta, Message, Contact, OutboundMessage } from '../cups/types'
 import { filter, take, distinctUntilChanged, map, concatMap, tap, mapTo } from 'rxjs/operators'
-import { exists, LogBehaviorSubject, alterState as replaceState } from '../../../rxjs/util'
+import { exists, alterState as replaceState } from '../../../rxjs/util'
 import { LogLevel as L, LogTopic as T, LogTopic } from 'src/app/config'
 import { MessageStore } from './message-store'
 import { Injectable } from '@angular/core'
@@ -12,8 +12,8 @@ import { Log } from 'src/app/log'
     Raw private app state. Shouldn't be accessed directly except by the below. 
 */
 const Private = {
-    $currentContact$: new LogBehaviorSubject<Contact | undefined>(undefined, { topic: T.CURRENT_CONTACT, level: L.INFO, desc: 'currentContact' }),
-    $contacts$: new LogBehaviorSubject<ContactWithMessageMeta[]>([], { topic: T.CONTACTS, level: L.DEBUG, desc: 'contacts' }),
+    $currentContact$: new BehaviorSubject<Contact | undefined>(undefined),
+    $contacts$: new BehaviorSubject<ContactWithMessageMeta[]>([]),
     messagesStore: {} as { [torAddress: string]: MessageStore }
 }
 
