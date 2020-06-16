@@ -9,6 +9,7 @@ import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
 import { concatMap, map, tap, take } from 'rxjs/operators'
 import { AppState } from 'src/app/services/state/app-state'
+import { BackgroundingService } from 'src/app/services/backgrounding-service'
 
 @Component({
   selector: 'app-contacts',
@@ -26,6 +27,7 @@ export class ContactsPage implements OnInit {
         private readonly loadingCtrl: LoadingController,
         private readonly stateIngestion: StateIngestionService,
         private readonly alertCtrl: AlertController,
+        private readonly backgroundService: BackgroundingService,
         readonly app: AppState
     ) {
         // By calling $forceRerender$.next, we force app.emitContacts$ to emit again getting most up to date info
@@ -35,13 +37,20 @@ export class ContactsPage implements OnInit {
     }
 
     ngOnInit(){
+        this.backgroundService.onResume({
+            name: 'refreshContacts',
+            f: () => this.refreshContacts()
+        })
+
         this.app.pullContactStateFromStore().subscribe()
         const alreadyHasContacts = this.app.hasLoadedContactsFromBrowserLogin 
-        if(!alreadyHasContacts){
-            nonBlockingLoader(
-                this.stateIngestion.refreshContacts(), this.$loading$,
-            ).subscribe(() => {})
-        }
+        if(!alreadyHasContacts) this.refreshContacts()
+    }
+
+    private refreshContacts(){
+        return nonBlockingLoader(
+            this.stateIngestion.refreshContacts(), this.$loading$,
+        ).subscribe()
     }
 
     // We want to get up to date contacts immediately even if navigating back to this page from messages

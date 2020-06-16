@@ -34,14 +34,14 @@ export class StateIngestionService {
             this.page = e.url as Page
         })
 
-        this.backgroundingService.onPause(() => {
-            Log.debug('Shutting down daemons due to pause')
-            this.shutdown()
+        this.backgroundingService.onPause({
+            name: 'daemonShutDown',
+            f: () => this.shutdown()
         })
 
-        this.backgroundingService.onResume(() => {
-            Log.debug('Restarting daemons due to resume')
-            this.init()
+        this.backgroundingService.onResume({
+            name: 'daemonStartUp',
+            f: () => this.startup()
         })
     }
 
@@ -89,7 +89,7 @@ export class StateIngestionService {
 
     // idempotent
     // can be used to restart any dead subs.
-    init() {
+    startup() {
         this.startContactsCooldownSub()
         this.startMessagesCooldownSub()
     }
@@ -117,8 +117,8 @@ export class StateIngestionService {
                 ),
             ).subscribe({
                 next: cs => this.appState.$ingestContacts.next(cs),
-                complete: () => { Log.error(`Critical: contacts observer completed`, {}, LogTopic.CONTACTS); this.init() },
-                error: e => { Log.error('Critical: contacts observer errored', e, LogTopic.CONTACTS); this.init() }
+                complete: () => { Log.error(`Critical: contacts observer completed`, {}, LogTopic.CONTACTS); this.startup() },
+                error: e => { Log.error('Critical: contacts observer errored', e, LogTopic.CONTACTS); this.startup() }
             })
 
     }
@@ -143,8 +143,8 @@ export class StateIngestionService {
                 }),
             ).subscribe({
                 next: ms => this.appState.$ingestMessages.next(ms),
-                complete: () => { Log.error(`Critical: messages observer completed`, {}, LogTopic.MESSAGES); this.init() },
-                error: e => { Log.error('Critical: messages observer errored', e, LogTopic.MESSAGES); this.init() }
+                complete: () => { Log.error(`Critical: messages observer completed`, {}, LogTopic.MESSAGES); this.startup() },
+                error: e => { Log.error('Critical: messages observer errored', e, LogTopic.MESSAGES); this.startup() }
             })
     }
 

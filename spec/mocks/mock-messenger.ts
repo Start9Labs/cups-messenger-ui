@@ -9,7 +9,7 @@ import { sortByTimestampDESC } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
     readonly serverTimeToLoad: number = 2000
-    contacts = mockL(mockContact, 5)
+    contacts = mockL(mockContact, 10)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
     constructor() {

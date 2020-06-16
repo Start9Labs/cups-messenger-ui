@@ -14,8 +14,8 @@ export class BackgroundingService {
     private readonly visibilityChangeKey: string
     private hidden = false
 
-    pauseCallbacks = []
-    resumeCallbacks = []
+    pauseCallbacks: { [name: string]: () => void } = {}
+    resumeCallbacks: { [name: string]: () => void } = {}
 
     constructor() {    
         // Set the name of the hidden property and the change event for visibility
@@ -42,35 +42,30 @@ export class BackgroundingService {
         
         if (document[this.hiddenKey]) {
             Log.debug('Executing pause callbacks')
-            this.pauseCallbacks.forEach(pc => pc())
+            Object.values(this.pauseCallbacks).forEach(pc => pc())
         } else {
             Log.debug('Executing resume callbacks')
-            this.resumeCallbacks.forEach(rc => rc())
+            Object.values(this.resumeCallbacks).forEach(rc => rc())
         }
     }
 
-    onPause(pc: () => void){
-        this.pauseCallbacks.push(
-            () => {
-                try{
-                    pc()
-                } catch (e) {
-                    Log.error('Error in pause callback', e)
-                }
+    onPause(callback: { name: string, f: () => void }){
+        this.pauseCallbacks[callback.name] = () => {
+            try{
+                callback.f()
+            } catch (e) {
+                Log.error(`Error in pause callback ${callback.name}`, e)
             }
-        )
+        }
     }
 
-    onResume(rc: () => void){
-        this.resumeCallbacks.push(
-            () => {
-                try{
-                    rc()
-                } catch (e) {
-                    Log.error('Error in pause callback', e)
-                }
+    onResume(callback: {name: string, f: () => void }){
+        this.resumeCallbacks[callback.name] = () => {
+            try{
+                callback.f()
+            } catch (e) {
+                Log.error(`Error in resume callback ${callback.name}`, e)
             }
-
-        )
+        }
     }
 }

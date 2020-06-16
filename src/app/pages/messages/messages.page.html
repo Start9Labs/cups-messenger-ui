@@ -62,7 +62,7 @@
 
         <div style="width: 100%; padding: 25px; align-items:center; display: flex; justify-content: center;">
             <ion-item lines="none">
-                <ion-spinner *ngIf="$previousMessagesLoading$ | async" name="crescent"></ion-spinner>
+                <ion-spinner *ngIf="$oldMessagesLoading$ | async" name="crescent"></ion-spinner>
                 <div *ngIf="$hasAllOldMessages$ | async">
                     <ion-text color="success" style="padding: 10px; font-size: small">No Older Messages</ion-text>
                 </div>
@@ -95,7 +95,7 @@
             </ion-button>
         </div>
         
-        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($jumping$ | async) && !initting" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="jumpToBottom()">
+        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($trackWithNewMessages$ | async) && !initting" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
         </ion-fab-button>
     </div>

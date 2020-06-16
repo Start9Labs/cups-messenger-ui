@@ -24,7 +24,7 @@ export class AppComponent {
     ) { }
 
     ngOnInit() {
-        this.stateIngestion.init()
+        this.stateIngestion.startup()
         this.store.ready$().subscribe(Log.info)
         this.authState.attemptLogin$().pipe(
             concatMap(() => this.authState.emitStatus$)
