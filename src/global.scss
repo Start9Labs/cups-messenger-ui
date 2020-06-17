@@ -47,6 +47,21 @@
     overflow: hidden;
 }
 
+// loading overlay style for ios.
+.loading-wrapper.sc-ion-loading-ios {
+    --spinner-color: var(--ion-color-light);
+    background: #0e0e10;
+    border-color: var(--ion-toolbar-border-color);
+    border-style: solid;
+    border-width: 1px;
+    padding-left: unset;
+    padding-right: unset;
+    -webkit-padding-start: 34px;
+    padding-inline-start: 34px;
+    -webkit-padding-end: 34px;
+    padding-inline-end: 34px;
+}
+
 .item-avatar {
     // background:  radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
     border-style: solid;

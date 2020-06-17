@@ -43,7 +43,7 @@
 </ion-content>
 
 <ion-footer *ngIf="$loading$ | async" style ="
-    padding: 25px;
+    padding: 10px;
     justify-content: center;
     display: flex;
     border-style: solid;
@@ -53,6 +53,5 @@
     background: var(--ion-background-color);
     "
 >
-    <ion-text style="color: #676a71; font-weight: 700;">Refreshing Contacts</ion-text>
     <ion-spinner style="margin-left: 5px" color="light" name="dots"></ion-spinner>
 </ion-footer>

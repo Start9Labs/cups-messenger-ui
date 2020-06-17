@@ -23,7 +23,7 @@ export class AppComponent {
         private readonly store: Store,
     ) { }
 
-    ngOnInit() {
+    ngOnInit() {    
         this.stateIngestion.startup()
         this.store.ready$().subscribe(Log.info)
         this.authState.attemptLogin$().pipe(

@@ -1,5 +1,5 @@
 import { Observable, from, BehaviorSubject } from 'rxjs'
-import { getContext } from 'ambassador-sdk'
+import { getContext } from '@start9labs/ambassador-sdk'
 import { fromAsyncFunction } from 'src/rxjs/util'
 import { LogTopic, runningOnNativeDevice } from 'src/app/config'
 import { Log } from 'src/app/log'

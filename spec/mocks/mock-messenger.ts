@@ -1,4 +1,4 @@
-import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent, server } from 'src/app/services/cups/types'
+import { ContactWithMessageMeta, Contact, ServerMessage, ObservableOnce, mkSent } from 'src/app/services/cups/types'
 import * as uuid from 'uuid'
 import { of, timer, interval } from 'rxjs'
 import { map, take } from 'rxjs/operators'
@@ -8,7 +8,7 @@ import { mockL, mockContact, mockMessage } from './util'
 import { sortByTimestampDESC } from 'src/app/util'
 
 export class StandardMockCupsMessenger {
-    readonly serverTimeToLoad: number = 2000
+    readonly serverTimeToLoad: number = 2000000
     contacts = mockL(mockContact, 10)
     mocks: {[tor: string]: ServerMessage[]} = {}
     counter = 0
