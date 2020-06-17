@@ -16,14 +16,12 @@ import { Observable, BehaviorSubject } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 import { sortByTimestampDESC, uniqueBy, partitionBy } from 'src/app/util'
 import * as uuid from 'uuid'
-import { LogLevel, LogTopic } from 'src/app/config'
 
 // This is our in memory db for all messages loaded into the app from the server, or initiated by the user
 export class MessageStore {
     private readonly $messages$: BehaviorSubject<Message[]> = new BehaviorSubject([])
 
-    constructor(){
-    }
+    constructor(){}
 
     $ingestMessages(msgs: Message[]): void {
         this.$messages$.next(uniqueById([...this.$messages$.getValue(), ...msgs]))
@@ -107,7 +105,6 @@ export function messageStatusHeirarchy<Q extends Message>(m1: Q, m2: Q) {
     if(server(m2)) return false
 
     // we can assert both m1 and m2 are now local.
-
     if(local(m1) && local(m2)) {
         // failed beats attending if same sentToServer timestam
         if(failed(m1) && m1.sentToServer === m2.sentToServer) return true

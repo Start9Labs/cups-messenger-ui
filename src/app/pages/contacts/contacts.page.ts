@@ -12,9 +12,9 @@ import { AppState } from 'src/app/services/state/app-state'
 import { BackgroundingService } from 'src/app/services/backgrounding-service'
 
 @Component({
-  selector: 'app-contacts',
-  templateUrl: './contacts.page.html',
-  styleUrls: ['./contacts.page.scss'],
+    selector: 'app-contacts',
+    templateUrl: './contacts.page.html',
+    styleUrls: ['./contacts.page.scss'],
 })
 export class ContactsPage implements OnInit {
     public contacts$: Observable<ContactWithMessageMeta[]>

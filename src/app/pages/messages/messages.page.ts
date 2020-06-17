@@ -11,11 +11,7 @@ import { Log } from '../../log'
 import { exists, nonBlockingLoader } from 'src/rxjs/util'
 import { sortByTimestampDESC } from 'src/app/util'
 import { AppState } from 'src/app/services/state/app-state'
-/*
-1.) Entering message page needs loader for initial messages
-2.) Messages load we should jump to the bottom
-3.) If we're at the bottom and new messages come in, we should jump to bottom
-*/
+
 @Component({
   selector: 'app-messages',
   templateUrl: './messages.page.html',
@@ -87,7 +83,7 @@ export class MessagesPage implements OnInit {
             tap(messages => {
                 this.renderedMessageCount = messages.length
 
-                const { updatedNewest } = this.updateRenderedMessageBoundary(
+                const { updatedNewest } = this.updateNewestAndEarliestMessages(
                     messages.filter(server)
                 )
                 
@@ -120,28 +116,8 @@ export class MessagesPage implements OnInit {
         this.jumpToBottom()
     }
 
-    private jumpToBottomWithNewMessages(): Subscription {
-        return this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
-            if(this.isAtBottom() || !this.$trackWithNewMessages$.getValue()) return
-            this.jumpToBottom()
-        })
-    }
-
-    private initDocumentComponents(){
-        this.chatElement = document.getElementById('chat')
-        this.textInputElement = document.getElementById('textInput')
-        this.bottomOfChatElement = document.getElementById('end-of-scroll')
-        this.topOfChatElement = document.getElementById('start-of-scroll')
-    }
-
-
-    handleResize(){
-        let diff = this.oldHeight - window.innerHeight
-        this.oldHeight = window.innerHeight
-
-        if(!this.isAtBottom()){
-            this.contentComponent.scrollByPoint(0, diff, 100)
-        }
+    ngOnDestroy(): void { 
+        this.subsToTeardown.forEach(s => s.unsubscribe())
     }
 
     initialMessageLoad(){
@@ -163,7 +139,27 @@ export class MessagesPage implements OnInit {
             return this.stateIngestion.refreshMessages(c, {})
         }
     }
+
+
+    private jumpToBottomWithNewMessages(): Subscription {
+        return this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
+            if(this.isAtBottom() || !this.$trackWithNewMessages$.getValue()) return
+            this.jumpToBottom()
+        })
+    }
+
+    private initDocumentComponents(){
+        this.chatElement = document.getElementById('chat')
+        this.textInputElement = document.getElementById('textInput')
+        this.bottomOfChatElement = document.getElementById('end-of-scroll')
+        this.topOfChatElement = document.getElementById('start-of-scroll')
+    }
     
+    // Navigation Buttons
+    toProfile(){
+        this.nav.navigateForward('profile')
+    }
+
     // Triggered by enabled infinite scroll
     oldMessageLoad() {
         if(this.earliestRendered){
@@ -184,14 +180,8 @@ export class MessagesPage implements OnInit {
         } 
     }
 
-
-    /* Navigation Buttons */
-    toProfile(){
-        this.nav.navigateForward('profile')
-    }
-
     /* Sending + Retrying Message */
-    sendMessage(contact: Contact) {
+    send(contact: Contact) {
         const attendingMessage = mkAttending({
             direction: 'Outbound',
             otherParty: contact,
@@ -200,13 +190,13 @@ export class MessagesPage implements OnInit {
             trackingId: uuid.v4(),
         })
         Log.info(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
-        this.send(contact, attendingMessage)
+        this.sendMessage(contact, attendingMessage)
         this.messageToSend = ''
     }
 
     retry(contact: Contact, failedMessage: FailedMessage) {
         const retryMessage = mkAttending({...failedMessage, sentToServer: new Date(), failure: undefined} as FailedMessage)
-        this.send(contact, retryMessage)
+        this.sendMessage(contact, retryMessage)
     }
 
     cancel(contact: Contact, message: FailedMessage) {
@@ -215,7 +205,7 @@ export class MessagesPage implements OnInit {
         })
     }
 
-    send(contact: Contact, message: AttendingMessage) {
+    private sendMessage(contact: Contact, message: AttendingMessage) {
         this.app.forceMessagesUpdate$({contact, messages: [message]}).pipe(
             tap(() => this.$trackWithNewMessages$.next(true)), 
             delay(150)
@@ -231,11 +221,20 @@ export class MessagesPage implements OnInit {
             filter(exists),
             tap(() => Log.info(`Message sent`, message.trackingId)),
             concatMap(() => this.stateIngestion.refreshMessages(contact))
-        ).subscribe(() => {})
+        ).subscribe()
+    }
+
+    onKeyPress(e){
+        if(e.key === 'Enter' && !e.shiftKey){
+            e.preventDefault()
+            if(this.messageToSend && this.messageToSend.length){
+                this.send(this.contact)
+            }
+        }
     }
 
     /* Jumping logic */
-    async jumpToBottom(speed: 0 | 100 | 200 = 200) {
+    jumpToBottom(speed: 0 | 100 | 200 = 200) {
         this.contentComponent.scrollToBottom(speed)
         this.$unreads$.next(false)
     }
@@ -252,16 +251,7 @@ export class MessagesPage implements OnInit {
         }        
     }
 
-    onKeyPress(e){
-        if(e.key === 'Enter' && !e.shiftKey){
-            e.preventDefault()
-            if(this.messageToSend && this.messageToSend.length){
-                this.sendMessage(this.contact)
-            }
-        }
-    }
-
-    private updateRenderedMessageBoundary(
+    private updateNewestAndEarliestMessages(
         serverMessages: ServerMessage[]
     ): { updatedOldest: boolean, updatedNewest: boolean }{
         const toReturn = { updatedOldest: false, updatedNewest: false }
@@ -291,11 +281,15 @@ export class MessagesPage implements OnInit {
         return this.topOfChatElement ? isElementInViewport(this.topOfChatElement) : true
     }
 
-    ngOnDestroy(): void {
-        this.subsToTeardown.forEach(s => s.unsubscribe())
+    handleResize(){
+        let diff = this.oldHeight - window.innerHeight
+        this.oldHeight = window.innerHeight
+
+        if(!this.isAtBottom()){
+            this.contentComponent.scrollByPoint(0, diff, 100)
+        }
     }
 }
-
 
 function isElementInViewport (el) {
     var rect = el.getBoundingClientRect()

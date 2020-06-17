@@ -1,33 +1,33 @@
 <ion-header>
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button color="primary"></ion-back-button>
-    </ion-buttons>
-  <ion-title>Settings</ion-title>
-  </ion-toolbar>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-back-button color="primary"></ion-back-button>
+        </ion-buttons>
+        <ion-title>Settings</ion-title>
+    </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <ion-item>
-    <div style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;"
-    >
-      <ion-label>My Tor Address</ion-label>
-      <ion-button id="torAddress" (click)="copyTorAddress()" fill="clear">Copy</ion-button>
+    <ion-item>
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;"
+        >
+            <ion-label>My Tor Address</ion-label>
+            <ion-button id="torAddress" (click)="copyTorAddress()" fill="clear">Copy</ion-button>
+        </div>
+    </ion-item>
+    <ion-item lines="none">
+        <ion-text color="light">
+        <h5 style="font-size: smaller; font-style: italic;">{{ {torAddress: myTorAddress} | truncateEllipses:42 }}</h5>
+        </ion-text>
+    </ion-item>
+    <div style="display: flex; justify-content: center; padding: 25px;">
+        <canvas id="qr-canvas"></canvas>
     </div>
-  </ion-item>
-  <ion-item lines="none">
-    <ion-text color="light">
-      <h5 style="font-size: smaller; font-style: italic;">{{ {torAddress: myTorAddress} | truncateEllipses:42 }}</h5>
-    </ion-text>
-  </ion-item>
-  <div style="display: flex; justify-content: center; padding: 25px;">
-    <canvas id="qr-canvas"></canvas>
-  </div>
-  <ion-button class="ion-margin-top" color="primary" expand="block" fill="outline" (click)="logout()">
-    Logout
-  </ion-button>
+    <ion-button class="ion-margin-top" color="primary" expand="block" fill="outline" (click)="logout()">
+        Logout
+    </ion-button>
 </ion-content>

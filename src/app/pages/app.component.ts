@@ -48,7 +48,6 @@ export class AppComponent {
                             this.navCtrl.navigateRoot('signin')
                         }
                     })
-
                     break
                 }
                 case AuthStatus.VERIFIED: {

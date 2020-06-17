@@ -14,58 +14,56 @@ import { AppState } from 'src/app/services/state/app-state'
   styleUrls: ['./new-contact.page.scss'],
 })
 export class NewContactPage implements OnInit {
-  name = ''
-  torAddress = ''
-  $error$ = new BehaviorSubject<string>(undefined)
+    name = ''
+    torAddress = ''
+    $error$ = new BehaviorSubject<string>(undefined)
 
-  constructor(
-    private readonly cups: CupsMessenger,
-    private readonly stateIngestion: StateIngestionService,
-    private readonly nav: NavController,
-    private readonly zone: NgZone,
-    private readonly loadingCtrl: LoadingController,
-    readonly app: AppState
-  ) { }
+    constructor(
+        private readonly cups: CupsMessenger,
+        private readonly stateIngestion: StateIngestionService,
+        private readonly nav: NavController,
+        private readonly zone: NgZone,
+        private readonly loadingCtrl: LoadingController,
+        readonly app: AppState
+    ) { }
 
-  ngOnInit() {
-  }
+    ngOnInit() {}
 
-  ionViewWillEnter(){
-    this.$error$.next(undefined)
-  }
+    ionViewWillEnter(){
+        this.$error$.next(undefined)
+    }
 
-  wipeCurrentContact(){
-    this.app.replaceCurrentContact$(undefined)
-  }
+    wipeCurrentContact(){
+        this.app.replaceCurrentContact$(undefined)
+    }
 
-  async save() {
-    this.$error$.next(undefined)
-
-    this.app.emitContacts$.pipe(take(1)).pipe(
-      map(cs => {
-        const sanitizedTorOnion = ensureNewTorAddress(
-          cs, sanitizeOnion(this.torAddress)
-        )
-        const sanitizedName = sanitizeName(this.name)
-        return {
-            torAddress: sanitizedTorOnion,
-            name: sanitizedName
-        }
-      }),
-      concatMap(c =>
-        overlayLoader(
-          this.cups.contactsAdd(c).pipe(concatMap(() => this.stateIngestion.refreshContacts()))
-          , this.loadingCtrl
-          , 'Creating contact...'
-        )
-      )
-    ).subscribe({
-        next: () => {
-          this.zone.run(() => this.nav.back())
-        },
-        error: e => {
-          this.$error$.next(e.message)
-        },
-    })
-  }
+    async save() {
+        this.$error$.next(undefined)
+        this.app.emitContacts$.pipe(take(1)).pipe(
+            map(cs => {
+                const sanitizedTorOnion = ensureNewTorAddress(
+                cs, sanitizeOnion(this.torAddress)
+                )
+                const sanitizedName = sanitizeName(this.name)
+                return {
+                    torAddress: sanitizedTorOnion,
+                    name: sanitizedName
+                }
+            }),
+            concatMap(c =>
+                overlayLoader(
+                this.cups.contactsAdd(c).pipe(concatMap(() => this.stateIngestion.refreshContacts()))
+                , this.loadingCtrl
+                , 'Creating contact...'
+                )
+            )
+        ).subscribe({
+            next: () => {
+                this.zone.run(() => this.nav.back())
+            },
+            error: e => {
+                this.$error$.next(e.message)
+            },
+        })
+    }
 }

@@ -9,20 +9,20 @@ import { ProfilePage } from './profile.page'
 import { TextAvatarModule } from '../../text-avatar'
 
 const routes: Routes = [
-  {
-    path: '',
-    component: ProfilePage,
-  },
+    {
+        path: '',
+        component: ProfilePage,
+    },
 ]
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    RouterModule.forChild(routes),
-    TextAvatarModule,
-  ],
-  declarations: [ProfilePage],
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        RouterModule.forChild(routes),
+        TextAvatarModule,
+    ],
+    declarations: [ProfilePage],
 })
-export class ProfilePageModule { }
+export class ProfilePageModule {}
