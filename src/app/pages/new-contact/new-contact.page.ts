@@ -42,7 +42,7 @@ export class NewContactPage implements OnInit {
         this.app.emitContacts$.pipe(take(1)).pipe(
             map(cs => {
                 const sanitizedTorOnion = ensureNewTorAddress(
-                cs, sanitizeOnion(this.torAddress)
+                    cs, sanitizeOnion(this.torAddress)
                 )
                 const sanitizedName = sanitizeName(this.name)
                 return {
@@ -52,9 +52,11 @@ export class NewContactPage implements OnInit {
             }),
             concatMap(c =>
                 overlayLoader(
-                this.cups.contactsAdd(c).pipe(concatMap(() => this.stateIngestion.refreshContacts()))
-                , this.loadingCtrl
-                , 'Creating contact...'
+                    this.cups.contactsAdd(c).pipe(
+                        concatMap(() => this.stateIngestion.refreshContacts())
+                    )
+                    , this.loadingCtrl
+                    , 'Creating contact...'
                 )
             )
         ).subscribe({

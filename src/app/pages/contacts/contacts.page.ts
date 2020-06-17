@@ -94,8 +94,8 @@ export class ContactsPage implements OnInit {
 
     ionViewWillLeave() {}
 
-    jumpToChat(contact: ContactWithMessageMeta) {
-        Log.trace('jumping to contact', contact, LogTopic.NAV)
+    toMessages(contact: ContactWithMessageMeta) {
+        Log.trace('to messages', contact, LogTopic.NAV)
         contact.unreadMessages = 0
         this.app.$ingestCurrentContact.next(contact)
 
