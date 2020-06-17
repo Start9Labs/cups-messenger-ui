@@ -47,7 +47,7 @@ export interface Config {
 
 export const config: Config = {
     cupsMessenger: {
-        type: CupsMessengerType.STANDARD_MOCK,
+        type: CupsMessengerType.LIVE,
         url: '/api'
     },
     contactsDaemon: {
@@ -61,7 +61,7 @@ export const config: Config = {
     loadMesageBatchSize: 15,
     defaultServerTimeout: 30000,
     logs: {
-        level: LogLevel.DEBUG,
+        level: LogLevel.ERROR,
     },
     myTorAddress: removeOnionForAndroid(window.origin.split('//')[1] || window.origin)
 }
