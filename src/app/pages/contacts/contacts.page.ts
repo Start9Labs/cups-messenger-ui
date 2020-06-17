@@ -46,15 +46,16 @@ export class ContactsPage implements OnInit {
             name: 'refreshContacts',
             f: () => this.$loading$.next(true)
         })
-
-        this.subsToTeardown.push(...[
-            this.app.emitContacts$.subscribe(cs => this.updateUnreadsCache(cs)),
-            this.app.emitContacts$.subscribe(() => this.$loading$.next(false))
-        ])
         
+        // When we come in from auth/shell
         this.app.pullContactStateFromStore().subscribe(
             () => this.$loading$.next(true)
         )
+
+        this.subsToTeardown.push(...[
+            this.app.emitContacts$.subscribe(() => this.$loading$.next(false)),
+            this.app.emitContacts$.subscribe(cs => this.updateUnreadsCache(cs))  
+        ])
     }
 
     /* 
