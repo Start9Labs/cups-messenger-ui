@@ -9,6 +9,7 @@ ion-list {
     flex-direction: column-reverse;
     display: flex;
     min-height: 100%;
+    margin-bottom: 5%;
 }
 
 .chat-message {
@@ -180,7 +181,7 @@ ion-list {
 
 .jump-fab-unreads {
     --background: clear;
-    --color: var(--ion-color-warning);
+    --color: var(--ion-color-primary-contrast);
     --color-activated: #fafafa;
     --background-activated: #1a1c22;
 }

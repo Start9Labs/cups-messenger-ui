@@ -5,28 +5,28 @@ import { Log } from '../log'
 import { LogTopic } from '../config'
 
 @Injectable({
-  providedIn: 'root',
+    providedIn: 'root',
 })
 export class UnauthGuard implements CanActivate {
-  private enabled = false
+    private enabled = false
 
-  constructor (
-    private readonly router: Router,
-    private readonly authState: AuthState,
-  ) {
-    this.authState.emitStatus$.subscribe(s => {
-        Log.trace('Auth subscriber: UnauthGurad', AuthStatus[s], LogTopic.AUTH)
-        switch (s){
-            case AuthStatus.UNVERIFED: this.enabled = true; return
-            case AuthStatus.VERIFIED: this.enabled = false; return
-        }
-    })
-  }
-
-  canActivate (): boolean {
-    if(!this.enabled){
-        this.router.navigateByUrl('/contacts')
+    constructor (
+        private readonly router: Router,
+        private readonly authState: AuthState,
+    ){
+        this.authState.emitStatus$.subscribe(s => {
+            Log.trace('Auth subscriber: UnauthGurad', AuthStatus[s], LogTopic.AUTH)
+            switch (s){
+                case AuthStatus.UNVERIFED: this.enabled = true; return
+                case AuthStatus.VERIFIED: this.enabled = false; return
+            }
+        })  
     }
-    return this.enabled
-  }
+
+    canActivate (): boolean {
+        if(!this.enabled){
+            this.router.navigateByUrl('/contacts')
+        }
+        return this.enabled
+}
 }

@@ -2,21 +2,16 @@ import { Component, OnInit, ViewChild } from '@angular/core'
 import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject, Subject } from 'rxjs'
+import { Observable, of, Subscription, BehaviorSubject } from 'rxjs'
 import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
 import { exists, nonBlockingLoader } from 'src/rxjs/util'
-import { ShowMessagesOptions } from 'src/app/services/cups/live-messenger'
 import { sortByTimestampDESC } from 'src/app/util'
 import { AppState } from 'src/app/services/state/app-state'
-/*
-1.) Entering message page needs loader for initial messages
-2.) Messages load we should jump to the bottom
-3.) If we're at the bottom and new messages come in, we should jump to bottom
-*/
+
 @Component({
   selector: 'app-messages',
   templateUrl: './messages.page.html',
@@ -27,23 +22,24 @@ export class MessagesPage implements OnInit {
 
     @ViewChild('content') contentComponent: IonContent
 
-    chatComponent: HTMLElement // listen for scroll events on this
-    textInputComponent: HTMLElement // fix ios keyboard pop up bug using this and the above
+    chatElement: HTMLElement // listen for scroll events on this
+    textInputElement: HTMLElement // fix ios keyboard pop up bug using this and the above
     bottomOfChatElement: HTMLElement // detect at and scroll to bottom with this
     topOfChatElement: HTMLElement // detect at top for loading old messages with this
 
     contact: ContactWithMessageMeta
-    shouldGetAllOldMessages = false
-    $hasAllOldMessages$ = new BehaviorSubject(false)
 
-    $newMessagesLoading$ = new BehaviorSubject(false)
-    $previousMessagesLoading$ = new BehaviorSubject(false)
+    // Loading old messages
+    oldMessagesLoadEnabled = false //Becomes true after initial load, and becomes false when hasAllOldMessages becomes true.
+    $hasAllOldMessages$ = new BehaviorSubject(false) // Becomes true when all old messages acquired. Renders 'no more messages' in app.
+    $oldMessagesLoading$ = new BehaviorSubject(false) // Used to manage the old message loader
 
     // Messages w current status piped from app-state sorted by timestamp
     messagesForDisplay$: Observable<Message[]>
 
-    $jumping$ = new BehaviorSubject(true)
-
+    // When true, the UI will scroll down when new messages are sent/received
+    $trackWithNewMessages$ = new BehaviorSubject(true)
+    
     // Used for green highlights
     private $unreads$ = new BehaviorSubject(false)
     unreads$ = this.$unreads$.asObservable().pipe(distinctUntilChanged()) // only notify subs if things have changed
@@ -52,9 +48,9 @@ export class MessagesPage implements OnInit {
     messageToSend: string
 
     // newest rendered should be used to jump to last viewed in future iterations
-    newestRendered: ServerMessage | undefined = undefined 
+    latestRendered: ServerMessage | undefined = undefined 
     // oldest rendered is used for fetching older messages
-    oldestRendered: ServerMessage | undefined = undefined 
+    earliestRendered: ServerMessage | undefined = undefined 
 
     // These will be unsubbed on ngOnDestroy
     private subsToTeardown: Subscription[] = []
@@ -72,59 +68,31 @@ export class MessagesPage implements OnInit {
         return document.querySelector('ion-content')
     }
 
-    ngAfterViewInit() {        
-        this.shouldGetAllOldMessages = false
-        this.chatComponent = document.getElementById('chat')
-        this.textInputComponent = document.getElementById('textInput')
-        this.bottomOfChatElement = document.getElementById('end-of-scroll')
-        this.topOfChatElement = document.getElementById('start-of-scroll')
-
-        this.subsToTeardown.push(
-            // for tracking the bottom of the screen with message updates
-            this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
-                if(this.isAtBottom() || !this.$jumping$.getValue()) return
-                this.jumpToBottom()
-            })
-        )
-
-        this.initialMessageLoad().pipe(delay(250)).subscribe( ({contact, messages}) => {
-            this.initting = false
-            this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
-            this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
-            Log.debug(`Loaded messages for ${contact.torAddress}`, messages, LogTopic.MESSAGES)
-        })
-
-        // for jumping to the bottom on page load
-        this.jumpToBottom()
-    }  
-
     ngOnInit() {
         this.oldHeight = window.innerHeight
-
-        this.app.emitCurrentContact$.pipe(take(1)).subscribe(c => { 
-            this.contact = c 
-            this.app.pullMessageStateFromStore(c).subscribe()
-        })
         // html will subscribe to this to get message additions/updates
-
         this.messagesForDisplay$ = this.app.emitCurrentContact$.pipe(
             take(1), 
+            tap(c => {
+                this.contact = c 
+                this.app.pullMessageStateFromStore(this.contact).subscribe()
+            }),
             concatMap(c => 
                 this.app.emitMessages$(c.torAddress).pipe(map(ms => ms.sort(sortByTimestampDESC)))
             ),
             tap(messages => {
                 this.renderedMessageCount = messages.length
 
-                const { updatedNewest } = this.updateRenderedMessageBoundary(
+                const { updatedNewest } = this.updateNewestAndEarliestMessages(
                     messages.filter(server)
                 )
                 
                 if(this.isAtBottom()) { 
-                    this.$jumping$.next(true)
+                    this.$trackWithNewMessages$.next(true)
                     return
                 }
                 
-                this.$jumping$.next(false)
+                this.$trackWithNewMessages$.next(false)
                 if(updatedNewest) {
                     this.$unreads$.next(true)
                 }
@@ -133,13 +101,23 @@ export class MessagesPage implements OnInit {
         )
     }
 
-    handleResize(){
-        let diff = this.oldHeight - window.innerHeight
-        this.oldHeight = window.innerHeight
+    ngAfterViewInit() {        
+        this.oldMessagesLoadEnabled = false
+        this.initDocumentComponents()
+        this.subsToTeardown.push(this.jumpToBottomWithNewMessages())
 
-        if(!this.isAtBottom()){
-            this.contentComponent.scrollByPoint(0, diff, 100)
-        }
+        this.initialMessageLoad().pipe(delay(250)).subscribe(({ messages }) => {
+            this.initting = false
+            this.oldMessagesLoadEnabled = messages.length >= config.loadMesageBatchSize
+            this.$hasAllOldMessages$.next(!this.oldMessagesLoadEnabled)
+        })
+
+        // for jumping to the bottom on page load
+        this.jumpToBottom()
+    }
+
+    ngOnDestroy(): void { 
+        this.subsToTeardown.forEach(s => s.unsubscribe())
     }
 
     initialMessageLoad(){
@@ -155,25 +133,45 @@ export class MessagesPage implements OnInit {
                 this.stateIngestion.refreshMessages(c, 
                     { limit: config.loadMesageBatchSize, offset: { id: lastMessage.id, direction: 'before' } }
                 ), 
-                this.$previousMessagesLoading$
+                this.$oldMessagesLoading$
             )
         } else {
             return this.stateIngestion.refreshMessages(c, {})
         }
     }
+
+
+    private jumpToBottomWithNewMessages(): Subscription {
+        return this.messagesForDisplay$.pipe(delay(150)).subscribe(() => {
+            if(this.isAtBottom() || !this.$trackWithNewMessages$.getValue()) return
+            this.jumpToBottom()
+        })
+    }
+
+    private initDocumentComponents(){
+        this.chatElement = document.getElementById('chat')
+        this.textInputElement = document.getElementById('textInput')
+        this.bottomOfChatElement = document.getElementById('end-of-scroll')
+        this.topOfChatElement = document.getElementById('start-of-scroll')
+    }
     
+    // Navigation Buttons
+    toProfile(){
+        this.nav.navigateForward('profile')
+    }
+
     // Triggered by enabled infinite scroll
     oldMessageLoad() {
-        if(this.oldestRendered){
+        if(this.earliestRendered){
             nonBlockingLoader(
                 this.stateIngestion.refreshMessages(
-                    this.contact, { limit: config.loadMesageBatchSize, offset: { direction: 'before', id: this.oldestRendered.id }}
+                    this.contact, { limit: config.loadMesageBatchSize, offset: { direction: 'before', id: this.earliestRendered.id }}
                 ),
-                this.$previousMessagesLoading$
+                this.$oldMessagesLoading$
             ).subscribe({
                 next: ({ messages }) => {
-                    this.shouldGetAllOldMessages = messages.length >= config.loadMesageBatchSize
-                    this.$hasAllOldMessages$.next(!this.shouldGetAllOldMessages)
+                    this.oldMessagesLoadEnabled = messages.length >= config.loadMesageBatchSize
+                    this.$hasAllOldMessages$.next(!this.oldMessagesLoadEnabled)
                 },
                 error: e => {
                     Log.error('Exception fetching older messages for ' + this.contact.torAddress, e, LogTopic.MESSAGES)
@@ -182,17 +180,8 @@ export class MessagesPage implements OnInit {
         } 
     }
 
-    ngOnDestroy(): void {
-        this.subsToTeardown.forEach(s => s.unsubscribe())
-    }
-
-    /* Navigation Buttons */
-    toProfile(){
-        this.nav.navigateForward('profile')
-    }
-
     /* Sending + Retrying Message */
-    sendMessage(contact: Contact) {
+    send(contact: Contact) {
         const attendingMessage = mkAttending({
             direction: 'Outbound',
             otherParty: contact,
@@ -201,13 +190,13 @@ export class MessagesPage implements OnInit {
             trackingId: uuid.v4(),
         })
         Log.info(`sending message ${JSON.stringify(attendingMessage, null, '\t')}`)
-        this.send(contact, attendingMessage)
+        this.sendMessage(contact, attendingMessage)
         this.messageToSend = ''
     }
 
     retry(contact: Contact, failedMessage: FailedMessage) {
         const retryMessage = mkAttending({...failedMessage, sentToServer: new Date(), failure: undefined} as FailedMessage)
-        this.send(contact, retryMessage)
+        this.sendMessage(contact, retryMessage)
     }
 
     cancel(contact: Contact, message: FailedMessage) {
@@ -216,59 +205,68 @@ export class MessagesPage implements OnInit {
         })
     }
 
-    send(contact: Contact, message: AttendingMessage) {
+    private sendMessage(contact: Contact, message: AttendingMessage) {
         this.app.forceMessagesUpdate$({contact, messages: [message]}).pipe(
-            tap(() => this.$jumping$.next(true)), 
+            tap(() => this.$trackWithNewMessages$.next(true)), 
             delay(150)
         ).subscribe(() => this.jumpToBottom())
 
         this.cups.messagesSend(contact, message.trackingId, message.text).pipe(
             catchError(e => {
                 console.error(`send message failure`, e.message)
-                const failedMessage = mkFailed({...message, failure: e.message})
+                const failedMessage = mkFailed({...message, failure: e.message || `${e}`})
                 this.app.$ingestMessages.next( { contact, messages: [failedMessage] } )
                 return of(null)
             }),
             filter(exists),
             tap(() => Log.info(`Message sent`, message.trackingId)),
             concatMap(() => this.stateIngestion.refreshMessages(contact))
-        ).subscribe(() => {})
+        ).subscribe()
+    }
+
+    onKeyPress(e){
+        if(e.key === 'Enter' && !e.shiftKey){
+            e.preventDefault()
+            if(this.messageToSend && this.messageToSend.length){
+                this.send(this.contact)
+            }
+        }
     }
 
     /* Jumping logic */
-    async jumpToBottom(speed: 0 | 100 | 200 = 200) {
+    jumpToBottom(speed: 0 | 100 | 200 = 200) {
         this.contentComponent.scrollToBottom(speed)
         this.$unreads$.next(false)
     }
 
     onScrollEnd(){
         const top = this.isAtTop()
-        if(top && this.shouldGetAllOldMessages) this.oldMessageLoad()
+        if(top && this.oldMessagesLoadEnabled) this.oldMessageLoad()
         
         if(this.isAtBottom()) { 
-            this.$jumping$.next(true)
+            this.$trackWithNewMessages$.next(true)
             this.$unreads$.next(false) 
         } else {
-            this.$jumping$.next(false)
+            this.$trackWithNewMessages$.next(false)
         }        
     }
 
-    private updateRenderedMessageBoundary(
+    private updateNewestAndEarliestMessages(
         serverMessages: ServerMessage[]
     ): { updatedOldest: boolean, updatedNewest: boolean }{
         const toReturn = { updatedOldest: false, updatedNewest: false }
 
         const oldestMessage = serverMessages[serverMessages.length - 1]
-        const oldestRendered = this.oldestRendered
+        const oldestRendered = this.earliestRendered
         if(oldestMessage && isOlder(oldestMessage, oldestRendered)){
-            this.oldestRendered = oldestMessage
+            this.earliestRendered = oldestMessage
             toReturn.updatedOldest = true
         }
 
         const newestMessage = serverMessages.filter(server)[0]
-        const newestRendered = this.newestRendered
+        const newestRendered = this.latestRendered
         if(newestMessage && isNewer(newestMessage, newestRendered)){
-            this.newestRendered = newestMessage
+            this.latestRendered = newestMessage
             toReturn.updatedNewest = true
         }
 
@@ -282,8 +280,16 @@ export class MessagesPage implements OnInit {
     isAtTop(): boolean {
         return this.topOfChatElement ? isElementInViewport(this.topOfChatElement) : true
     }
-}
 
+    handleResize(){
+        let diff = this.oldHeight - window.innerHeight
+        this.oldHeight = window.innerHeight
+
+        if(!this.isAtBottom()){
+            this.contentComponent.scrollByPoint(0, diff, 100)
+        }
+    }
+}
 
 function isElementInViewport (el) {
     var rect = el.getBoundingClientRect()

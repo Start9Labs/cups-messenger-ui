@@ -1,8 +1,8 @@
-import { Observable, NextObserver, of } from 'rxjs'
+import { Observable, NextObserver, BehaviorSubject } from 'rxjs'
 import { ContactWithMessageMeta, Message, Contact, OutboundMessage } from '../cups/types'
-import { filter, take, distinctUntilChanged, map, concatMap, tap, mapTo } from 'rxjs/operators'
-import { exists, LogBehaviorSubject, alterState as replaceState } from '../../../rxjs/util'
-import { LogLevel as L, LogTopic as T } from 'src/app/config'
+import { filter, take, distinctUntilChanged, tap, mapTo } from 'rxjs/operators'
+import { exists, alterState as replaceState } from '../../../rxjs/util'
+import { LogTopic } from 'src/app/config'
 import { MessageStore } from './message-store'
 import { Injectable } from '@angular/core'
 import { Store } from './store'
@@ -12,8 +12,8 @@ import { Log } from 'src/app/log'
     Raw private app state. Shouldn't be accessed directly except by the below. 
 */
 const Private = {
-    $currentContact$: new LogBehaviorSubject<Contact | undefined>(undefined, { topic: T.CURRENT_CONTACT, level: L.INFO, desc: 'currentContact' }),
-    $contacts$: new LogBehaviorSubject<ContactWithMessageMeta[]>([], { topic: T.CONTACTS, level: L.DEBUG, desc: 'contacts' }),
+    $currentContact$: new BehaviorSubject<Contact | undefined>(undefined),
+    $contacts$: new BehaviorSubject<ContactWithMessageMeta[]>([]),
     messagesStore: {} as { [torAddress: string]: MessageStore }
 }
 
@@ -29,7 +29,6 @@ const Private = {
     providedIn: 'root',
 })
 export class AppState {    
-    hasLoadedContactsFromBrowserLogin: boolean
     currentContact: Contact = undefined
     $ingestCurrentContact:  NextObserver<Contact>
     $ingestContacts:  NextObserver<ContactWithMessageMeta[]>
@@ -72,14 +71,14 @@ export class AppState {
 
     pullContactStateFromStore(): Observable<{}> {
         return this.store.getValue$(AppState.CONTACTS_STORE_KEY, []).pipe(tap(cs => {
-            Log.debug(`dredging contacts`, cs)
+            Log.debug(`dredging contacts`, cs, LogTopic.CONTACTS)
             this.$ingestContacts.next(cs)
         }), mapTo({}))
     }
 
     pullMessageStateFromStore(c: Contact): Observable<{}> {
         return this.store.getValue$(AppState.MESSAGES_STORE_KEY(c.torAddress), []).pipe(tap(ms => {
-            Log.debug(`dredging messages for ${c.name || c.torAddress}`, ms)
+            Log.debug(`dredging messages for ${c.name || c.torAddress}`, ms, LogTopic.MESSAGES)
             this.$ingestMessages.next({contact: c, messages: ms})
         }), mapTo({}))
     }
@@ -91,7 +90,6 @@ export class AppState {
         Object.keys(Private.messagesStore).forEach( tor => {
             this.eraseMessagesFor(tor)
         })
-        this.hasLoadedContactsFromBrowserLogin = false
     }
 
     //Replace current contact with c, emits when complete

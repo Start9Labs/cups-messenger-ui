@@ -30,10 +30,8 @@
     color: #ff4d4d !important;
 }
 
-.center {
-    display: block;
-    margin: auto;
-    height: 100%;
+ion-toolbar {
+    --border-width: 0 0 1px;
 }
 
 // alert styling for ios.
@@ -42,23 +40,35 @@
     background: #0e0e10;
     border-style: solid;
     border-width: 1px;
-    border-color: var(--ion-border-color);
-    box-shadow: 4px 4px #000000d1;
-    overflow: hidden;
+    border-color: var(--ion-toolbar-border-color);
+}
+
+.alert-button.sc-ion-alert-ios {
+    border-top: 0.55px solid var(--ion-toolbar-border-color);;
+    border-right: 0.55px solid var(--ion-toolbar-border-color);;
+}
+
+// loading overlay style for ios.
+.loading-wrapper.sc-ion-loading-ios {
+    --spinner-color: var(--ion-color-light);
+    background: #0e0e10;
+    border-color: var(--ion-toolbar-border-color);
+    border-style: solid;
+    border-width: 1px;
 }
 
 .item-avatar {
-    // background:  radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
-    border-style: solid;
-    border-color: #baceefb3;
-    border-width: 1px;
+    width: 37px;
+    height: 37px;
+    margin: 0;
+    
+    border-radius: 50%;
+    line-height: 37px;
+    text-align: center;
+
+    background: radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
 }
 
 .item-avatar-unreads {
-    background: linear-gradient(0.9turn, #1a1c22 17%, #b6cdf1 83%, var(--ion-color-primary-contrast));
-    color: white;
-    border-style: solid;
-    border-color: #baceefb3;
-    border-width: 1px;
-    // background: radial-gradient(#1a1c22 10%, var(--ion-color-primary-contrast));
+    background: radial-gradient(#1a1c22 10%, var(--ion-color-primary-contrast));
 }

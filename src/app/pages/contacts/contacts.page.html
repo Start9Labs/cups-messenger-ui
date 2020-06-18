@@ -2,7 +2,7 @@
     <ion-toolbar>
         <div class="contacts-header">
             <ion-text class="page-title">Cups Messenger</ion-text>               
-            <ion-button color="primary" fill="clear" (click)="me()">
+            <ion-button color="primary" fill="clear" (click)="toMe()">
                 <ion-icon name="settings-outline"></ion-icon>
             </ion-button>
         </div>   
@@ -10,17 +10,16 @@
 </ion-header>
 
 <ion-content id="content" fullscreen>
-    <ion-item-group>
+    <ion-item-group style="width: 100%">
         <div *ngFor="let contact of (contacts$ | async); index as i" >
             <ion-item-sliding>
-                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="jumpToChat(contact)">
-                    <ion-avatar *ngIf="contact.unreadMessages === 0" class="item-avatar" slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                    </ion-avatar>
-                    <ion-avatar *ngIf="contact.unreadMessages > 0" class="item-avatar-unreads" slot="start">
-                        <text-avatar [text]='(contact | truncateEllipses:12)'></text-avatar>
-                    </ion-avatar>
-                    <ion-grid>
+                <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="toMessages(contact)">
+                    
+                    <div [class.item-avatar-unreads]="(unreadsCache[contact.torAddress] | async).unreads > 0" class="item-avatar">
+                        {{ (contact | truncateEllipses:15)[0].toUpperCase() }}
+                    </div>
+                    
+                    <ion-grid style="margin-left: 3.5%">
                         <ion-row style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="flex-shrink: 1" class="contact-name">{{ (contact | truncateEllipses:15) }}</div>
                             <div style="font-size: small; flex-grow: 0; flex-shrink: 0" *ngIf="contact.lastMessages[0]">{{contact.lastMessages[0].timestamp | dateDisplay:true}}</div>
@@ -35,9 +34,8 @@
                     <ion-item-option color="medium" (click)="presentAlertDelete(contact)">Delete</ion-item-option>
                 </ion-item-options>
             </ion-item-sliding>
-        </div>
+        </div>  
     </ion-item-group>
-    <ion-spinner *ngIf="$loading$ | async" class="center" name="crescent"></ion-spinner>
 
     <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button class="new-contact-button" size="medium" fill="clear" color="primary" (click)="toNewContactPage()">
@@ -45,3 +43,17 @@
         </ion-fab-button>
     </ion-fab>
 </ion-content>
+
+<ion-footer *ngIf="$loading$ | async" style ="
+    padding: 10px;
+    justify-content: center;
+    display: flex;
+    border-style: solid;
+    border-width: 1px 0px 0px 0px;
+    border-color: var(--ion-toolbar-border-color);
+    align-items: center;
+    background: var(--ion-background-color);
+    "
+>
+    <ion-spinner style="margin-left: 5px" color="light" name="dots"></ion-spinner>
+</ion-footer>

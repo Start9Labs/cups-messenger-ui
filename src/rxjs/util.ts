@@ -76,40 +76,6 @@ export function nonBlockingLoader<T>(
     )
 }
 
-// LogBehaviorSubjects simply decorate BehaviorSubjects with logging on ingestion. Any time their state is
-// updated (or queried with getValue()) a log will be emitted of that state.
-export class LogBehaviorSubject<T> extends BehaviorSubject<T> {
-    level: LogLevel = LogLevel.INFO
-    desc = 'subject'
-    topic: LogTopic = LogTopic.NO_TOPIC
-
-    constructor(t: T, opt?: { level?: LogLevel, topic?: LogTopic, desc?: string }){
-        super(t)
-        if(opt && opt.level) {
-            this.level = opt.level
-        }
-        if(opt && opt.desc){
-            this.desc = opt.desc
-        } else {
-            this.desc = `subject-${uuid.v4()}`
-        }
-        if(opt && opt.topic){
-            this.topic = opt.topic
-        }
-    }
-
-    getValue(): T {
-        const t = super.getValue()
-        Log.safeLog( {level: this.level, topic: this.topic, msg: `${this.desc} queried`, object: t} )
-        return t
-    }
-
-    next(t: T){
-        Log.safeLog( {level: this.level, topic: this.topic, msg: `${this.desc} inbound`, object: t} )
-        super.next(t)
-    }
-}
-
 export function fromAsyncFunction<T, S>( f: (s: S) => Promise<T>, s?: S): Observable<T>{
     return from(f(s))
 }

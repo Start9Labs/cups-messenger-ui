@@ -11,7 +11,8 @@ export enum LogTopic {
     CURRENT_CONTACT = 'CURRENT_CONTACT',
     MESSAGES = 'MESSAGE',
     NO_TOPIC = 'NO_TOPIC',
-    AUTH = 'AUTH'
+    AUTH = 'AUTH',
+    BACKGROUNDING = 'BACKGROUNDING'
 }
 
 export enum CupsMessengerType {

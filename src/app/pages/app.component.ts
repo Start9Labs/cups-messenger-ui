@@ -5,7 +5,7 @@ import { StateIngestionService } from '../services/state/state-ingestion/state-i
 import { AuthState, AuthStatus } from '../services/state/auth-state'
 import { getContext } from '@start9labs/ambassador-sdk'
 import { Log } from '../log'
-import { runningOnNativeDevice } from '../config'
+import { runningOnNativeDevice, config, CupsMessengerType } from '../config'
 import { Store } from '../services/state/store'
 import { concatMap } from 'rxjs/operators'
 
@@ -23,8 +23,8 @@ export class AppComponent {
         private readonly store: Store,
     ) { }
 
-    ngOnInit() {
-        this.stateIngestion.init()
+    ngOnInit() {    
+        this.stateIngestion.startup()
         this.store.ready$().subscribe(Log.info)
         this.authState.attemptLogin$().pipe(
             concatMap(() => this.authState.emitStatus$)
@@ -32,7 +32,9 @@ export class AppComponent {
     }
 
     ngAfterViewInit() {
-        fetch('/close.svg').then(() => setTimeout(() => getContext().childReady(), 200)) // HERE BE DRAGONS
+        if(config.cupsMessenger.type === CupsMessengerType.LIVE){
+            fetch('/close.svg').then(() => setTimeout(() => getContext().childReady(), 200)) // HERE BE DRAGONS
+        }
     }
 
     handleAuthChange(s: AuthStatus) {
@@ -46,7 +48,6 @@ export class AppComponent {
                             this.navCtrl.navigateRoot('signin')
                         }
                     })
-
                     break
                 }
                 case AuthStatus.VERIFIED: {
