@@ -1,6 +1,6 @@
 import * as base32 from 'base32.js'
 import * as h from 'js-sha3'
-import { MessageDirection, ServerMessage, mkInbound, mkSent, Contact } from './types'
+import { MessageDirection, Contact } from './types'
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()

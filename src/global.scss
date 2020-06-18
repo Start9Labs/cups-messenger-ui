@@ -30,10 +30,8 @@
     color: #ff4d4d !important;
 }
 
-.center {
-    display: block;
-    margin: auto;
-    height: 100%;
+ion-toolbar {
+    --border-width: 0 0 1px;
 }
 
 // alert styling for ios.
@@ -60,6 +58,14 @@
 }
 
 .item-avatar {
+    width: 37px;
+    height: 37px;
+    margin: 0;
+    
+    border-radius: 50%;
+    line-height: 37px;
+    text-align: center;
+
     background: radial-gradient(#1a1c22 50%, var(--ion-color-primary-contrast));
 }
 

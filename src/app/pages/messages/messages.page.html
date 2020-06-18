@@ -8,9 +8,11 @@
                 grid-gap: 10px;
                 padding: 0 10px;"
             >
-            <ion-avatar style="width: 36px; height: 36px" [class.item-avatar]="!(unreads$ | async)" [class.item-avatar-unreads]="(unreads$ | async)">
-                <text-avatar [text]='contact.name || contact.torAddress'></text-avatar>
-            </ion-avatar>
+            
+            <div class="item-avatar" [class.item-avatar-unreads]="(unreads$ | async)">
+                {{(contact | truncateEllipses:32)[0] | uppercase}}     
+            </div>
+            
             <ion-title style="
                 position: unset; 
                 padding: 0; 

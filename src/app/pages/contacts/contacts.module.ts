@@ -4,7 +4,6 @@ import { Routes, RouterModule } from '@angular/router'
 import { IonicModule } from '@ionic/angular'
 import { ContactsPage } from './contacts.page'
 import { SharingModule } from '../../modules/sharing.module'
-import { TextAvatarModule } from 'src/app/text-avatar'
 
 const routes: Routes = [
     {
@@ -18,8 +17,7 @@ const routes: Routes = [
         CommonModule,
         IonicModule,
         RouterModule.forChild(routes),
-        SharingModule,
-        TextAvatarModule,
+        SharingModule
     ],
     declarations: [ContactsPage],
 })
