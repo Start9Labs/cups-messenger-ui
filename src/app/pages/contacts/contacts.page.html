@@ -1,11 +1,14 @@
 <ion-header>
-    <ion-toolbar>
-        <div class="contacts-header">
-            <ion-text class="page-title">Cups Messenger</ion-text>               
+    <ion-toolbar style="padding: 20px 5px 5px 5px;">
+        <ion-text slot="start" class="page-title">Cups Messenger</ion-text>               
+        <ion-buttons slot="end"> 
             <ion-button color="primary" fill="clear" (click)="toMe()">
                 <ion-icon name="settings-outline"></ion-icon>
             </ion-button>
-        </div>   
+            <ion-button color="primary" fill="clear" (click)="toNewContactPage()">
+                <ion-icon name="add-circle-outline"></ion-icon>
+            </ion-button>
+        </ion-buttons>
     </ion-toolbar>
 </ion-header>
 
@@ -36,12 +39,6 @@
             </ion-item-sliding>
         </div>  
     </ion-item-group>
-
-    <ion-fab class="ion-padding" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button class="new-contact-button" size="medium" fill="clear" color="primary" (click)="toNewContactPage()">
-            <ion-icon name="add-outline"></ion-icon>
-        </ion-fab-button>
-    </ion-fab>
 </ion-content>
 
 <ion-footer *ngIf="$loading$ | async" style ="
