@@ -121,9 +121,8 @@ export class AppState {
 
     private eraseMessagesFor(torAddress: string) {
         this.messagesFor(torAddress).clear()
-        this.store.deleteValue$(torAddress)
+        this.store.deleteValue$(torAddress).subscribe()
         delete Private.messagesStore[torAddress]
-
     }
 }
     
