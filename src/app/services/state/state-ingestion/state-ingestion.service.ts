@@ -108,7 +108,7 @@ export class StateIngestionService {
         Log.info('starting contacts daemon', config.contactsDaemon, LogTopic.CONTACTS)
 
         this.contactsCooldown =
-            timer(0, config.contactsDaemon.frequency).pipe(
+            timer(config.contactsDaemon.frequency/3, config.contactsDaemon.frequency).pipe(
                 withLatestFrom(this.authState.emitStatus$),
                 filter(([_, s]) => s === AuthStatus.VERIFIED),
                 tap(i => Log.debug('running contacts', i, LogTopic.CONTACTS)),

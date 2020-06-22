@@ -1,4 +1,4 @@
-import { StandardMockCupsMessenger } from './mock-messenger'
+import { StandardMockCupsMessenger } from './standard-mock'
 import { of } from 'rxjs'
 import { tap, map, delay } from 'rxjs/operators'
 
