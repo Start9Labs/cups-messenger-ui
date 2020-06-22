@@ -36,7 +36,7 @@
     </ion-toolbar>
 </ion-header>
 
-<ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" (window:resize)="handleResize()">
+<ion-content #content [scrollEvents]="true" (ionScrollStart)="onScrollStart()" (ionScrollEnd)="onScrollEnd()" (window:resize)="handleResize()">
     <ion-list id="chat"  *ngIf="(app.emitCurrentContact$ | async) as contact">
         <div id="end-of-scroll"></div>
         <div *ngFor="let message of (messagesForDisplay$ | async)">
@@ -102,8 +102,14 @@
             </ion-button>
         </div>
         
-        <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($trackWithNewMessages$ | async) && !initting" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="jumpToBottom()">
-            <ion-icon name="arrow-down-outline"></ion-icon>
+        <ion-fab-button style="--position: relative" [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($trackWithNewMessages$ | async) && !initting" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="jumpToBottom()">
+            <!-- <div> -->
+                <ion-icon style="position: absolute" [class.bump-up]="$refreshing$ | async" name="arrow-down-outline"></ion-icon>
+                <ion-spinner style="color: #7b7c80;
+                                    position: absolute;
+                                    top: 20px;
+                " name="dots" *ngIf="$refreshing$ | async"></ion-spinner>
+            <!-- </div> -->
         </ion-fab-button>
         <ion-fab-button *ngIf="($trackWithNewMessages$ | async) || initting" [disabled]="$refreshing$ | async" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="refresh()">
             <ion-icon name="refresh-outline" *ngIf="!($refreshing$ | async)"></ion-icon>

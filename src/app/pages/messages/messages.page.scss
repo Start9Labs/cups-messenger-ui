@@ -24,6 +24,10 @@ ion-list {
     user-select: text;
 }
 
+.bump-up {
+    top: -2px
+}
+
 .submit {
     background: var(--ion-color-dark);
     padding: 10px 10px 25px 10px;

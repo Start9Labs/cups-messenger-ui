@@ -82,7 +82,7 @@ export class ContactsPage implements OnInit {
         })
     }
 
-    private refresh(event): void {
+    refresh(event): void {
         this.stateIngestion.refreshContacts().subscribe()
         
         this.app.emitContacts$.pipe(skip(1), take(1), finalize(() => {

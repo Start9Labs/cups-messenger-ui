@@ -12,8 +12,8 @@ import { Contact,
 } from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject } from 'rxjs'
-import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share } from 'rxjs/operators'
+import { Observable, of, Subscription, BehaviorSubject, Subject, interval } from 'rxjs'
+import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share, throttleTime, skip } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
@@ -75,8 +75,8 @@ export class MessagesPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
         readonly app: AppState,
-    ){
-    }
+    ){}
+
     getContent() {
         return document.querySelector('ion-content')
     }
@@ -117,7 +117,9 @@ export class MessagesPage implements OnInit {
     ngAfterViewInit() {        
         this.oldMessagesLoadEnabled = false
         this.initDocumentComponents()
-        this.subsToTeardown.push(this.jumpToBottomWithNewMessages())
+        this.subsToTeardown.push(
+            this.jumpToBottomWithNewMessages(),
+        )
 
         this.initialMessageLoad().pipe(delay(250)).subscribe(({ messages }) => {
             this.initting = false
@@ -194,7 +196,8 @@ export class MessagesPage implements OnInit {
     }
 
     async refresh(){
-        nonBlockingLoader(this.stateIngestion.refreshMessages(this.contact, {}), this.$refreshing$).subscribe()
+        this.stateIngestion.refreshMessages(this.contact, {}).subscribe()
+        nonBlockingLoader(this.app.emitMessages$(this.contact.torAddress).pipe(skip(1)), this.$refreshing$).subscribe()
     }
 
     /* Sending + Retrying Message */
@@ -256,6 +259,11 @@ export class MessagesPage implements OnInit {
         this.$unreads$.next(false)
     }
 
+    async onScrollStart(){
+        await pauseFor(200)
+        this.onScrollEnd()
+    }
+
     onScrollEnd(){
         const top = this.isAtTop()
         if(top && this.oldMessagesLoadEnabled) this.oldMessageLoad()
@@ -264,6 +272,7 @@ export class MessagesPage implements OnInit {
             this.$trackWithNewMessages$.next(true)
             this.$unreads$.next(false) 
         } else {
+            console.log('scroll end')            
             this.$trackWithNewMessages$.next(false)
         }        
     }
