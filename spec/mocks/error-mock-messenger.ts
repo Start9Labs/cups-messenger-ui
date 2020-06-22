@@ -1,7 +1,7 @@
 import { Contact, ObservableOnce } from 'src/app/services/cups/types'
 import { timer } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { StandardMockCupsMessenger } from './mock-messenger'
+import { StandardMockCupsMessenger } from './standard-mock'
 
 export class ErrorMockCupsMessenger extends StandardMockCupsMessenger {
     retries = 2

@@ -5,9 +5,9 @@ import { NavController, LoadingController, AlertController } from '@ionic/angula
 import { Log } from 'src/app/log'
 import { LogTopic } from 'src/app/config'
 import { CupsMessenger } from 'src/app/services/cups/cups-messenger'
-import { overlayLoader, nonBlockingLoader } from 'src/rxjs/util'
+import { overlayLoader } from 'src/rxjs/util'
 import { StateIngestionService } from 'src/app/services/state/state-ingestion/state-ingestion.service'
-import { concatMap, map, tap, take } from 'rxjs/operators'
+import { concatMap, map, tap, take, finalize, skip } from 'rxjs/operators'
 import { AppState } from 'src/app/services/state/app-state'
 import { BackgroundingService } from 'src/app/services/backgrounding-service'
 
@@ -18,6 +18,7 @@ import { BackgroundingService } from 'src/app/services/backgrounding-service'
 })
 export class ContactsPage implements OnInit {
     public contacts$: Observable<ContactWithMessageMeta[]>
+    public $refreshing$: BehaviorSubject<boolean> = new BehaviorSubject(true)
     public unreadsCache: { [tor: string]: BehaviorSubject<{ unreads: number, lastMessageId: string }> } = {}
 
     private subsToTeardown: Subscription[] = []
@@ -81,10 +82,12 @@ export class ContactsPage implements OnInit {
         })
     }
 
-    private refreshContacts(): void {
-        nonBlockingLoader(
-            this.stateIngestion.refreshContacts(), this.$loading$,
-        ).subscribe()
+    refresh(event): void {
+        this.stateIngestion.refreshContacts().subscribe()
+        
+        this.app.emitContacts$.pipe(skip(1), take(1), finalize(() => {
+            event.target.complete()
+        })).subscribe()
     }
 
     // We want to get up to date contacts immediately even if navigating back to this page from messages

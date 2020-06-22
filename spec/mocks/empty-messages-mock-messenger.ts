@@ -1,5 +1,5 @@
 import { ServerMessage } from 'src/app/services/cups/types'
-import { StandardMockCupsMessenger } from './mock-messenger'
+import { StandardMockCupsMessenger } from './standard-mock'
 
 export class NoMessagesMockCupsMessenger extends StandardMockCupsMessenger {
     mocks: {[tor: string]: ServerMessage[]} = {}

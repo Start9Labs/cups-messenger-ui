@@ -1,14 +1,24 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
+import { Contact,
+        Message,
+        AttendingMessage,
+        FailedMessage,
+        ServerMessage,
+        server,
+        mkAttending,
+        mkFailed,
+        ContactWithMessageMeta,
+        pauseFor
+} from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
-import { Observable, of, Subscription, BehaviorSubject } from 'rxjs'
-import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share } from 'rxjs/operators'
+import { Observable, of, Subscription, BehaviorSubject, Subject, interval } from 'rxjs'
+import { tap, filter, catchError, concatMap, take, delay, distinctUntilChanged, map, share, throttleTime, skip } from 'rxjs/operators'
 import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, nonBlockingLoader } from 'src/rxjs/util'
+import { exists, nonBlockingLoader, overlayLoader } from 'src/rxjs/util'
 import { sortByTimestampDESC } from 'src/app/util'
 import { AppState } from 'src/app/services/state/app-state'
 
@@ -40,7 +50,7 @@ export class MessagesPage implements OnInit {
     // When true, the UI will scroll down when new messages are sent/received
     $trackWithNewMessages$ = new BehaviorSubject(true)
     
-    // Used for green highlights
+    // Used for highlights
     private $unreads$ = new BehaviorSubject(false)
     unreads$ = this.$unreads$.asObservable().pipe(distinctUntilChanged()) // only notify subs if things have changed
 
@@ -52,6 +62,9 @@ export class MessagesPage implements OnInit {
     // oldest rendered is used for fetching older messages
     earliestRendered: ServerMessage | undefined = undefined 
 
+    // shows that page is manually refreshing
+    $refreshing$ = new BehaviorSubject(false)
+
     // These will be unsubbed on ngOnDestroy
     private subsToTeardown: Subscription[] = []
     private renderedMessageCount = 0
@@ -62,8 +75,8 @@ export class MessagesPage implements OnInit {
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
         readonly app: AppState,
-    ){
-    }
+    ){}
+
     getContent() {
         return document.querySelector('ion-content')
     }
@@ -104,7 +117,9 @@ export class MessagesPage implements OnInit {
     ngAfterViewInit() {        
         this.oldMessagesLoadEnabled = false
         this.initDocumentComponents()
-        this.subsToTeardown.push(this.jumpToBottomWithNewMessages())
+        this.subsToTeardown.push(
+            this.jumpToBottomWithNewMessages(),
+        )
 
         this.initialMessageLoad().pipe(delay(250)).subscribe(({ messages }) => {
             this.initting = false
@@ -180,6 +195,11 @@ export class MessagesPage implements OnInit {
         } 
     }
 
+    async refresh(){
+        this.stateIngestion.refreshMessages(this.contact, {}).subscribe()
+        nonBlockingLoader(this.app.emitMessages$(this.contact.torAddress).pipe(skip(1)), this.$refreshing$).subscribe()
+    }
+
     /* Sending + Retrying Message */
     send(contact: Contact) {
         const attendingMessage = mkAttending({
@@ -237,6 +257,11 @@ export class MessagesPage implements OnInit {
     jumpToBottom(speed: 0 | 100 | 200 = 200) {
         this.contentComponent.scrollToBottom(speed)
         this.$unreads$.next(false)
+    }
+
+    async onScrollStart(){
+        await pauseFor(200)
+        this.onScrollEnd()
     }
 
     onScrollEnd(){
