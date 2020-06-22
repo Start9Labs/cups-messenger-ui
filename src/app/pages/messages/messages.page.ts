@@ -1,5 +1,15 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { Contact, Message, AttendingMessage, FailedMessage, ServerMessage, server, mkAttending, mkFailed, ContactWithMessageMeta } from '../../services/cups/types'
+import { Contact,
+        Message,
+        AttendingMessage,
+        FailedMessage,
+        ServerMessage,
+        server,
+        mkAttending,
+        mkFailed,
+        ContactWithMessageMeta,
+        pauseFor
+} from '../../services/cups/types'
 import * as uuid from 'uuid'
 import { NavController, IonContent } from '@ionic/angular'
 import { Observable, of, Subscription, BehaviorSubject } from 'rxjs'
@@ -8,7 +18,7 @@ import { CupsMessenger } from '../../services/cups/cups-messenger'
 import { config, LogTopic } from '../../config'
 import { StateIngestionService } from '../../services/state/state-ingestion/state-ingestion.service'
 import { Log } from '../../log'
-import { exists, nonBlockingLoader } from 'src/rxjs/util'
+import { exists, nonBlockingLoader, overlayLoader } from 'src/rxjs/util'
 import { sortByTimestampDESC } from 'src/app/util'
 import { AppState } from 'src/app/services/state/app-state'
 
@@ -40,7 +50,7 @@ export class MessagesPage implements OnInit {
     // When true, the UI will scroll down when new messages are sent/received
     $trackWithNewMessages$ = new BehaviorSubject(true)
     
-    // Used for green highlights
+    // Used for highlights
     private $unreads$ = new BehaviorSubject(false)
     unreads$ = this.$unreads$.asObservable().pipe(distinctUntilChanged()) // only notify subs if things have changed
 
@@ -51,6 +61,9 @@ export class MessagesPage implements OnInit {
     latestRendered: ServerMessage | undefined = undefined 
     // oldest rendered is used for fetching older messages
     earliestRendered: ServerMessage | undefined = undefined 
+
+    // shows that page is manually refreshing
+    $refreshing$ = new BehaviorSubject(false)
 
     // These will be unsubbed on ngOnDestroy
     private subsToTeardown: Subscription[] = []
@@ -178,6 +191,10 @@ export class MessagesPage implements OnInit {
                 }
             })
         } 
+    }
+
+    async refresh(){
+        nonBlockingLoader(this.stateIngestion.refreshMessages(this.contact, {}), this.$refreshing$).subscribe()
     }
 
     /* Sending + Retrying Message */

@@ -1,37 +1,44 @@
 <ion-header translucent>
     <ion-toolbar>
         <div *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
-            <ion-back-button color="primary" [defaultHref]="['/contacts']"></ion-back-button>
+            <ion-buttons>
+                <ion-back-button color="primary" [defaultHref]="['/contacts']"></ion-back-button>
+            </ion-buttons>
             <div style="
                 display: grid;
                 justify-items: center;
                 grid-gap: 10px;
                 padding: 0 10px;"
             >
-            
-            <div class="item-avatar" [class.item-avatar-unreads]="(unreads$ | async)">
-                {{(contact | truncateEllipses:32)[0] | uppercase}}     
+                
+                <div class="item-avatar" [class.item-avatar-unreads]="(unreads$ | async)">
+                    {{(contact | truncateEllipses:32)[0] | uppercase}}     
+                </div>
+                
+                <ion-title style="
+                    position: unset; 
+                    padding: 0; 
+                    overflow: hidden;
+                    font-size: 12px;
+                ">
+                    {{contact | truncateEllipses:32}}
+                </ion-title>
+
+                
             </div>
-            
-            <ion-title style="
-                position: unset; 
-                padding: 0; 
-                overflow: hidden;
-                font-size: 12px;
-            ">
-                {{contact | truncateEllipses:32}}
-            </ion-title>
-            </div>
-            <ion-button fill="clear" color="primary" (click)="toProfile()">
-                Edit
-            </ion-button>
+            <ion-buttons> 
+                <ion-button fill="clear" color="primary" (click)="toProfile()">
+                    <ion-icon name="person"></ion-icon>
+                </ion-button>
+            </ion-buttons>
+
         </div>
     </ion-toolbar>
 </ion-header>
 
 <ion-content #content [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" (window:resize)="handleResize()">
     <ion-list id="chat"  *ngIf="(app.emitCurrentContact$ | async) as contact">
-        <div id="end-of-scroll"></div>         
+        <div id="end-of-scroll"></div>
         <div *ngFor="let message of (messagesForDisplay$ | async)">
             <div id="{{message.id}}" class="left-bubble" *ngIf="(message | classify) === 'INBOUND'" lines="none">
                 <p class="chat-message ionic-text-wrap">{{message.text}}</p>
@@ -97,6 +104,10 @@
         
         <ion-fab-button [class.jump-fab-unreads]="unreads$ | async" *ngIf="!($trackWithNewMessages$ | async) && !initting" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="jumpToBottom()">
             <ion-icon name="arrow-down-outline"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-button *ngIf="($trackWithNewMessages$ | async) || initting" [disabled]="$refreshing$ | async" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px;" class="jump-fab" size="small" (click)="refresh()">
+            <ion-icon name="refresh-outline" *ngIf="!($refreshing$ | async)"></ion-icon>
+            <ion-spinner name="dots" style="color:white" *ngIf="$refreshing$ | async"></ion-spinner>
         </ion-fab-button>
     </div>
 </ion-footer>
