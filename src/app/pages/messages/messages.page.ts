@@ -272,7 +272,6 @@ export class MessagesPage implements OnInit {
             this.$trackWithNewMessages$.next(true)
             this.$unreads$.next(false) 
         } else {
-            console.log('scroll end')            
             this.$trackWithNewMessages$.next(false)
         }        
     }
