@@ -51,7 +51,13 @@
                 <ion-item minHeight="100px" class="item-contact" lines="full" detail='true' detail-icon="chevron-forward-outline" button (click)="toMessages(contact)">
                     
                     <div [class.item-avatar-unreads]="(unreadsCache[contact.torAddress] | async).unreads > 0" class="item-avatar">
-                        {{ (contact | truncateEllipses:15)[0].toUpperCase() }}
+                        <div style="margin: 0;
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);">
+                            {{ (contact | truncateEllipses:15)[0].toUpperCase() }}
+                        </div>
                     </div>
                     
                     <ion-grid style="margin-left: 3.5%">

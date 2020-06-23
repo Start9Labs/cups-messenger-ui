@@ -12,7 +12,7 @@
             >
                 
                 <div class="item-avatar" [class.item-avatar-unreads]="(unreads$ | async)">
-                    {{(contact | truncateEllipses:32)[0] | uppercase}}     
+                    <div>{{(contact | truncateEllipses:32)[0] | uppercase}}</div>
                 </div>
                 
                 <ion-title style="
