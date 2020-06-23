@@ -120,7 +120,6 @@ export class StateIngestionService {
                 complete: () => { Log.error(`Critical: contacts observer completed`, {}, LogTopic.CONTACTS); this.startup() },
                 error: e => { Log.error('Critical: contacts observer errored', e, LogTopic.CONTACTS); this.startup() }
             })
-
     }
 
     // When we're on the messages page for the current contact, get messages more frequently, and mark as read
