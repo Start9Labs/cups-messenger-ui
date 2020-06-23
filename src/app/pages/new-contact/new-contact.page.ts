@@ -21,7 +21,7 @@ export class NewContactPage implements OnInit {
     constructor(
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
-        private readonly nav: NavController,
+        readonly nav: NavController,
         private readonly zone: NgZone,
         private readonly loadingCtrl: LoadingController,
         readonly app: AppState

@@ -71,7 +71,7 @@ export class MessagesPage implements OnInit {
     oldHeight: number
 
     constructor(
-        private readonly nav: NavController,
+        readonly nav: NavController,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
         readonly app: AppState,

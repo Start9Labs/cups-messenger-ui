@@ -20,7 +20,7 @@ export class ProfilePage {
 
     constructor (
         private readonly loadingCtrl: LoadingController,
-        private readonly nav: NavController,
+        readonly nav: NavController,
         private readonly zone: NgZone,
         private readonly cups: CupsMessenger,
         private readonly stateIngestion: StateIngestionService,
