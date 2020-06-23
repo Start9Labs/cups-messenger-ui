@@ -1,7 +1,9 @@
 <ion-header>
 	<ion-toolbar>
 		<ion-buttons slot="start">
-		  	<ion-back-button color="primary" (click)="wipeCurrentContact()"></ion-back-button>
+			<ion-button color="primary" (click)="nav.navigateBack('contacts')">
+				<ion-icon name="chevron-back-outline"></ion-icon>
+			</ion-button>
 		</ion-buttons>
 		<ion-title>New Contact</ion-title>
 		<ion-buttons slot="end">

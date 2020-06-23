@@ -1,7 +1,9 @@
 <ion-header>
 	<ion-toolbar *ngIf="(app.emitCurrentContact$ | async) as contact">
 		<ion-buttons slot="start">
-		  	<ion-back-button color="primary"></ion-back-button>
+			<ion-button color="primary" (click)="nav.navigateBack('messages')">
+				<ion-icon name="chevron-back-outline"></ion-icon>
+			</ion-button>
 		</ion-buttons>
 		<ion-title>Contact</ion-title>
 		<ion-buttons slot="end">

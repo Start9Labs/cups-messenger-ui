@@ -2,7 +2,9 @@
     <ion-toolbar>
         <div *ngIf="(app.emitCurrentContact$ | async) as contact" class="avatar-toolbar">
             <ion-buttons>
-                <ion-back-button color="primary" [defaultHref]="['/contacts']"></ion-back-button>
+                <ion-button color="primary" (click)="nav.navigateBack('contacts')">
+                    <ion-icon name="chevron-back-outline"></ion-icon>
+                </ion-button>
             </ion-buttons>
             <div style="
                 display: grid;
