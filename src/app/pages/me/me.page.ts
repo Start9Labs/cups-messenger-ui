@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core'
 import { AuthState } from 'src/app/services/state/auth-state'
 import { Log } from 'src/app/log'
 import { LogTopic, config } from 'src/app/config'
-import { ToastController, IonicSafeString } from '@ionic/angular'
+import { ToastController, IonicSafeString, NavController } from '@ionic/angular'
 import * as QRCode from 'qrcode'
 
 @Component({
@@ -13,11 +13,10 @@ import * as QRCode from 'qrcode'
 export class MePage implements OnInit {
   public myTorAddress = config.myTorAddress
 
-  els = ['b', 'c', 'd']
-
   constructor(
     private readonly toastCtrl: ToastController,
     private readonly authState: AuthState,
+    readonly nav: NavController
   ) { }
   
   ngOnInit() {
@@ -58,19 +57,6 @@ export class MePage implements OnInit {
     })
     await toast.present()
   } 
-
-  push(){
-    this.els.push('e')
-  }
-
-  unshift(){
-    this.els.unshift('a')
-  }
-
-
-  swipeA(){ this.els = ['a', 'b', 'c', 'd']  }
-  swipeE(){ this.els = ['b', 'c', 'd', 'e']  }
-  reset(){ this.els = ['b', 'c', 'd']  }
 }
 
 function copyToClipboard(str: string): boolean {
