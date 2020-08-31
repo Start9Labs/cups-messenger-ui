@@ -15,7 +15,6 @@ import { BackgroundingService } from '../../backgrounding-service'
 enum Page {
     CONTACTS = '/contacts', MESSAGES = '/messages', OTHER = ''
 }
-
 @Injectable({ providedIn: 'root' })
 export class StateIngestionService {
     private page: Page
@@ -53,10 +52,12 @@ export class StateIngestionService {
                 acquireContacts(this.cups, testPassword).subscribe(
                     {
                         next: cs => {
+                            console.log('contacts', cs)
                             this.appState.$ingestContacts.next(cs)
                             subscriber.next(cs)
                         },
                         complete: () => {
+                            console.log('contacts-refresh complete')
                             subscriber.complete()
                         },
                         error: e => subscriber.error(e)

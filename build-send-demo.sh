@@ -2,7 +2,7 @@
 
 rm cups${1}.tar.gz
 rm -rf www
-#ionic build --prod
+
 npm run build-prod
 tar -zcvf cups${1}.tar.gz www
 scp cups${1}.tar.gz root@demo.start9labs.com:/root/cups

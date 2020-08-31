@@ -37,7 +37,8 @@ export class SigninPage {
         overlayLoader(
             this.stateIngestion.refreshContacts(pass), this.loadingCtrl, 'Authenticating...'
         ).subscribe({
-            next: () => { 
+            next: () => {
+                console.log(`refreshContacts signin success`)
                 this.authState.login$(pass).subscribe(() => Log.info(`Logged in.`))
             },
             error: (e) => {
