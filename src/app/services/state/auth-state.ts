@@ -31,13 +31,13 @@ export class AuthState {
     login$(p: string): Observable<{}> {
         return from(this.storage.set('password', p)).pipe(concatMap(() => this.attemptLogin$()))
     }
-    
+
     attemptLogin$(): Observable<{}> {
         return fromAsyncFunction(async () => {
             // First check if password is in storage from previous login
             const storagePassword = await this.storage.get('password')
             Log.debug('password retreive attempt from local storage', storagePassword, LogTopic.AUTH)
-            
+
             if(storagePassword){
                 this.password = storagePassword
                 this.$status$.next(AuthStatus.VERIFIED)
@@ -49,15 +49,18 @@ export class AuthState {
                 this.$status$.next(AuthStatus.UNVERIFED)
                 return
             }
-            
+
             // On a mobile device, we might have come in from the shell
-            let shellPassword = undefined 
+            let shellPassword = undefined
             try{
-                shellPassword = await getContext().getConfigValue(['password'], 5000)
+                shellPassword = await fetch(
+                    'ambassador://embassy/getConfigValue',
+                    { method: 'POST', body: JSON.stringify(['password']) }
+                ).then(r => r.json())
             } catch (e) {
                 Log.error('getConfigValue password exception: ', e)
             }
-            
+
             Log.debug('password retrieve attempt from shell', shellPassword, LogTopic.AUTH)
 
             if(!shellPassword){

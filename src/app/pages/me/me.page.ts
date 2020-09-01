@@ -25,7 +25,7 @@ export class MePage implements OnInit {
 
   logout(){
     Log.debug('Logging out', {}, LogTopic.AUTH)
-    this.authState.logout$()
+    this.authState.logout$().subscribe()
   }
 
   renderQR(){
