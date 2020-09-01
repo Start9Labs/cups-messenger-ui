@@ -52,12 +52,10 @@ export class StateIngestionService {
                 acquireContacts(this.cups, testPassword).subscribe(
                     {
                         next: cs => {
-                            console.log('contacts', cs)
                             this.appState.$ingestContacts.next(cs)
                             subscriber.next(cs)
                         },
                         complete: () => {
-                            console.log('contacts-refresh complete')
                             subscriber.complete()
                         },
                         error: e => subscriber.error(e)
