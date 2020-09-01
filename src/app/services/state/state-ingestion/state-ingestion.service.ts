@@ -15,7 +15,6 @@ import { BackgroundingService } from '../../backgrounding-service'
 enum Page {
     CONTACTS = '/contacts', MESSAGES = '/messages', OTHER = ''
 }
-
 @Injectable({ providedIn: 'root' })
 export class StateIngestionService {
     private page: Page

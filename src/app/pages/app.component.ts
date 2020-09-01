@@ -42,11 +42,10 @@ export class AppComponent {
             switch (s) {
                 case AuthStatus.UNVERIFED: {
                     this.store.clear$().subscribe(() => {
-                        if (runningOnNativeDevice()) {
-                            getContext().close()
-                        } else {
-                            this.navCtrl.navigateRoot('signin')
+                        if(runningOnNativeDevice()){
+                            fetch('ambassador://embassy/close', { method: 'POST' }).catch(console.warn)
                         }
+                        this.navCtrl.navigateRoot('signin')
                     })
                     break
                 }
